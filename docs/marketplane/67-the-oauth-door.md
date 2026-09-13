@@ -1,4 +1,4 @@
-# 66. The OAuth package was complete and nothing served it
+# 67. The OAuth package was complete and nothing served it
 
 **PR:** _(not yet opened)_ &nbsp;·&nbsp; **Issue:** #51 &nbsp;·&nbsp; **Date:** 2026-09-13 &nbsp;·&nbsp; **Status:** proposed
 

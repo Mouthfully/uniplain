@@ -1,7 +1,7 @@
 /**
- * THE PRE-LAUNCH GATE'S TOKEN.
+ * THE ACCESS GATE'S TOKEN.
  *
- * The site is not public yet. A shared password unlocks it; everyone else sees the waiting list.
+ * The site is password protected. A shared password unlocks it; everyone else is sent to /access.
  *
  * THE PASSWORD IS NEVER PUT IN A COOKIE. What is stored is an HMAC of a fixed label under the
  * password as key -- one-way, so a stolen cookie does not yield the password, and deterministic, so
