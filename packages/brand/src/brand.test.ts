@@ -249,6 +249,31 @@ describe("the forbidden-claims list", () => {
     "pen-tested quarterly",
   ];
 
+  /**
+   * THE ELIMINATED-CAUSES CLAIM. Section 14's artboard, never section 4.1's output, and no longer
+   * carried by the `diagnose` claim -- which is exactly why it needs a ban: `withheld-claims`
+   * derives its runs from claim text, so removing the phrase from the claim removed the only thing
+   * that was catching it.
+   */
+  const eliminatedCauses = [
+    "what was ruled out",
+    "What was ruled out and why",
+    "what we ruled out",
+    "shows the causes and what was ruled out",
+    "causes that were ruled out",
+    "hypotheses eliminated by the second pass",
+    "ruled-out causes are listed beside each one",
+    "eliminated causes, with the rows behind each",
+  ];
+
+  for (const copy of eliminatedCauses) {
+    it(`catches the eliminated-causes claim ${JSON.stringify(copy.slice(0, 44))}`, () => {
+      const hit = FORBIDDEN_CLAIMS.find((f) => f.pattern.test(copy));
+      expect(hit, `nothing in FORBIDDEN_CLAIMS matched: ${copy}`).toBeDefined();
+      expect(hit?.reason).not.toHaveLength(0);
+    });
+  }
+
   for (const copy of certificationEvasions) {
     it(`catches the certification claim ${JSON.stringify(copy)}`, () => {
       const hit = FORBIDDEN_CLAIMS.find((f) => f.pattern.test(copy));
@@ -277,6 +302,13 @@ describe("the forbidden-claims list", () => {
     "Social sharing is not a feature of this product.",
     "Clause 2 of the agreement covers termination.",
     "Associate accounts are billed separately.",
+    // The eliminated-causes pattern must not reach ordinary English. This repository's own design
+    // notes are written in exactly these sentences, and `forbidden-claims.test.ts` strips comments
+    // but `check-copy` and a future reviewer do not.
+    "We ruled out storing a hash in place of deleting the address.",
+    "A permissive policy was ruled out because it would apply to every role.",
+    "The first draft was excluded from the release.",
+    "Duplicate rows are eliminated by the upsert key.",
   ];
 
   for (const copy of mustStayLegal) {

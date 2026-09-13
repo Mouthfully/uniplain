@@ -175,11 +175,9 @@ rewritten the product's whole proposition on my own initiative, which is a found
 line: `packages/insights` generates exactly this brief today and nothing delivers it. That is a
 delivery gap with a path.
 
-**The `diagnose` claim was not amended.** It was on my list and I could not reconstruct, from the
-repository, what was wrong with its final clause — and the claim is **withheld** behind
-`surface:diagnose`, so it renders nowhere and amending it on a guess would be the failure this repo
-is organised against. Recorded rather than silently dropped: someone who knows the reason should
-take it.
+**The `diagnose` claim is amended, and §8 below is why.** This section originally said the clause
+could not be reconstructed and should be left to someone who knew the reason. That was the right
+call at the time and it was not the end of the job: reading the specification settled it.
 
 **`entity_name` is still stored tenant free text** with no policy over it — written by
 `google_ads/normalize.ts:569` and `meta_ads/normalize.ts:493`, persisted by `store/src/ingest.ts:66`.
@@ -190,3 +188,64 @@ but it is unfiled and keeps being rediscovered.
 63 was written and is not now: the `database` job in `.github/workflows/ci.yml` runs the SQL suite
 against a `postgres:16` service. Note 63's own section 7 is corrected in the same commit rather than
 left to be repeated a third time.
+
+## 8. The `diagnose` claim: a capability sourced from a drawing
+
+**It was the middle clause, not the final one.** The claim read *"Ranked causes with the evidence
+rows attached, **what was ruled out**, and a recovery plan"* and cited specification §4.1. §4.1
+defines the output of `diagnose.metric` exactly — *"a ranked list of hypotheses with the evidence
+rows attached, a confidence, and a recovery plan as ordered steps"* — and **there is no list of
+eliminated hypotheses in it.**
+
+The phrase is in the specification, which is what made it look sourced. It is at line 1910, under
+**§14, "Landing page draft"**, describing a chat card that shows *"three causes in words with source
+tags, what was ruled out, and next steps"*. §14 is an artboard — and this repository already treats
+that class of source as non-binding, because §14 is also where *"nothing monthly / pay as you go"*
+comes from, and that line is a `FORBIDDEN_CLAIMS` pattern. A drawing of a thing somebody would like
+to sell is not a decision to sell it.
+
+A capability taken from a mockup and attributed to an engineering section is worse than an uncited
+one, because **the citation is the thing that stops anyone rechecking.**
+
+### The obvious repair was also wrong, and that is the more useful half
+
+§4.1's output carries *"a confidence"*, so restoring the sentence from its own source would give
+*"…evidence rows attached, a confidence, and a recovery plan"*. **The engine refuses to produce
+one:** note 59's rule is that uncertainty is *measured, never decorated* — there is no error bar and
+no confidence constant anywhere in `packages/insights`. What it produces instead is a **range**
+whose ends come from splitting the contributing rows on `is_provisional`.
+
+So this is a genuine divergence between the specification and what was built, built that way on
+purpose, and it is **recorded rather than resolved by quoting the older document**. The clause was
+removed; nothing was put in its place.
+
+### Deleting the phrase deleted its guard, which a mutation caught
+
+`withheld-claims.test.tsx` derives its five-word runs **from the claim text**. It caught the Ask
+card on the run `what was ruled out and` — and it could only do that while the claim contained the
+phrase. Removing the phrase removed the detector with it: the same sentence written into a section
+body went from failing the build to passing silently. **A cut that removes a claim and its detector
+in one move leaves the phrase more writable than before anyone questioned it.**
+
+That is why this ends in a ban rather than a deletion. The new `FORBIDDEN_CLAIMS` entry is built
+against this list's own recorded near-misses — `\W{0,4}` separators rather than `\s`, because
+`/\b\d+\s+(sources|integrations)\b/` let "200+ integrations" through on exactly that difference,
+and both word orders written out, because the competitor pattern taught that a `\b` boundary is not
+a substitute for spelling the variant. It is deliberately narrow: it fires on eliminated **causes**,
+not on the ordinary English *"we ruled out storing a hash"*, which this repository's own notes use.
+
+**And it is interlocked with the claim**, the same way the certification bans are. Eight evasion
+spellings and four must-stay-legal sentences run on every commit.
+
+### Mutation testing
+
+| Mutation | Result |
+|---|---|
+| the amended claim restated as Ask-card copy | `withheld-claims` red — *does not republish the withheld claim diagnose* |
+| the deleted phrase as section copy, **before** the ban | **green** — the hole, demonstrated |
+| the same, **after** the ban | red twice: the homepage render *and* the all-routes source scan |
+| the phrase restored to the claim, capability still withheld | green — correct: a withheld claim renders nowhere |
+| the phrase restored **and** `surface:diagnose` switched on | red — *does not fire on the claims that are allowed*: the interlock |
+| `surface:diagnose` on with the **corrected** text | the interlock test stays green — the ban does not false-positive on the fix |
+
+All reverted. Brand suite green at **71 tests** (59 before this unit).
