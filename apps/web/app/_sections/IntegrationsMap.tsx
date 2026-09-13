@@ -98,9 +98,27 @@ const MORE_CONNECTORS = [
 
 export function IntegrationsMap() {
   return (
+    /* THE SPLIT IS AT lg, NOT md, AND THE REASON IS A MEASUREMENT.
+     *
+     * The map to the right is a single inline row -- two 2x2 clusters, two rules and the centre
+     * mark -- and it needs 676px including its own padding. Measured in a production build, the
+     * right-hand column of this grid is 332px at 768, 440px at 1024 and 528px from 1280 up: the
+     * row has never once fitted the column it is in. At 768 that put the outermost tile 781px into
+     * a 768px viewport and scrolled all of / sideways by 13px.
+     *
+     * Splitting at lg gives the map the full 704px at 768, where it fits with room to spare, and
+     * the section stacks instead -- copy above, map below. From 1024 the two columns come back and
+     * the row spills 21px into the gutter between them, which is the layout that ships today and
+     * which costs no sideways scroll at any viewport.
+     *
+     * WHAT IT COSTS: tablet portrait loses the side-by-side arrangement and reads as two stacked
+     * blocks. That is the trade the product's own onboarding line names -- five minutes, on your
+     * phone -- and 13px of horizontal scroll on the home page is the thing a thumb notices.
+     * The row itself still does not fit its column above 1024; that is a design question about
+     * tile sizes and is written down in the note rather than guessed at here. */
     <section
       id="integrations"
-      className="mx-auto grid max-w-[1200px] items-center gap-8 px-8 py-12 md:grid-cols-2 md:gap-10 md:py-20 lg:gap-20"
+      className="mx-auto grid max-w-[1200px] items-center gap-8 px-8 py-12 md:gap-10 md:py-20 lg:grid-cols-2 lg:gap-20"
     >
       <div className="min-w-0">
         <span className="text-ink-faint block text-xs font-bold tracking-[0.14em] uppercase">
@@ -117,7 +135,9 @@ export function IntegrationsMap() {
         {/* `list-none` kills the marker in Firefox, the pseudo-element rule in WebKit; both are
             needed, and neither removes the element's keyboard behaviour. */}
         <details className="group mt-6">
-          <summary className="text-accent inline-flex cursor-pointer list-none items-center text-sm font-bold hover:underline [&::-webkit-details-marker]:hidden">
+          {/* 182x20 measured -- under the 24x24 WCAG 2.5.8 floor. The disclosure is the only way
+              to the other connectors from this section, so it gets a thumb-sized box. */}
+          <summary className="text-accent inline-flex min-h-[44px] cursor-pointer list-none items-center text-sm font-bold hover:underline [&::-webkit-details-marker]:hidden">
             {DISCLOSURE_LABEL}
             <span
               aria-hidden="true"

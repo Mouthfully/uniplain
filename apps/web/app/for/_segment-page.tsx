@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
-import { Footer, SiteHeader } from "../../_chrome";
-import { FOR_CLAIMS, FOR_COPY, SEGMENTS, type Segment, segmentBySlug } from "../_content";
+import { Footer, SiteHeader } from "../_chrome";
+import { FOR_CLAIMS, FOR_COPY, SEGMENTS, type Segment, segmentBySlug } from "./_content";
 
 /**
  * ONE PAGE COMPONENT FOR EVERY SEGMENT, AT /for/<segment>.
@@ -32,25 +32,30 @@ import { FOR_CLAIMS, FOR_COPY, SEGMENTS, type Segment, segmentBySlug } from "../
  * to wire.
  */
 
-export const dynamicParams = false;
+/**
+ * THREE STATIC ROUTES RATHER THAN ONE DYNAMIC ONE, AND THE REGISTRY IS WHY.
+ *
+ * This began as `/for/[segment]` with `generateStaticParams`. `_agent/registry.ts` -- the
+ * machine-readable surface -- asserts that every indexable route has a registry entry, that every
+ * entry has a `page.tsx` on disk at that literal path, and that every entry has a markdown twin at
+ * the same URL with the extension replaced. A dynamic segment satisfies none of those: the sitemap
+ * would emit the literal `/for/[segment]`, and the markdown handler would describe a template
+ * rather than a page.
+ *
+ * So each segment is its own folder, four lines long, and this module is what they render. The
+ * duplication is three imports; what it buys is that the registry, the sitemap and the markdown
+ * surface all describe the same three real URLs.
+ */
 
-export function generateStaticParams(): { segment: string }[] {
-  return SEGMENTS.map((segment) => ({ segment: segment.slug }));
-}
-
-/** The segment this route names, or a 404. Shared by the metadata and the page. */
-async function resolve(params: Promise<{ segment: string }>): Promise<Segment> {
-  const segment = segmentBySlug((await params).segment);
+/** The segment, or a 404 -- which is what an unknown slug reaching this component means. */
+function resolve(slug: string): Segment {
+  const segment = segmentBySlug(slug);
   if (segment === undefined) notFound();
   return segment;
 }
 
-export async function generateMetadata({
-  params,
-}: {
-  params: Promise<{ segment: string }>;
-}): Promise<Metadata> {
-  const segment = await resolve(params);
+export function segmentMetadata(slug: string): Metadata {
+  const segment = resolve(slug);
   // `layout.tsx` appends the product name through its title template, so the title here is the
   // short half. The canonical is written per segment rather than inherited: a shared canonical
   // across three pages would ask a crawler to drop two of them.
@@ -67,8 +72,8 @@ const PRIMARY_BUTTON =
 const SECONDARY_BUTTON =
   "bg-surface text-accent border-line hover:bg-surface-subtle inline-flex min-h-[46px] items-center justify-center rounded-md border px-[22px] text-sm font-bold transition-colors";
 
-export default async function SegmentPage({ params }: { params: Promise<{ segment: string }> }) {
-  const segment = await resolve(params);
+export function SegmentPage({ slug }: { readonly slug: string }) {
+  const segment = resolve(slug);
 
   return (
     <>

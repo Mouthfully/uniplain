@@ -270,6 +270,40 @@ export const QUESTIONS = [
 ] as const;
 
 /**
+ * THE SAME SIX QUESTIONS, DECLARED AS A FAQPage.
+ *
+ * The answers were already on this page in `<details>` elements, which is the correct HTML and is
+ * invisible as a question-and-answer pair to anything that is not rendering the page. The JSON-LD
+ * says what the markup means, and it is built from the SAME `QUESTIONS` constant the section
+ * renders -- so the two cannot answer differently, which is the whole failure mode of hand-written
+ * structured data and the reason Google treats a mismatch as a manual action rather than a warning.
+ *
+ * NOTHING IS ADDED HERE THAT IS NOT ON THE PAGE. No extra question, no expanded answer, no
+ * `aggregateRating`. Structured data is the easiest place in a codebase to state something untrue
+ * at scale, which is the argument `layout.tsx` already makes for its own graph; this inherits it.
+ */
+function FaqStructuredData() {
+  const graph = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: QUESTIONS.map((item) => ({
+      "@type": "Question",
+      name: item.question,
+      acceptedAnswer: { "@type": "Answer", text: item.answer },
+    })),
+  };
+
+  return (
+    <script
+      type="application/ld+json"
+      // JSON produced by JSON.stringify from a module constant. No user input reaches it, and Next
+      // has no other way to emit a JSON-LD block.
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(graph) }}
+    />
+  );
+}
+
+/**
  * The closing panel.
  *
  * "READY TO UNIFY YOUR DATA?" IS NAMED IN SECTION 5.1 AS COPY THAT MUST STOP, alongside its lead,
@@ -323,7 +357,10 @@ export function Faq() {
             reads like a decision: it survives the thing it was waiting for. */}
         <a
           href="/docs"
-          className="text-accent mt-6 inline-flex items-center gap-3 text-sm font-bold hover:underline"
+          /* Both halves of this line were fixed independently and both are kept: #67 pointed it at
+             the real route (it was `#docs`, an anchor no element carried), and the mobile pass
+             raised the box to 44px -- it measured 171x20, under even the 24x24 WCAG 2.5.8 floor. */
+          className="text-accent mt-4 inline-flex min-h-[44px] items-center gap-3 text-sm font-bold hover:underline"
         >
           {HELP_LINK_LABEL}
           <span aria-hidden="true">&rarr;</span>
@@ -331,9 +368,14 @@ export function Faq() {
       </div>
 
       <div className="min-w-0">
+        <FaqStructuredData />
         {QUESTIONS.map((item) => (
           <details key={item.question} className="group border-line border-b py-[18px]">
-            <summary className="text-ink flex cursor-pointer list-none justify-between gap-5 text-sm font-bold [&::-webkit-details-marker]:hidden">
+            {/* The six questions are the only interactive thing in this section and they
+                measured 21px tall for the one-line ones -- below the 24px WCAG 2.5.8 floor, on the
+                control a phone reader taps most. min-h-[44px] on the summary box only; the
+                question keeps its own type and its own leading. */}
+            <summary className="text-ink flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-5 text-sm font-bold [&::-webkit-details-marker]:hidden">
               {item.question}
               {/* Hidden from assistive tech: <details> already announces expanded/collapsed. */}
               <span aria-hidden="true" className="text-ink-subtle shrink-0 leading-[1.5]">

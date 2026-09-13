@@ -68,64 +68,24 @@ for f in "$ROOT"/supabase/migrations/*.sql; do
   psql -d "$DB" -q -f "$f" && echo "ok"
 done
 
-echo "==> rls suite"
-psql -d "$DB" -q -f "$HERE/01_rls_isolation.sql"
-
-echo "==> scheduler suite"
-psql -d "$DB" -q -f "$HERE/02_scheduler.sql"
-
-echo "==> envelope store suite"
-psql -d "$DB" -q -f "$HERE/03_envelope_store.sql"
-
-echo "==> restatement outbox suite"
-psql -d "$DB" -q -f "$HERE/04_restatement_events.sql"
-
-echo "==> webhook delivery suite"
-psql -d "$DB" -q -f "$HERE/05_webhook_delivery.sql"
-
-echo "==> jwt claims suite"
-psql -d "$DB" -q -f "$HERE/06_jwt_claims.sql"
-
-echo "==> anon grants suite"
-psql -d "$DB" -q -f "$HERE/07_anon_grants.sql"
-
-echo "==> credential lane suite"
-psql -d "$DB" -q -f "$HERE/08_credential_lane.sql"
-
-echo "==> position suite"
-psql -d "$DB" -q -f "$HERE/09_position.sql"
-
-echo "==> ingest entry point suite"
-psql -d "$DB" -q -f "$HERE/10_ingest_entry_point.sql"
-
-echo "==> connection timezone suite"
-psql -d "$DB" -q -f "$HERE/11_connection_timezone.sql"
-
-echo "==> billing suite"
-psql -d "$DB" -q -f "$HERE/12_billing.sql"
-
-# 13 WAS WRITTEN AND NEVER WIRED IN. `20260912000800_scheduler_entry_point.sql` shipped with
-# `13_scheduler_entry_point.sql` beside it and this runner was not amended, so the file has been
-# sitting in the directory proving nothing -- the same failure the repository keeps finding, one
-# layer up: a test nothing runs is indistinguishable from a test that passes. Wired in here
-# rather than left for whoever notices next.
-echo "==> scheduler entry point suite"
-psql -d "$DB" -q -f "$HERE/13_scheduler_entry_point.sql"
-
-echo "==> ambient suite"
-psql -d "$DB" -q -f "$HERE/14_ambient.sql"
-
-echo "==> force rls suite"
-psql -d "$DB" -q -f "$HERE/15_force_rls.sql"
-
-echo "==> oauth pending suite"
-psql -d "$DB" -q -f "$HERE/16_oauth_pending.sql"
-
-echo "==> organisation members suite"
-psql -d "$DB" -q -f "$HERE/17_organisation_members.sql"
-
-echo "==> membership guards suite"
-psql -d "$DB" -q -f "$HERE/18_membership_guards.sql"
-
-echo "==> erasure suite"
-psql -d "$DB" -q -f "$HERE/19_erasure.sql"
+# EVERY NUMBERED SUITE, ENUMERATED FROM THE DIRECTORY RATHER THAN LISTED HERE.
+#
+# This used to be twenty hand-written `psql -f` lines, and the failure that arrangement produces
+# has already happened twice. `13_scheduler_entry_point.sql` shipped beside its migration and was
+# never wired in -- it sat in the directory proving nothing, which is indistinguishable from a
+# suite that passes. It was fixed by adding one more hand-written line, which fixed that instance
+# and left the mechanism intact; `20_data_requests.sql` then hit it again immediately.
+#
+# A suite that cannot run is worse than a missing one, because it reports as coverage. So the list
+# is now the filesystem. `00_supabase_shim.sql` is excluded because it is applied above, before the
+# migrations, and is setup rather than a suite.
+#
+# ORDER IS THE NUMERIC PREFIX, and `sort -V` rather than glob order so `19` does not sort before
+# `2`. The suites share one database and several depend on fixtures earlier ones create, so the
+# ordering is load-bearing and not cosmetic.
+for f in $(printf '%s\n' "$HERE"/[0-9][0-9]_*.sql | sort -V); do
+  name="$(basename "$f")"
+  [ "$name" = "00_supabase_shim.sql" ] && continue
+  echo "==> ${name%.sql}"
+  psql -d "$DB" -q -f "$f"
+done

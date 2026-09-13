@@ -534,7 +534,16 @@ export default function GoogleAdsFieldsPage() {
             </div>
           </nav>
 
-          <article>
+          {/* `min-w-0` IS THE WHOLE FIX FOR 474px OF SIDEWAYS SCROLL, AND IT IS NOT COSMETIC.
+              Below md this element is the only child of a grid with no explicit template, so it
+              sits in ONE auto track -- and an auto track cannot be narrower than its item's
+              min-content width. The catalogue table inside carries `min-w-[760px]`, which sets
+              that min-content to 762px, so at a 320px viewport the track computed to 762px and
+              took the whole document with it. The table's own `overflow-x-auto` scroller could not
+              help: the floor was already set by the time the scroller was consulted. min-w-0
+              releases the track, the scroller does its job, and the page measures 320.
+              The md/xl templates already say `minmax(0,1fr)` for the same reason. */}
+          <article className="min-w-0">
             {/* The first crumb is a page, so it is a link; the second is this page, so it is not. */}
             <div className="text-ink-subtle mb-[30px] flex flex-wrap items-center gap-3 text-[11px] md:text-xs">
               <a href="/docs" className="hover:text-accent">
@@ -668,7 +677,7 @@ export default function GoogleAdsFieldsPage() {
                               surface token and mint ink misses AA at this size, so the metric badge
                               takes the neutral pair -- the two are still told apart at a glance. */}
                           <span
-                            className={`inline-block rounded-sm px-[7px] py-1 text-[10px] ${
+                            className={`inline-block rounded-sm px-[7px] py-1 text-xs ${
                               field.kind === "dimension"
                                 ? "bg-surface-inset text-accent"
                                 : "bg-surface-subtle text-ink-muted border-line border"

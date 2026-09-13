@@ -652,3 +652,113 @@ what. It is the check that keeps a *correct* authorisation from being filed unde
 account, which is this repository's own worst outcome rather than a breach: a connection that looks
 right and reads someone else's numbers. Three tests hold it, in two files, on both the decision and
 the route.
+
+---
+
+## 7. What the review found, and what was unattended
+
+Two adversarial reads of this change came back `needs-fixes`. Neither found the security core
+wrong — the state is looked up by primary key, redeemed by `delete … returning`, refused across
+tenants by Postgres rather than by this Worker, and no token appears in any response body or log,
+and each of those is mutation-proved above. What both found instead is the failure this repository
+is most exposed to: **refusals nothing exercised, and promises nothing held.** They are recorded
+here rather than quietly fixed, because the pattern is the finding.
+
+### Two tests that asserted the opposite of their names
+
+`MEMBERSHIP` makes MALLORY a member of `WORKSPACE_B`. Two cases seeded a pending row in
+`WORKSPACE_B` and presented it as MALLORY, one of them labelled **"refused by the database"**. That
+is the *accepted* path wearing a refusal's label, and neither case asserted `response.ok === false`,
+so both would have passed had the tenancy predicate been deleted outright.
+
+Fixed by presenting ALICE — who is not a member of `WORKSPACE_B` — and by asserting the refusal
+rather than inferring it. Mutation: making ALICE a member of `WORKSPACE_B` turns **three** tests red
+with the messages `refused by the database was supposed to be refused and was not` and
+`the refused path did not refuse`. Before the fix, the same mutation turned none.
+
+The lesson is narrower than "test your tests": **a negative assertion needs a positive one beside
+it.** `expect(response.ok).toBe(false)` is what makes the fixture's membership table load-bearing;
+without it the test was asserting only that a request completed.
+
+### Refusals that no test could reach
+
+Every refusal in `toPendingAuthorization` was unreachable from the suite, because the fake database
+keeps its rows well-formed by construction. They read as considered, they cost nothing to delete,
+and nothing would have noticed.
+
+The function is exported, so the fix is a unit block rather than a fixture that can produce a
+corrupt row — with one route-level test for the wiring, asserting that a row which cannot be
+narrowed never reaches the token endpoint. That direction matters: **the exchange is the
+irreversible half.** A provider that has issued a refresh token against a code we then refuse to
+store leaves the customer holding a grant nothing here will use and nothing here will revoke.
+
+| Mutation | Test that went red |
+|---|---|
+| `sources.length !== 1` → `sources.length < 1`, i.e. connect the first of several | `refuses a grant naming two sources rather than connecting the first`, `names no value from the row in any message it throws`, and the route-level `refuses the callback before anything is exchanged or sealed` |
+| Dropped the `OAUTH_PROVIDER_IDS` check on `provider` | `refuses a provider this build holds no registration for` |
+| Dropped `providerFor(source) !== provider` | `refuses a source whose provider is not the one on the row` |
+| `Number.isNaN(Date.parse(createdAt))` removed, so `created_at: "soon"` is a timestamp | `refuses a created_at that is not a time, rather than treating it as one` |
+| `if (body.length > 1)` → never, i.e. take the first row | `refuses two rows rather than choosing which workspace the credential lands in` |
+| `MAX_CALLBACK_FIELD` doubled | `is refused by length before it is looked at` |
+
+The `created_at` one is worth stating plainly, because it is `?? 0` in a different costume: a row
+whose timestamp cannot be read has no expiry, and an authorisation with no expiry never expires.
+`Date.parse` is looser than it looks — it is the same laxity that made the scheduler grow its own
+RFC3339 guard — so the floor here is only that unparseable is refused, and the note says so rather
+than implying the check is tighter than it is.
+
+Two of these needed a store built over a fetch that answers whatever the case requires, because
+`redeem_oauth_authorization` is keyed on the primary key and the fake cannot return two rows for one
+state. That is exactly when a guard matters: **the day the key changes is the day nothing fails.**
+
+### The promise on the screen that nothing was holding
+
+`CONNECTIONS.oauthNote` tells a customer, in the product's own words, *"No key of yours is typed on
+this page and none is asked for."* Inserting `<input type="password" name="secret" />` into
+`oauth-form.tsx` left all 318 tests in the web app passing and every guard green. The promise was
+prose; the code was unattended.
+
+`oauth-form.test.tsx` now asserts the **whole field set**, not the absence of `type="password"`.
+Banning the attribute has the obvious way round it, and the second mutation proves it:
+`<input name="consumer_secret" />` — no type at all, a text box that takes a secret just as well —
+walks past the password assertion and is caught only by "exactly one input, and it is the account
+id". A third mutation raising `MAX_ACCOUNT` to 4096 turns red against `MAX_EXTERNAL_ACCOUNT_ID`
+imported from the endpoint's own source: two constants, two files, one value, and previously nothing
+holding them together, so this screen could have grown its limit and sent customers to a consent
+screen the endpoint would refuse them on the way back from.
+
+### The return leg rendered whatever was in the URL
+
+`page.tsx` had no test at all. Replacing `{oauthMessageFor(outcome)}` with `{outcome}` left 318
+tests passing while the page printed the query string, in the product's own error styling, to a
+signed-in customer. React escapes it, so it is not script injection — it is worse in the way this
+repository cares about: **an attacker-chosen sentence wearing the product's voice**, telling an owner
+what to do about their own data.
+
+`_oauth-refusals.test.ts` already held the *table* to the endpoint, and would have passed through
+that mutation untouched, because the table was never what broke. The gap was between a correct table
+and the JSX, and only a render crosses it.
+
+| Mutation | Test that went red |
+|---|---|
+| `{oauthMessageFor(outcome)}` → `{outcome}` | `renders this product's sentence for every code the door can answer with`, `never prints the code from the URL, only the sentence it selects`, `answers a code it does not recognise with the sentence that says so`, `is dropped, not repaired, when it is not` |
+| `safeReference` stopped checking the shape and forwarded the string | `is dropped, not repaired, when it is not` |
+| `connected === "1"` → `Boolean(params.connected)` | `appears only for the exact value the callback sets` |
+
+One assertion in that file needed fixing before it meant anything. Every sentence this page can
+print has an apostrophe in it, which `renderToStaticMarkup` emits as `&#x27;`, so
+`not.toContain(sentence)` against raw markup passes whether the sentence is there or not. The test
+decodes the entities before asserting on words and keeps the raw string only for assertions about
+tags — a test that reports green for the wrong reason is the one kind this repository may not ship,
+and it very nearly shipped three of them here.
+
+### Still open
+
+Recorded rather than fixed, because fixing them in this PR would widen it:
+
+- `MAX_ACCOUNT` and `MAX_EXTERNAL_ACCOUNT_ID` are now asserted to agree, but they are still two
+  constants. One of them should import the other; that is a change to `@repo/connections`' surface
+  and belongs in its own PR.
+- Control characters and request-id bounding are handled asymmetrically between the start and
+  callback legs. Neither asymmetry is exploitable as written — both fields are bounded and neither
+  is interpolated — but "not exploitable as written" is a property of the current call sites.

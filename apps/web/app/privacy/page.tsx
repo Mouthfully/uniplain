@@ -404,7 +404,7 @@ const CLAUSES: readonly Clause[] = [
     id: "rights",
     title: "Your rights over your own data",
     body: [
-      "Anyone whose personal data is held in an account can ask what is held about them, ask for it to be corrected, ask for a copy, or ask for it to be deleted. Two of those no longer need asking: a member of an account can download everything it holds as one file, and an owner can close the account outright, both from the account page. The rest go to the contact address in the panel at the top of this page and are answered individually.",
+      "Anyone whose personal data is held in an account can ask what is held about them, ask for it to be corrected, ask for a copy, or ask for it to be deleted. Two of those no longer need asking: a member of an account can download everything it holds as one file, and an owner can close the account outright, both from the account page. For the rest — a correction, an objection, or a question about what is held — a signed-in account files a request on its own Your data screen, which records it against the organisation and shows what has become of it. The contact address at the top of this page reaches the same people.",
       "No statutory framework is claimed here, because which one applies depends on where a person is and on arrangements this company has not yet made. The practical position is simpler than a list of articles: ask, and it will be answered.",
       "For data read out of a connected platform, the customer that connected it is the one to ask. We hold it on that customer's behalf and pass a request of that kind to them rather than acting on it ourselves.",
       "A connection can be disconnected from the product at any time, and the underlying access can be revoked at the platform independently of anything done here.",
@@ -715,7 +715,7 @@ export default function PrivacyPage() {
                       {clause.title}
                     </h3>
                     {clause.open === true ? (
-                      <span className="border-line bg-surface text-ink-subtle rounded-full border px-2.5 py-1 text-[10px] font-bold tracking-[0.08em] uppercase">
+                      <span className="border-line bg-surface text-ink-subtle rounded-full border px-2.5 py-1 text-xs font-bold tracking-[0.08em] uppercase">
                         {OPEN_BADGE}
                       </span>
                     ) : null}

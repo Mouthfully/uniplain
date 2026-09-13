@@ -17,3 +17,6 @@ __pycache__/
 
 # scripts/gate.sh writes one log per check here.
 .gate-logs/
+
+# apps/web/scripts/mobile-audit.mjs writes its report and screenshots here.
+.mobile-audit/

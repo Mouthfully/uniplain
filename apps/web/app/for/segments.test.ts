@@ -1,10 +1,16 @@
+import { existsSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
+
 import { FORBIDDEN_CLAIMS, IMPLEMENTED_SOURCE_IDS } from "@repo/brand";
 import { type InsightRow, allowedNumbers, canonicalNumber, numericTokens } from "@repo/insights";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
 import { PLAN_ENTITLEMENTS } from "../_billing/entitlements";
-import SegmentPage, { generateMetadata, generateStaticParams } from "./[segment]/page";
+
+const HERE = dirname(fileURLToPath(import.meta.url));
+import { SegmentPage, segmentMetadata } from "./_segment-page";
 import {
   FOR_COPY,
   SEGMENTS,
@@ -49,9 +55,7 @@ import {
  * reader skips is not something the page asserts.
  */
 async function mainTextOf(slug: string): Promise<string> {
-  const markup = renderToStaticMarkup(
-    await SegmentPage({ params: Promise.resolve({ segment: slug }) }),
-  );
+  const markup = renderToStaticMarkup(SegmentPage({ slug }));
   const main = /<main[^>]*>([\s\S]*)<\/main>/.exec(markup);
   expect(main, `no <main> rendered for /for/${slug}`).not.toBeNull();
   return (main?.[1] ?? "")
@@ -403,9 +407,7 @@ describe("no two segments compete with each other in search", () => {
 
   it("publishes each segment's own metadata, with its own canonical", async () => {
     for (const segment of SEGMENTS) {
-      const metadata = await generateMetadata({
-        params: Promise.resolve({ segment: segment.slug }),
-      });
+      const metadata = await segmentMetadata(segment.slug);
       expect(metadata.title).toBe(segment.title);
       expect(metadata.description).toBe(segment.description);
       expect(metadata.alternates?.canonical).toBe(`/for/${segment.slug}`);
@@ -416,9 +418,20 @@ describe("no two segments compete with each other in search", () => {
   });
 
   it("generates a route for every segment and nothing else", () => {
-    expect(generateStaticParams().map((entry) => entry.segment)).toEqual(
-      SEGMENTS.map((segment) => segment.slug),
-    );
+    // THE ROUTES ARE REAL FOLDERS NOW, not entries a `generateStaticParams` returns. The dynamic
+    // segment could not satisfy `_agent/registry.ts`, which requires a `page.tsx` on disk at each
+    // indexable path and a markdown twin beside it -- so this asserts the folders exist rather
+    // than that a function lists them.
+    for (const segment of SEGMENTS) {
+      expect(
+        existsSync(join(HERE, segment.slug, "page.tsx")),
+        `/for/${segment.slug} has no page.tsx`,
+      ).toBe(true);
+      expect(
+        existsSync(join(HERE, `${segment.slug}.md`, "route.ts")),
+        `/for/${segment.slug} has no markdown twin`,
+      ).toBe(true);
+    }
   });
 });
 

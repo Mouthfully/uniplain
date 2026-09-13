@@ -26,9 +26,12 @@ import type { CryptoLike as VaultCrypto } from "@repo/vault";
 import { describe, expect, it } from "vitest";
 
 import {
+  createPendingAuthorizationStore,
   handleOAuthCallback,
   handleOAuthStart,
+  MAX_CALLBACK_FIELD,
   type OAuthConnectDeps,
+  toPendingAuthorization,
 } from "../src/oauth-connect.js";
 
 /** A fixture, not a secret. The real one is `wrangler secret put SUPABASE_JWT_SECRET`. */
@@ -801,6 +804,10 @@ describe("the token response", () => {
           seed?: PendingRow[];
           body: Record<string, unknown>;
           token?: { status?: number; payload?: Record<string, unknown> };
+          /** Whose session presents the callback. Defaults to ALICE, who holds WORKSPACE_A. */
+          as?: string;
+          /** Asserted, not assumed. See the "refused by the database" case. */
+          refused?: boolean;
         },
       ]
     > = [
@@ -840,8 +847,18 @@ describe("the token response", () => {
         },
       ],
       [
+        // ALICE, NOT MALLORY, AND THAT IS THE WHOLE CASE. `MEMBERSHIP` makes MALLORY a member of
+        // WORKSPACE_B, so seeding a WORKSPACE_B row and presenting MALLORY's session is the
+        // ACCEPTED path wearing a refusal's label -- which is what this case used to do, silently
+        // testing the happy path a second time while reading as cross-tenant coverage. Alice holds
+        // only WORKSPACE_A, so `app.can_write_workspace` refuses her, which is the thing named.
         "refused by the database",
-        { seed: [pendingRow({ workspace_id: WORKSPACE_B })], body: callbackBody() },
+        {
+          seed: [pendingRow({ workspace_id: WORKSPACE_B })],
+          body: callbackBody(),
+          as: ALICE,
+          refused: true,
+        },
       ],
     ];
 
@@ -850,8 +867,17 @@ describe("the token response", () => {
         ...(c.seed === undefined ? {} : { seed: c.seed }),
         ...(c.token === undefined ? {} : { token: c.token }),
       });
-      const auth = `Bearer ${await session(c.seed?.[0]?.workspace_id === WORKSPACE_B ? MALLORY : ALICE)}`;
-      const text = await (await callback(h.deps, c.body, auth)).text();
+      const auth = `Bearer ${await session(c.as ?? ALICE)}`;
+      const response = await callback(h.deps, c.body, auth);
+      const text = await response.text();
+
+      // A CASE CALLED "refused" MUST ACTUALLY HAVE BEEN REFUSED, asserted rather than assumed.
+      // Inferring the session from the seed is how this case quietly became a second copy of the
+      // accepted path; asserting the outcome is what stops it happening again, because the next
+      // person to change `MEMBERSHIP` gets a failure instead of a passing lie.
+      if (c.refused === true) {
+        expect(response.ok, `${name} was supposed to be refused and was not`).toBe(false);
+      }
 
       // Not echoed, not masked, not fingerprinted. The client secret is in here too: `exchangeCode`
       // sends it as a form parameter, and providers echo request parameters back in error bodies.
@@ -860,6 +886,31 @@ describe("the token response", () => {
       expect(text, name).not.toContain(CLIENT_SECRET);
       expect(text, name).not.toContain("ya29.");
       expect(text, name).not.toContain("GOCSPX-");
+    }
+  });
+
+  it("REFUSES a callback with no external_account_id, rather than inventing one", async () => {
+    // THE REFUSAL THE WHOLE ACCOUNT-SELECTION DESIGN RESTS ON, and nothing tested it. An
+    // adversarial verifier replaced the parse with a branch defaulting to the literal "primary"
+    // when the field is absent, and all 25 tests passed.
+    //
+    // What a default would mean is the thing CLAUDE.md's one rule forbids: the account id is what
+    // every later pull is addressed to, so inventing one attaches a real credential to an account
+    // nobody named. The customer sees a connection; the pulls address something else. That is a
+    // wrong value that looks right, arriving through the one path where the customer has already
+    // granted access and cannot easily tell.
+    for (const missing of [undefined, "", "   "]) {
+      const h = harness({ seed: [pendingRow()] });
+      const body =
+        missing === undefined
+          ? (({ external_account_id: _drop, ...rest }) => rest)(callbackBody())
+          : callbackBody({ external_account_id: missing });
+      const response = await callback(h.deps, body, `Bearer ${await session()}`);
+
+      expect(response.ok, JSON.stringify(missing)).toBe(false);
+      // And nothing was sealed: a refusal that still wrote a row would be worse than no refusal,
+      // because the row would hold a credential addressed to nothing.
+      expect(connectionCalls(h), JSON.stringify(missing)).toHaveLength(0);
     }
   });
 
@@ -875,9 +926,17 @@ describe("the token response", () => {
       const ok = harness({ seed: [pendingRow()] });
       await callback(ok.deps, callbackBody(), `Bearer ${await session()}`);
 
-      // The path that logs a FAILURE is the one carrying the offending input.
+      // The path that logs a FAILURE is the one carrying the offending input -- and it has to
+      // actually fail. This was MALLORY, who `MEMBERSHIP` makes a member of WORKSPACE_B, so the
+      // "failure" was an acceptance and the log line under test was the accepted one. ALICE holds
+      // only WORKSPACE_A.
       const refused = harness({ seed: [pendingRow({ workspace_id: WORKSPACE_B })] });
-      await callback(refused.deps, callbackBody(), `Bearer ${await session(MALLORY)}`);
+      const refusedResponse = await callback(
+        refused.deps,
+        callbackBody(),
+        `Bearer ${await session(ALICE)}`,
+      );
+      expect(refusedResponse.ok, "the refused path did not refuse").toBe(false);
 
       // And the start path, whose log line is the one that could most easily carry a state.
       const started = harness();
@@ -944,5 +1003,244 @@ describe("the routes", () => {
       );
       expect(response.status).toBe(405);
     }
+  });
+});
+
+// ------------------------------------------------------------------------------------------------
+
+/**
+ * THE ROW THE DATABASE HANDS BACK, NARROWED -- AND WHY IT IS TESTED AWAY FROM THE ROUTE.
+ *
+ * Every refusal below was reachable only through a database whose contents this suite's fake keeps
+ * well-formed by construction, so each one was unreached code with a comment explaining itself.
+ * That is the worst place for a refusal to be: it reads as considered, it costs nothing to delete,
+ * and nothing notices when it goes.
+ *
+ * `toPendingAuthorization` is exported for exactly this, and the mutation that matters is the cheap
+ * one -- `sources[0]` in place of the length check, `as PendingAuthorization` in place of the field
+ * checks. Both leave the route passing every test above.
+ */
+describe("narrowing a pending authorisation", () => {
+  const good = {
+    provider: "google",
+    sources: ["ga4"],
+    state: "state-fixture-aaaaaaaaaaaaaaaaaaaaaaaaa",
+    code_verifier: "verifier-fixture-".padEnd(86, "z"),
+    workspace_id: WORKSPACE_A,
+    redirect_uri: REDIRECT_URI,
+    created_at: NOW.toISOString(),
+  };
+
+  it("accepts the row the start leg actually writes", () => {
+    // The positive case first: a narrowing that refused everything would pass every test below.
+    const pending = toPendingAuthorization(good);
+    expect(pending.provider).toBe("google");
+    expect(pending.sources).toEqual(["ga4"]);
+    expect(pending.workspaceId).toBe(WORKSPACE_A);
+    expect(pending.codeVerifier).toBe(good.code_verifier);
+    expect(pending.createdAt).toBe(good.created_at);
+  });
+
+  it("refuses a grant naming two sources rather than connecting the first", () => {
+    // THE ONE THIS BLOCK EXISTS FOR. `connect()` writes one connection for one source, so a
+    // two-source grant would have to become two connections -- a flow nobody has designed. Taking
+    // `sources[0]` would attach a credential for one source and silently drop a permission the
+    // customer granted for another, which is the kind of wrong that looks right forever.
+    expect(() => toPendingAuthorization({ ...good, sources: ["ga4", "google_ads"] })).toThrow(
+      /exactly one source/,
+    );
+  });
+
+  it("refuses a grant naming no source at all", () => {
+    expect(() => toPendingAuthorization({ ...good, sources: [] })).toThrow(/exactly one source/);
+    expect(() => toPendingAuthorization({ ...good, sources: "ga4" })).toThrow(/exactly one source/);
+  });
+
+  it("refuses a provider this build holds no registration for", () => {
+    expect(() => toPendingAuthorization({ ...good, provider: "linkedin" })).toThrow(
+      /no registration, endpoints or scopes/,
+    );
+  });
+
+  it("refuses a source whose provider is not the one on the row", () => {
+    // `loyverse` is a real source with a real provider, and that provider is not Google. A row
+    // pairing them would send a Google code to Loyverse's token endpoint.
+    expect(() => toPendingAuthorization({ ...good, sources: ["loyverse"] })).toThrow(
+      /cannot connect through google/,
+    );
+  });
+
+  it("refuses a source that this product connects by pasting a key", () => {
+    // WooCommerce is in the build and has no OAuth lane. Nothing on the callback path would notice
+    // until `providerFor` returned nothing useful somewhere further in.
+    expect(() => toPendingAuthorization({ ...good, sources: ["woocommerce"] })).toThrow(
+      /cannot connect through google/,
+    );
+  });
+
+  it("refuses a row missing any field the exchange needs", () => {
+    for (const field of ["state", "code_verifier", "workspace_id", "redirect_uri", "created_at"]) {
+      const row: Record<string, unknown> = { ...good };
+      delete row[field];
+      expect(() => toPendingAuthorization(row), field).toThrow(/missing a field/);
+    }
+  });
+
+  it("refuses a created_at that is not a time, rather than treating it as one", () => {
+    // `Date.parse` is the check and it is looser than it looks -- this is the reason the scheduler
+    // grew its own RFC3339 guard. Here the floor is only that unparseable is refused: a row whose
+    // timestamp cannot be read has no expiry, and an authorisation with no expiry never expires.
+    expect(() => toPendingAuthorization({ ...good, created_at: "soon" })).toThrow(
+      /missing a field/,
+    );
+    expect(() => toPendingAuthorization({ ...good, created_at: 1_757_764_800_000 })).toThrow(
+      /missing a field/,
+    );
+  });
+
+  it("names no value from the row in any message it throws", () => {
+    // `code_verifier` is one of the fields being checked. A message that helpfully printed the row
+    // it could not parse would put the PKCE verifier in a response body -- the refusal and the
+    // leak would ship together.
+    for (const row of [
+      { ...good, created_at: undefined },
+      { ...good, sources: ["ga4", "google_ads"] },
+      { ...good, provider: "linkedin" },
+    ]) {
+      let message = "";
+      try {
+        toPendingAuthorization(row);
+      } catch (error) {
+        message = error instanceof Error ? error.message : String(error);
+      }
+      expect(message).not.toBe("");
+      expect(message).not.toContain(good.code_verifier);
+      expect(message).not.toContain(WORKSPACE_A);
+      expect(message).not.toContain(good.state);
+    }
+  });
+
+  it("refuses something that is not a row at all", () => {
+    for (const row of [null, undefined, "a string", 7, []]) {
+      expect(() => toPendingAuthorization(row)).toThrow();
+    }
+  });
+});
+
+/**
+ * THE SHAPE OF THE REDEEM ANSWER, WHICH THE SUITE'S FAKE DATABASE CANNOT GET WRONG.
+ *
+ * `redeem_oauth_authorization` is keyed on `state`, the primary key, so "two rows for one state"
+ * cannot happen -- until a migration changes the key, which is the day the guard matters and the
+ * day nothing would have failed. The store is built here over a fetch that answers whatever the
+ * case needs, because that is the only way to say those answers out loud.
+ */
+describe("what the store accepts back from a redeem", () => {
+  const config = (answer: unknown, status = 200) => ({
+    url: URL_BASE,
+    apiKey: API_KEY,
+    jwtSecret: SECRET,
+    fetch: (async () =>
+      new Response(JSON.stringify(answer), {
+        status,
+        headers: { "content-type": "application/json" },
+      })) as unknown as typeof fetch,
+  });
+
+  const row = {
+    provider: "google",
+    sources: ["ga4"],
+    state: "state-fixture-aaaaaaaaaaaaaaaaaaaaaaaaa",
+    code_verifier: "verifier-fixture-".padEnd(86, "z"),
+    workspace_id: WORKSPACE_A,
+    redirect_uri: REDIRECT_URI,
+    created_at: NOW.toISOString(),
+  };
+
+  it("reads the one row a redeem is allowed to return", async () => {
+    const store = createPendingAuthorizationStore(config([row]));
+    const pending = await store.redeem(row.state, await session());
+    expect(pending?.workspaceId).toBe(WORKSPACE_A);
+  });
+
+  it("treats no rows as no pending authorisation, which is not an error", async () => {
+    // A replayed code and a state belonging to another tenant both arrive here as zero rows, and
+    // both are the customer's problem to hear about rather than a fault to report.
+    const store = createPendingAuthorizationStore(config([]));
+    expect(await store.redeem(row.state, await session())).toBeNull();
+  });
+
+  it("refuses two rows rather than choosing which workspace the credential lands in", async () => {
+    const store = createPendingAuthorizationStore(
+      config([row, { ...row, workspace_id: WORKSPACE_B }]),
+    );
+    await expect(store.redeem(row.state, await session())).rejects.toThrow(/more than one/);
+  });
+
+  it("refuses an answer that is not a set of rows", async () => {
+    for (const answer of [row, "ok", 1, null]) {
+      const store = createPendingAuthorizationStore(config(answer));
+      await expect(store.redeem(row.state, await session())).rejects.toThrow(
+        /other than a set of rows/,
+      );
+    }
+  });
+});
+
+describe("a corrupt pending row, reached through the route", () => {
+  it("refuses the callback before anything is exchanged or sealed", async () => {
+    // The narrowing is unit-tested above; this is the wiring. A row that cannot be narrowed must
+    // not reach the token endpoint, because the exchange is the irreversible half: a provider that
+    // has issued a refresh token against a code we then refuse to store leaves the customer with a
+    // grant nothing here will ever use and nothing here will ever revoke.
+    const h = harness({ seed: [pendingRow({ sources: ["ga4", "google_ads"] })] });
+    const response = await callback(h.deps, callbackBody(), `Bearer ${await session()}`);
+
+    expect(response.ok).toBe(false);
+    const body = (await response.json()) as { error: string; message: string };
+    expect(body.error).toBe("store_unavailable");
+    // Nothing from the row travels: the message is ours, and the verifier is not in it.
+    expect(body.message).not.toContain(pendingRow().code_verifier);
+    expect(h.forms).toHaveLength(0);
+    expect(h.seals()).toBe(0);
+    expect(connectionCalls(h)).toHaveLength(0);
+  });
+});
+
+describe("a callback field that is a pasted document", () => {
+  it("is refused by length before it is looked at", async () => {
+    const h = harness({ seed: [pendingRow()] });
+    const response = await callback(
+      h.deps,
+      callbackBody({ code: "4/".padEnd(MAX_CALLBACK_FIELD + 1, "a") }),
+      `Bearer ${await session()}`,
+    );
+
+    expect(response.status).toBe(400);
+    const body = (await response.json()) as { error: string; message: string };
+    expect(body.error).toBe("bad_request");
+    expect(body.message).toContain(String(MAX_CALLBACK_FIELD));
+    // AND THE OVERSIZE VALUE IS NOT ECHOED. The refusal says how long it was, not what it said:
+    // the field it most often applies to is `code`, which is a single-use credential.
+    expect(body.message).not.toContain("aaaaaaaaaa");
+    // Nothing was redeemed, so the customer can retry the same state once the paste is fixed.
+    expect(h.pending.size).toBe(1);
+    expect(h.seals()).toBe(0);
+  });
+
+  it("accepts a field exactly at the bound, so the refusal is the length and not the flow", async () => {
+    // The off-by-one that would make the test above pass for the wrong reason. This code is
+    // nonsense to the token endpoint, which is not what is under test -- what is under test is that
+    // parsing let it through.
+    const h = harness({ seed: [pendingRow()] });
+    const response = await callback(
+      h.deps,
+      callbackBody({ code: "4/".padEnd(MAX_CALLBACK_FIELD, "a") }),
+      `Bearer ${await session()}`,
+    );
+
+    const body = (await response.json()) as { error: string };
+    expect(body.error).not.toBe("bad_request");
+    expect(h.forms).toHaveLength(1);
   });
 });
