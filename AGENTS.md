@@ -193,9 +193,22 @@ Three outcomes, and doing nothing is not among them:
 | Art. 25(1) | Data protection by design | **FORCE** row-level security (not merely ENABLE) on **all fifteen** tables in `public`, asserted from the catalogue by `supabase/tests/15_force_rls.sql`. Three tables had only ENABLE until `20260913000200_force_rls.sql`; the earlier version of this row said "all seven tenancy tables" and was silent about the eight added since |
 | Art. 5(1)(a) / 12(1) | Transparency | `/privacy` and `/terms` — every statement is read out of the repository or declared absent; gaps are marked rather than filled |
 
-Everything else is partial or absent, and the gaps mirror §1: Art. 15–20 rights, Art. 30 records,
-Art. 32 security measures, Art. 33–34 breach notification, Art. 28 processor terms, Art. 44–49
-transfers.
+### What exists now, and what is still open
+
+The decision recorded above was taken: the EU stays a market, so the GDPR work is being built
+rather than deferred. Progress against the articles this section previously listed as absent:
+
+| Article | State | Evidence |
+|---|---|---|
+| Art. 30(1) records | **Held, with (a) partial and (e) absent, both stated as such** | `apps/web/app/_processing/article-30.ts` derives every sub-paragraph from the PDPA record, the sub-processor list and the brand facts. `article-30.test.ts` asserts each letter appears once, every `recorded` answer is backed by a file that exists, and the transfer sub-paragraph reports **no Art. 46 safeguard** rather than inventing one |
+| Art. 15, 16, 17, 20, 21 rights | **An intake exists for each** | `app.data_request_kind`, `/data-requests`, plus `/account` export and erasure |
+| Art. 18 restriction | **Added.** It was missing from the enum and from the form, so nothing failed | `20260913001600_restriction_right.sql`; `_content.test.ts` now reads the enum out of the migrations and compares both directions, which is what was absent |
+| Art. 32(1) security measures | **Described from mechanisms that exist** | `SECURITY_MEASURES` in `article-30.ts`; each clause names a file and the test fails if it does not exist |
+| Art. 27 representative | **Absent** — the open decision, issue #74 | `brand.euRepresentative` is `null` |
+| Art. 44–49 transfers | **Absent, and the largest remaining gap** | Every recipient is in a third country from the Union's standpoint and so is the controller. No SCCs, no BCRs, no derogation. Stated in Art. 30(1)(e), in `/dpa` and in `/privacy` |
+| Art. 33–34 breach notification | **Partial** — the trail an assessment needs exists, the notification path does not | `20260913001200_security_events.sql` |
+| Art. 28 processor terms | **A PDPA s.40 instrument exists; its Art. 28(3) clause-by-clause coverage is unassessed** | `/dpa` |
+| Art. 37 DPO | **Undecided**, like PDPA s.41 | `brand.dataProtectionOfficer` is `null` |
 
 ---
 
