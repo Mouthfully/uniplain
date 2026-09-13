@@ -192,3 +192,37 @@ jobs:
           PGUSER: postgres
           PGPASSWORD: postgres
         run: ./supabase/tests/run-local.sh
+
+  # A SEPARATE JOB, AND THE SEPARATION IS THE POINT.
+  #
+  # `pnpm audit` is the only step in this workflow that depends on a service outside it: it asks the
+  # registry what is known about the versions in the lockfile. Run inside `verify`, a registry
+  # outage would turn the whole gate red and read exactly like a broken test, and the reflex on a
+  # red build is to re-run it rather than to read it. Here it fails on its own, with its own name.
+  #
+  # It is required all the same. `scripts/check-advisories.mjs` refuses to treat an audit that could
+  # not run as a pass, so "we could not check" is a failure rather than a silence -- the same
+  # posture as the Worker reporting `not_configured` instead of "nothing to do".
+  advisories:
+    name: advisories
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Install Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: pnpm
+
+      # `pnpm audit` reads the lockfile and needs no node_modules, so nothing is installed here.
+      # That also means this job cannot be broken by an install failure, which is the other half of
+      # why it is separate.
+      - name: Advisory guard
+        run: node scripts/check-advisories.mjs

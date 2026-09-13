@@ -17,12 +17,14 @@
     "format": "biome format --write .",
     "format:check": "biome format .",
     "check": "biome check .",
-    "check:fix": "biome check --write .",
+    "check:advisories": "node scripts/check-advisories.mjs",
     "check:brand": "node scripts/check-brand.mjs",
     "check:capabilities": "node scripts/check-capabilities.mjs",
     "check:claim-sources": "node scripts/check-claim-sources.mjs",
     "check:copy": "node scripts/check-copy.mjs",
     "check:dictionary": "node scripts/check-dictionary.mjs",
+    "check:erasure": "node scripts/check-erasure.mjs",
+    "check:fix": "biome check --write .",
     "check:providers": "node scripts/check-providers.mjs",
     "check:registry": "node scripts/check-registry.mjs",
     "check:tokens": "node scripts/check-tokens.mjs"
@@ -43,6 +45,9 @@
       "@biomejs/biome",
       "esbuild",
       "workerd"
-    ]
+    ],
+    "overrides": {
+      "sharp": ">=0.35.4"
+    }
   }
 }

@@ -13,7 +13,7 @@ environment is marked *unverified* rather than laundered into a fact.
 | Framework | Implemented | Partial | Absent | N/A | Of |
 |---|---|---|---|---|---|
 | SOC 2 Type II | **0** | 19 | 15 | 1 | 35 |
-| ISO/IEC 27001:2022 | 4 | 14 | 6 | — | 24 |
+| ISO/IEC 27001:2022 | 5 | 14 | 5 | — | 24 |
 | GDPR | 3 | 9 | 12 | 1 | 25 |
 | PDPA (Thailand) | 2 | 3 | 12 | 3 | 20 |
 
@@ -232,12 +232,12 @@ produces a well-run system and not a certificate.**
 | A.5.17 | Authentication information managed | `20260908000600_api_keys.sql` — only a SHA-256 `key_hash` and a non-secret prefix are stored; plaintext shown once |
 | A.8.3 | Information access restricted | as A.5.15, plus no DELETE on `organisations`/`workspaces`/`invitations`/`api_keys` and no policy granting an API-key session write access. Note what this rests on: every SECURITY DEFINER writer here reaches a FORCED table through no policy admitting its owner, so the whole write path depends on the owner holding `BYPASSRLS`. Demonstrated as a mechanism in `15_force_rls.sql`; **unverified on the hosted project** |
 | A.8.33 | Test information protected | every fixture is hand-written synthetic TypeScript; no production data in any test |
+| A.8.8 (dependency half) | Known vulnerabilities identified and acted on | `scripts/check-advisories.mjs` fails the build on a high or critical advisory, as its own CI job. **Its first run found one that had been in the tree with nothing looking at it** — `sharp@0.35.2`, GHSA-rgj7-g3m4-5g8c, reached through `@cloudflare/vitest-pool-workers` — fixed by a `pnpm.overrides` pin to `>=0.35.4`. An audit that could not reach the registry **fails** rather than reporting clean, and a suppression is keyed on the advisory rather than the module and expires within 90 days. `.github/dependabot.yml` supplies the upgrades so the only route past a finding is not the suppression file. **Scanning, not ISMS work**: A.8.8 also wants a defined process, assigned ownership and a documented response time, and none of those exists |
 
 ### Absent and code-shaped, so these are ours to fix
 
-- **A.8.8 vulnerability management** — no `pnpm audit` step, no Dependabot or Renovate, no CodeQL or
-  SAST, no secret scanning, no SBOM. *Verified: one CI workflow, no dependabot config, no audit or
-  SAST step anywhere in `.github/`.*
+- **A.8.8 vulnerability management** — **partial, and the dependency half is now enforced.** See the
+  row in *Implemented* above. Still absent: no CodeQL or SAST, no secret scanning, no SBOM.
 - **A.8.15/A.8.16 logging and monitoring** — the Worker emits structured `console.log` with counts
   and reasons. That is emission, not monitoring: no alerting, no retention, no review.
 - **A.8.32 change management** — *verified: no `CODEOWNERS`, and the ten most recent commits are all

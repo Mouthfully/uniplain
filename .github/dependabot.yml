@@ -1,0 +1,48 @@
+# THE OTHER HALF OF A.8.8, AND THE REASON THE GATE IS SURVIVABLE.
+#
+# `scripts/check-advisories.mjs` refuses a build carrying a high or critical advisory. On its own
+# that is a gate with no path through it: when a finding lands, somebody has to go and find the
+# upgrade by hand, under the pressure of a red build on unrelated work -- and the thing that gets
+# reached for under that pressure is the acknowledgement file. A gate whose only escape is a
+# suppression trains people to suppress.
+#
+# So updates arrive on a schedule instead, before an advisory does. Weekly rather than daily: this
+# is a two-app monorepo with a pinned catalog, and a daily cadence on seventeen workspace projects
+# produces more pull requests than anyone reads, which is the same failure by a different route.
+#
+# GROUPED, because the unit of review is "the dev tooling moved", not thirty-one separate diffs.
+# Production dependencies are deliberately NOT grouped with them: a change to what ships to a
+# customer deserves its own pull request and its own reading.
+#
+# The version pins in `pnpm-workspace.yaml`'s catalog are load-bearing and documented there --
+# `vitest` is held at 4.1.11 because `@cloudflare/vitest-pool-workers` peers `^4.1.0` and vitest 5
+# breaks every Worker test. Dependabot reads `package.json`, which says `catalog:`, so it does not
+# see those pins. `ignore` below states the two it must not touch, in this file, so the reason is
+# not only in a comment in another one.
+version: 2
+
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: tuesday
+    open-pull-requests-limit: 5
+    groups:
+      dev-tooling:
+        dependency-type: development
+        update-types: [minor, patch]
+    ignore:
+      # See pnpm-workspace.yaml: the pool peers ^4.1.0 and vitest 5 breaks every Worker test.
+      - dependency-name: vitest
+        update-types: [version-update:semver-major]
+      - dependency-name: "@cloudflare/vitest-pool-workers"
+        update-types: [version-update:semver-major]
+
+  # The workflow itself pins actions by major tag. An action that stops being maintained is a
+  # supply-chain problem in the one place that has repository credentials.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: tuesday
