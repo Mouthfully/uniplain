@@ -67,10 +67,34 @@ becomes available.
 8. **s.37(1) — no personal-data audit trail**, which also disables the s.37(4) breach assessment.
    No access-log table exists in any migration; `claims.ts` correctly withholds `audit-log`.
 
-**Unverified and load-bearing:** whether the published contact address actually receives mail. One
-agent reported no MX record; **I could not verify that from this environment** (no `dig`/`host`). If
-it is true, the statutory rights channel on a public notice is a dead end, and it is the cheapest
-serious gap on this list to close.
+**VERIFIED, AND IT IS WORSE THAN "NO MX".** This entry previously read *"one agent reported no MX
+record; I could not verify that from this environment (no `dig`/`host`)"*. It is now verified, over
+DNS-over-HTTPS against Cloudflare's resolver, which `curl` can reach where `dig` is absent:
+
+```
+DOMAIN=$(node -e 'import("@repo/brand").then(b => console.log(b.brand.domain))')
+curl -H 'accept: application/dns-json' "https://cloudflare-dns.com/dns-query?name=$DOMAIN&type=MX"
+curl -H 'accept: application/dns-json' "https://cloudflare-dns.com/dns-query?name=$DOMAIN&type=TXT"
+```
+
+(The domain is read from the brand package rather than typed, because `check-brand.mjs` bans the
+literal everywhere else — **including inside a fenced shell example in a document**, which is how
+the first draft of this paragraph failed the gate.)
+
+Both return `Status: 0` (NOERROR) with **no `Answer` section at all** — only an SOA in `Authority`.
+That is NODATA rather than NXDOMAIN: the zone exists and is served by Cloudflare, and it holds
+**neither MX nor TXT records**.
+
+Two consequences, and the second is new:
+
+1. **Inbound mail bounces.** `brand.supportEmail` is published on `/privacy` and `/terms` as the
+   route for data-subject requests. Under PDPA s.30–36 that is the statutory rights channel, and it
+   currently does not receive mail. **This is the cheapest serious gap on this list and it is now a
+   confirmed defect rather than a suspicion.**
+2. **No outbound mail can be sent from the domain either.** No TXT means no SPF and no DKIM, so any
+   sending provider — Resend, Postmark, Supabase's own SMTP with a custom sender — cannot be
+   verified for the product domain until those records exist. Every email feature in the plan, from the
+   morning brief to a workspace invitation, is behind this same five-minute DNS task.
 
 ### Needs a human, not code
 

@@ -22,7 +22,11 @@ import { GATE_COOKIE, gateToken, isGated, tokensMatch } from "./app/_gate/token"
 // `/connections` IS ON THIS LIST BECAUSE IT WAS NOT COVERED BY ANY PREFIX ALREADY HERE, checked
 // rather than assumed. It is the screen that attaches a source, so an unauthenticated request must
 // land on sign-in rather than on a credential form that then fails at the server action.
-const PROTECTED = ["/connections", "/dashboard", "/billing", "/welcome"];
+// `/brief` READS ONE WORKSPACE'S OWN ROWS AND SPENDS A PROVIDER CALL, so it belongs here beside
+// the dashboard. The page checks the session itself too, and that is not redundant: a matcher edit
+// can silently unprotect a route, and a surface that costs money per request must not depend on a
+// routing rule alone for its access decision.
+const PROTECTED = ["/brief", "/connections", "/dashboard", "/billing", "/welcome"];
 
 /**
  * Reachable WITHOUT the pre-launch password.
@@ -32,7 +36,7 @@ const PROTECTED = ["/connections", "/dashboard", "/billing", "/welcome"];
  * Everything else -- including routes added months from now -- is gated by default, which is the
  * property a middleware has and a per-page check does not.
  */
-const PUBLIC_WHILE_GATED = ["/waitlist", "/api/gate"];
+const PUBLIC_WHILE_GATED = ["/access", "/api/gate"];
 
 export async function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
@@ -45,11 +49,11 @@ export async function middleware(request: NextRequest) {
     const expected = await gateToken(process.env.SITE_PASSWORD as string);
 
     if (!tokensMatch(presented, expected)) {
-      const waitlist = new URL("/waitlist", request.url);
+      const door = new URL("/access", request.url);
       // Carried so a person who unlocks lands where they were headed. It is a PATH from this
       // request, never a full URL from a query parameter -- the latter is an open redirect.
-      if (path !== "/") waitlist.searchParams.set("from", path);
-      return NextResponse.redirect(waitlist);
+      if (path !== "/") door.searchParams.set("from", path);
+      return NextResponse.redirect(door);
     }
   }
 
