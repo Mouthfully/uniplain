@@ -141,6 +141,57 @@ export const REDACTION_POLICIES: Readonly<Record<Source, RedactionPolicy>> = {
   // VALUES. `line_items[].name` is a product name and is kept, because without it the archive
   // cannot say what was sold -- and a merchant who names a product after its buyer has put personal
   // data somewhere no keep-list can reach. The header says a value-level rule is different work.
+  // SHOPIFY, AND IT IS A KEEP-LIST FOR A REASON THAT IS NOT THE USUAL ONE.
+  //
+  // Ten of the twelve entries in this record are `verbatim`, because those connectors pull
+  // aggregate reporting rows in which there is no buyer to redact. This one pulls ORDERS, which on
+  // Shopify's Order object sit beside `email`, `customer`, `shippingAddress`, `billingAddress`,
+  // `phone` and `lineItems` -- every one of them a named individual.
+  //
+  // THE CONNECTOR NEVER ASKS FOR ANY OF THEM. `ORDER_FIELDS` in `sources/shopify/client.ts` is the
+  // whole selection set and carries none, so in ordinary operation there is nothing here to
+  // remove. This list exists for the case that is not ordinary: a selection set widened by somebody
+  // who needed one more field, an error payload that echoes the query, a future bulk-operation
+  // result that arrives shaped differently. A keep-list holds in all three; a `verbatim` entry
+  // would archive whatever turned up.
+  //
+  // IT NAMES NO COLLECTION. WooCommerce below keeps `line_items` and `refunds` and then has to
+  // enumerate the keys inside them, because a kept collection whose members are all dropped
+  // survives as the right number of empty objects. Nothing here needs a line item, so the simpler
+  // and safer thing is to keep no collection at all.
+  shopify: {
+    disposition: "redact",
+    keep: new Set([
+      // Identity of the order itself. `name` is Shopify's order NUMBER as the merchant sees it on
+      // their orders page -- not a person's name, which is worth saying because it reads like one
+      // in a keep-list. (The literal form is a hash and four digits, which is why it is described
+      // here rather than quoted: check-tokens.mjs reads that as a colour, correctly.)
+      "id",
+      "name",
+      "test",
+      "cancelledAt",
+      "displayFinancialStatus",
+      "displayFulfillmentStatus",
+      // The clocks.
+      "createdAt",
+      "updatedAt",
+      "processedAt",
+      // The money. `shopMoney` is kept and `presentmentMoney` is NOT: presentment is what the buyer
+      // saw in their own currency, and keeping both invites a reader to sum the wrong one.
+      "currentTotalPriceSet",
+      "totalPriceSet",
+      "currentSubtotalPriceSet",
+      "subtotalPriceSet",
+      "shopMoney",
+      "amount",
+      "currencyCode",
+    ]),
+    reason:
+      "A Shopify order sits beside the buyer's email, phone, shipping and billing addresses and " +
+      "line items. The connector asks for none of them, and this keep-list is what holds if the " +
+      "selection set is ever widened or a payload arrives shaped differently.",
+  },
+
   woocommerce: {
     disposition: "redact",
     keep: new Set([

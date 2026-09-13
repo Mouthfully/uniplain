@@ -139,25 +139,38 @@ describe("the claims gate", () => {
   });
 
   it("derives the connector claim from the guarded implemented-source list", () => {
-    // Five sources now, and the negative assertion had to change with them -- which is the point
-    // of this test rather than an inconvenience. It used to prove the sentence could NOT say
-    // "Google Ads" or "Search Console", because neither existed and saying so would have been the
-    // abandoned-roadmap claim of issue #16. They exist, so the sentence names them. What must stay
-    // unsayable is a source with no module behind it.
+    // Seven sources now, and the list changing with them is the POINT of this test rather than an
+    // inconvenience. It used to prove the sentence could NOT say "Google Ads" or "Search Console",
+    // because neither existed and saying so would have been the abandoned-roadmap claim of issue
+    // #16. They exist, so the sentence names them.
+    //
+    // `shopify` is the sharpest case this list has had. `/connectors/shopify` was a full landing
+    // page with a connect button for a platform that had no module, no source, no provider and no
+    // redaction policy -- the abandoned-roadmap claim of issue #16, shipped, ending in a button.
+    // It is on this list now because the connector exists, and that is the only thing that may ever
+    // put a name here.
     expect(IMPLEMENTED_SOURCE_IDS).toEqual([
       "ga4",
       "google_ads",
       "loyverse",
       "meta_ads",
       "search_console",
+      "shopify",
       "woocommerce",
     ]);
     const connectors = allowedClaims().find((claim) => claim.id === "connectors");
     expect(connectors?.text).toBe(
-      "Reads GA4, Google Ads, Loyverse, Meta Ads, Search Console and WooCommerce on your own " +
-        "credentials.",
+      "Reads GA4, Google Ads, Loyverse, Meta Ads, Search Console, Shopify and WooCommerce on your " +
+        "own credentials.",
     );
-    expect(connectors?.text).not.toMatch(/affiliate|Shopify|TikTok|DataForSEO|Impact|Awin/i);
+    // `Shopify` CAME OFF THIS LIST THE DAY THE CONNECTOR SHIPPED, and it is worth recording why it
+    // was on it. This assertion existed to prove the sentence could not name a source with no
+    // module behind it -- issue #16's abandoned-roadmap claim -- and Shopify was the example. It
+    // was also, for that entire time, a full landing page at /connectors/shopify with a connect
+    // button. The guard held the one sentence it could see and the page said it anyway.
+    //
+    // The remaining names are still unsayable, and each for the same reason: no module.
+    expect(connectors?.text).not.toMatch(/affiliate|TikTok|DataForSEO|Impact|Awin/i);
   });
 
   // §11A.1 moved the primary customer from agencies and brands to an owner-run business with no

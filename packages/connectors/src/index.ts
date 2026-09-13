@@ -393,3 +393,27 @@ export {
   wooGmtToDate,
   wooPaymentFee,
 } from "./sources/woocommerce/normalize.ts";
+export {
+  fetchShopifyOrders,
+  ORDER_FIELDS,
+  ORDERS_QUERY,
+  PAGE_SIZE,
+  SHOPIFY_API_VERSION,
+  ShopifyClientError,
+  type ShopifyClientCode,
+  type ShopifyFetchOptions,
+  type ShopifyPage,
+  shopifyEndpoint,
+} from "./sources/shopify/client.ts";
+export {
+  normalizeShopifyOrders,
+  parseShopifyAmount,
+  ShopifyNormalizeError,
+  type ShopifyMoney,
+  type ShopifyMoneyBag,
+  type ShopifyNormalizeCode,
+  type ShopifyNormalizeOptions,
+  type ShopifyOrder,
+  shopifyDate,
+  shopifyNumericId,
+} from "./sources/shopify/normalize.ts";
