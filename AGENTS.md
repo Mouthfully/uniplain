@@ -329,7 +329,7 @@ platform credentials.
 
 What stops any of this being asserted before it is true.
 
-**SEARCH CONSOLE IS DISPATCHED TOO, AND A CLAIM MADE IN TWO NOTES WAS WRONG.** Notes 96 and 97 said
+**SEARCH CONSOLE IS DISPATCHED TOO, AND A CLAIM MADE IN TWO NOTES WAS WRONG.** Notes 105 and 97 said
 the blocker for GA4, Meta Ads and Search Console was "a report definition a `connections` row does
 not carry". Each connector carries its own default — `GA4_DEFAULT_REPORT`, `META_DEFAULT_REPORT`,
 `SEARCH_CONSOLE_DEFAULT_REPORTS` — and the dispatch invents nothing. The real blockers: Search
@@ -337,7 +337,7 @@ Console needed a **day span**, because it reports in the platform's Pacific repo
 truncating an instant picks a day by accident; **GA4 and Meta return `void` and report no
 checkpoint**, so a partial run has no honest watermark and `IngestReport.checkpoint` cannot be
 filled without the failure its own comment names. **Three of seven connectors now deliver rows.** See
-`docs/marketplane/99-a-day-based-source-asked-for-in-days.md`.
+`docs/marketplane/108-a-day-based-source-asked-for-in-days.md`.
 
 **LOYVERSE IS NOW DISPATCHED, AND THE CLAIM WIDENED BY ITSELF.** `runIngest` gained a Loyverse
 branch — `runLoyverseBackfill` had been written, tested and exported and was called by nothing — so
@@ -346,7 +346,7 @@ WooCommerce on your own credentials"* in the same commit, because `brand.test.ts
 one until it did. **Two of seven connectors now deliver rows**; GA4, Meta Ads and Search Console each
 have a written backfill and need a report definition a `connections` row does not carry, and Google
 Ads and Shopify have no backfill at all. All five stay declared in `DEFERRED_SOURCE_IDS`. See
-`docs/marketplane/97-the-till-this-product-is-designed-around.md`.
+`docs/marketplane/106-the-till-this-product-is-designed-around.md`.
 
 **THE GATE VERIFIED A PROXY, AND THE PROXY DRIFTED.** The home page published *"Reads GA4, Google
 Ads, Loyverse, Meta Ads, Search Console, Shopify and WooCommerce on your own credentials"* while
@@ -359,7 +359,7 @@ from `INGESTABLE_SOURCE_IDS` and reads *"Reads WooCommerce on your own credentia
 `check-ingestable.mjs` holds that against the Worker's dispatch in both directions. **Four backfills
 — GA4, Loyverse, Meta Ads, Search Console — are written, tested and exported and are dispatched by
 nothing**, under a comment saying four connectors had no backfill that was true when written. See
-`docs/marketplane/96-the-claim-named-seven-and-one-worked.md`.
+`docs/marketplane/105-the-claim-named-seven-and-one-worked.md`.
 
 | Control | Evidence |
 |---|---|

@@ -1,4 +1,4 @@
-# 99. A day-based source, asked for in days
+# 108. A day-based source, asked for in days
 
 **PR:** #85 &nbsp;·&nbsp; **Date:** 2026-09-13 &nbsp;·&nbsp; **Status:** proposed
 
@@ -11,7 +11,7 @@ itself again:
 
 > Reads **Loyverse, Search Console and WooCommerce** on your own credentials.
 
-**First, a correction.** Notes 96 and 97 and issue #89 all said the blocker for GA4, Meta Ads and
+**First, a correction.** Notes 105 and 97 and issue #89 all said the blocker for GA4, Meta Ads and
 Search Console was *"a report definition a `connections` row does not carry"*. **That is wrong.** Each
 connector carries its own default — `GA4_DEFAULT_REPORT`, `META_DEFAULT_REPORT`,
 `SEARCH_CONSOLE_DEFAULT_REPORTS` — decided by the connector author and documented where it lives. The
@@ -34,7 +34,7 @@ before it report in instants, so the obvious way to wire this one is `request.si
 **That picks a reporting day by accident.** A run asked for from `2026-09-11T20:00:00Z` would read
 the 11th when Google's own day had not started, and every impression and click would be attributed
 to a day the platform would not have answered for — well-formed data on the wrong calendar day, with
-nothing marking it. It is the Bangkok-receipt error from note 97 in a different timezone.
+nothing marking it. It is the Bangkok-receipt error from note 106 in a different timezone.
 
 So `IngestRequest` grew `from` and `to`, inclusive at both ends, validated at the boundary with the
 connector's own `parseSearchConsoleDate` rather than a second definition of what a date is. A
@@ -137,7 +137,7 @@ the standing list, and this dispatch does not change what scope is requested.
 - **Whether a search query can carry personal data into `envelope_rows`** is the gate-13 question.
   Google's threshold is a mitigation and not a guarantee, and the normaliser is the boundary; a
   reviewer should confirm independently rather than on this note's word.
-- **No live pull has happened, for any connector.** Unchanged from note 97 and repeated because it
+- **No live pull has happened, for any connector.** Unchanged from note 106 and repeated because it
   is the difference between "the dispatch is exercised end to end against fakes in real workerd" and
   "a row has arrived from a real property".
 

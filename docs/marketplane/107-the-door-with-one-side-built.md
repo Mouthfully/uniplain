@@ -1,4 +1,4 @@
-# 98. The door with one side built
+# 107. The door with one side built
 
 **PR:** #85 &nbsp;·&nbsp; **Date:** 2026-09-13 &nbsp;·&nbsp; **Status:** proposed
 

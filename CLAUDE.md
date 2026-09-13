@@ -47,6 +47,7 @@ So: **refuse rather than repair or default.**
 | `check-mailbox` | a published contact address whose deliverability fact disagrees with the zone's MX records — in **both** directions |
 | `check-recipients` | an `https://` host in shipped source that nobody has classified — and a host classified as a sub-processor that no disclosure names |
 | `check-advisories` | a dependency carrying a **high or critical** published advisory — and an audit that could not reach the registry, which fails rather than reporting clean |
+| `check-design-notes` | two design notes sharing a number, or a note whose heading and filename disagree |
 
 Plus two test-shaped guards that behave the same way: `withheld-claims.test.tsx` refuses a claim the
 capability gate withholds being rewritten as hand-typed section copy, and `forbidden-claims.test.ts`

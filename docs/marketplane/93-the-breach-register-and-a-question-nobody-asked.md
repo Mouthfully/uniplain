@@ -1,4 +1,11 @@
-# 88. The breach register, and a question nobody asked
+# 93. The breach register, and a question nobody asked
+
+> **Renumbered from 88 on merge.** #80 was open while #75 through #78 merged, and both
+> branches read the highest number on `main` rather than the highest number *claimed*. Five
+> notes collided — 86 through 90 — and git had nothing to say about it, because ten different
+> filenames sharing five numbers is not a conflict. `check-design-notes.mjs` now refuses a
+> duplicate prefix, which is the only reason this is the last time. Commit messages and PR
+> bodies written before the merge still say 88; they are history and are left alone.
 
 **PR:** #70 &nbsp;·&nbsp; **Date:** 2026-09-13 &nbsp;·&nbsp; **Status:** proposed
 
@@ -55,7 +62,7 @@ incident. The suite asserts a recorded zero and an unknown are distinguishable.
 `brand.dataProtectionOfficer` is `null` and every document said the question "has not been
 determined". **"Undecided" is the status this repository has already learned not to trust.**
 `AGENTS.md` said GDPR applicability was open while the pricing table quoted euros (note 85), and
-Art. 28(3)(d) sat recorded as blocked on DNS because nobody re-read the Article (note 87 → the
+Art. 28(3)(d) sat recorded as blocked on DNS because nobody re-read the Article (note 92 → the
 commit after it). An open question is the one kind of statement nobody audits.
 
 Both statutes require an officer in three cases and not otherwise, and all three are assessable

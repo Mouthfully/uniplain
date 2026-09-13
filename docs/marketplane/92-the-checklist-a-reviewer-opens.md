@@ -1,4 +1,11 @@
-# 87. The checklist a reviewer opens
+# 92. The checklist a reviewer opens
+
+> **Renumbered from 87 on merge.** #80 was open while #75 through #78 merged, and both
+> branches read the highest number on `main` rather than the highest number *claimed*. Five
+> notes collided — 86 through 90 — and git had nothing to say about it, because ten different
+> filenames sharing five numbers is not a conflict. `check-design-notes.mjs` now refuses a
+> duplicate prefix, which is the only reason this is the last time. Commit messages and PR
+> bodies written before the merge still say 87; they are history and are left alone.
 
 **PR:** #70 &nbsp;·&nbsp; **Date:** 2026-09-13 &nbsp;·&nbsp; **Status:** proposed
 
@@ -151,7 +158,7 @@ without closing the gap.
 
 ## 4. What was left out
 
-- **Art. 33–34 breach notification path.** The other item note 86 named and still not started. The
+- **Art. 33–34 breach notification path.** The other item note 91 named and still not started. The
   append-only trail an assessment needs exists; the notification path does not, and a 72-hour clock
   needs a recipient, a template and a decision about who is on the hook at 3am. **Issue, not scope
   creep.**

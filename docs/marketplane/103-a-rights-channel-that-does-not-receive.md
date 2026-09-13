@@ -1,4 +1,4 @@
-# 94. A rights channel that does not receive
+# 103. A rights channel that does not receive
 
 **PR:** #85 &nbsp;·&nbsp; **Date:** 2026-09-13 &nbsp;·&nbsp; **Status:** proposed
 

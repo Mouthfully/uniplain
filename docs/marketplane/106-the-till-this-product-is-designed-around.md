@@ -1,4 +1,4 @@
-# 97. The till this product is designed around
+# 106. The till this product is designed around
 
 **PR:** #85 &nbsp;·&nbsp; **Date:** 2026-09-13 &nbsp;·&nbsp; **Status:** proposed
 
@@ -12,7 +12,7 @@ out before they were leased.
 
 So a café in Bangkok could connect their Loyverse account, watch the connection go healthy, and
 never receive a single row — from the sweep or from a manual `POST /v1/ingest/run`, which answered
-501. Note 96 corrected the claim that hid this; this is the feature that removes the need for it.
+501. Note 105 corrected the claim that hid this; this is the feature that removes the need for it.
 
 **Loyverse is dispatched. The published claim widened by itself, in the same commit, because it is
 derived:**

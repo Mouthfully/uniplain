@@ -1,4 +1,4 @@
-# 92. The advisory nobody was looking for
+# 101. The advisory nobody was looking for
 
 **PR:** #85 &nbsp;·&nbsp; **Date:** 2026-09-13 &nbsp;·&nbsp; **Status:** proposed
 

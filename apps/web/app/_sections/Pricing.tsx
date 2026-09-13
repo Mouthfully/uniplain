@@ -180,7 +180,7 @@ const NOT_INCLUDED = "Not included";
 export function Pricing() {
   return (
     <section id="pricing" className="mx-auto max-w-[1200px] px-8 py-12 md:py-20">
-      <div className="text-center">
+      <div className="reveal text-center">
         <span className="text-ink-faint block text-[11px] font-bold tracking-[0.14em] uppercase md:text-xs">
           {EYEBROW}
         </span>
@@ -213,11 +213,11 @@ export function Pricing() {
 
       {/* Four across from 768px, the reference's own step; two below that; one below 390px, where
           four 13px feature lists in two columns would wrap every line. */}
-      <ul className="grid grid-cols-1 gap-4 min-[390px]:grid-cols-2 md:grid-cols-4 md:gap-6">
+      <ul className="reveal-group grid grid-cols-1 gap-4 min-[390px]:grid-cols-2 md:grid-cols-4 md:gap-6">
         {PLANS.map((plan) => (
           <li
             key={plan.name}
-            className={`bg-surface relative flex flex-col rounded-lg border px-5 py-6 ${
+            className={`lift bg-surface relative flex flex-col rounded-lg border px-5 py-6 ${
               plan.popular ? "border-accent shadow-[0_0_0_3px] shadow-surface-inset" : "border-line"
             }`}
           >
