@@ -256,6 +256,10 @@ export const NAV = [
   // TAKING YOUR DATA OUT AND CLOSING THE ACCOUNT ARE RIGHTS, NOT SETTINGS. A right nobody can find
   // is a right nobody has, and "write to us and we will do it by hand" is the answer a page like
   // this exists to stop being necessary.
+  // SECURITY IS A SALES PAGE, not a settings one, and it sits with the other things a buyer reads
+  // before they sign up. It is the page that answers "are you safe to give my takings to" without
+  // asserting a certificate this company does not hold.
+  { href: "/security", label: "Security" },
   { href: "/account", label: "Account" },
   { href: "/signin", label: "Sign in" },
 ] as const;

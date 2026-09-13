@@ -32,6 +32,15 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${base}/integrations`, lastModified, changeFrequency: "weekly", priority: 0.8 },
     { url: `${base}/connectors/shopify`, lastModified, changeFrequency: "monthly", priority: 0.7 },
     { url: `${base}/fields/google-ads`, lastModified, changeFrequency: "monthly", priority: 0.7 },
+    // THE SEGMENT PAGES, and they are listed individually rather than generated from SEGMENTS.
+    // A sitemap asserts that a URL is canonical and worth indexing, and generating it from a data
+    // structure means a draft segment added to that structure advertises itself the moment it
+    // exists. Three lines is the cost of that being a decision.
+    { url: `${base}/for/cafe`, lastModified, changeFrequency: "monthly", priority: 0.8 },
+    { url: `${base}/for/online-shop`, lastModified, changeFrequency: "monthly", priority: 0.8 },
+    { url: `${base}/for/salon`, lastModified, changeFrequency: "monthly", priority: 0.8 },
+    // A buyer looks for this one before they sign up, which is the whole argument for indexing it.
+    { url: `${base}/security`, lastModified, changeFrequency: "monthly", priority: 0.7 },
     { url: `${base}/docs`, lastModified, changeFrequency: "monthly", priority: 0.6 },
     // Rarely read and rarely changed, but a policy nobody can find is a policy that does not
     // satisfy the obligation to publish one.
