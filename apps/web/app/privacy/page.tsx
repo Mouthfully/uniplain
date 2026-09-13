@@ -2,6 +2,18 @@ import { brand, formatAddress } from "@repo/brand";
 import type { Metadata } from "next";
 
 import { Footer, SiteHeader } from "../_chrome";
+import { SUB_PROCESSORS } from "../_processing/sub-processors";
+
+/**
+ * The opening line of the sub-processors clause.
+ *
+ * NO COUNT IN IT, DELIBERATELY. The sentence it replaces began "Four providers", and that number
+ * was wrong for as long as `/brief` had a caller. A count is a second statement of the same fact
+ * that has to be kept in step with the list beneath it by hand, and it is the half a reader
+ * believes without checking. The list is the count.
+ */
+const SUB_PROCESSOR_LEAD =
+  "The providers below process data on our behalf in order to run this service.";
 
 /**
  * THE PRIVACY POLICY, at /privacy.
@@ -354,20 +366,28 @@ const CLAUSES: readonly Clause[] = [
     ],
   },
   {
-    // CLOSED, AND CLOSED FROM THE REPOSITORY RATHER THAN FROM WHAT A READER WOULD EXPECT TO SEE.
-    // The previous version of this clause declined to publish a list until one had been "assembled
-    // and verified" -- which was the right call then and is no longer needed, because the four
-    // below are readable off the code: the database and authentication server, the Worker runtime
-    // and the payload archive, the web host, and the payment processor.
+    // GENERATED FROM `SUB_PROCESSORS`, AND THE PREVIOUS VERSION IS WHY.
     //
-    // OPENROUTER IS DELIBERATELY NOT IN THIS LIST. `packages/insights` can call it and nothing
-    // does: no route, no cron, and no key configured on any surface. Listing a processor that
-    // receives nothing would be the same defect as omitting one that does. It joins this list in
-    // the change that gives it a caller, not before.
+    // It was four hand-typed sentences opening "Four providers process data on our behalf", above a
+    // comment that read, in capitals: "OPENROUTER IS DELIBERATELY NOT IN THIS LIST. packages/insights
+    // can call it and nothing does: no route, no cron, and no key configured on any surface... It
+    // joins this list in the change that gives it a caller, not before."
+    //
+    // THAT REASONING WAS RIGHT WHEN IT WAS WRITTEN AND A LATER COMMIT FALSIFIED IT. `/brief` shipped
+    // with `apps/web/app/brief/actions.ts` calling OpenRouter on a platform key, and nothing brought
+    // anybody back to this comment -- so a statutory disclosure went on naming four recipients while
+    // the service had five, and the number was typed out in words in the sentence a customer's
+    // counsel reads.
+    //
+    // So the list is no longer written here. It is read from the operational list, which is itself
+    // held against the record of processing in both directions, which `check-recipients.mjs` now
+    // holds against the hosts that appear in shipped source. A provider added to the code and to no
+    // document fails the build rather than waiting for somebody to remember this paragraph.
     id: "sub-processors",
     title: "Sub-processors",
     body: [
-      "Four providers process data on our behalf in order to run this service. Supabase hosts the database and the authentication server, and holds account records, workspace data and the figures read from connected platforms. Cloudflare runs the scheduled ingest and stores the raw platform responses that are archived. Vercel hosts this website and the pages an account signs in to. Stripe processes payments and holds the card details that never reach this application.",
+      SUB_PROCESSOR_LEAD,
+      ...SUB_PROCESSORS.map((p) => `${p.name}. ${p.role}`),
       "Each is used for that purpose and no other, and none of them is given data for their own use. If a provider is added or replaced, this clause changes and the date at the top of the page moves with it.",
     ],
   },

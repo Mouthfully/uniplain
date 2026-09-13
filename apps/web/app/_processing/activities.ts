@@ -110,6 +110,36 @@ export const PROCESSING_ACTIVITIES: readonly ProcessingActivity[] = [
       "supabase/migrations/20260908001100_envelope_rows.sql, packages/connectors/src/sources/*/normalize.ts",
   },
   {
+    // THE ACTIVITY THAT WAS HAPPENING AND WAS RECORDED NOWHERE.
+    //
+    // `/brief` has been posting a workspace's computed figures to a model router since it shipped,
+    // and no entry here named it -- so OpenRouter was absent from this record, from
+    // `SUB_PROCESSORS`, from `/privacy`, from the Art. 30(1)(d) record generated from this list and
+    // from SCC Annex III. Every artefact agreed, and all of them were missing the same recipient.
+    //
+    // NO TABLE. This activity reads `envelope_rows`, which `platform-data` already accounts for,
+    // and writes nothing: the brief is generated per request and is not stored. Claiming the table
+    // here would describe it twice and `activities.test.ts` refuses that, correctly -- two
+    // descriptions of one table eventually disagree and a reader cannot tell which one the system
+    // follows.
+    id: "insight-generation",
+    purpose:
+      "Turning a workspace's own figures into a written brief, by sending the computed figures to a model provider and refusing the answer if any number in it cannot be traced back to them.",
+    role: "processor",
+    tables: [],
+    subjects:
+      "Data subjects of the customer, and only to the extent the figures reach the prompt at all -- see the categories, which is where the substance of this entry is.",
+    categories:
+      "COMPUTED FIGURES AND NOTHING THE CUSTOMER TYPED. `packages/insights/src/brief.ts` builds the system prompt from a module constant and the user prompt from computed figures, dictionary metric labels and source ids; `InsightRow` carries no entity name and the prompt prints no entity or account id. The tenant is identified to the provider by a SALTED SHA-256 of the workspace id, produced by one function that refuses to run without a salt -- so it is a pseudonym a provider cannot join against, rather than a hash of a uuid that anyone holding the uuid could reproduce.",
+    basis:
+      "Processed on the customer's documented instruction: the brief is the product and the customer asks for it. This company is a processor for this activity. Whether what reaches the provider is personal data at all is a separate question and is deliberately not answered here -- the figures are measurements of a business, and the identifier is a pseudonym -- but the disclosure does not wait on that answer, because a controller deciding whether to appoint this company is entitled to know who receives their data either way.",
+    recipients: ["OpenRouter"],
+    retention:
+      'Not set by this company, and NOT ZERO. Every call carries provider `data_collection: "deny"` and `zdr: true`, enforced by the only builder and re-checked by the client against the body it is handed. `request.ts` records what that does not buy, in OpenRouter\'s own words: its provider-policy data "is not a definitive source of third party data policies, but represents our best knowledge", and `data_collection: "deny"` alone still permits 30-55 day retention at some providers. Stating a period here would be repeating a third party\'s best knowledge as this company\'s commitment.',
+    evidence:
+      "apps/web/app/brief/actions.ts, packages/insights/src/request.ts, packages/insights/src/brief.ts, apps/web/app/_processing/recipients.ts",
+  },
+  {
     id: "billing",
     purpose: "Taking payment for the service and knowing which plan an organisation is on.",
     role: "controller",
@@ -259,5 +289,21 @@ export const NO_PERSONAL_DATA: readonly { readonly table: string; readonly why: 
   },
 ];
 
-/** Sub-processors named above, which must match the ones the privacy notice discloses. */
-export const RECIPIENTS = ["Supabase", "Cloudflare", "Vercel", "Stripe"] as const;
+/**
+ * Every sub-processor named by an activity above.
+ *
+ * DERIVED, AND IT USED TO BE TYPED. This was `["Supabase", "Cloudflare", "Vercel", "Stripe"]`, and
+ * `recipientsInRecord()` -- whose own comment says "every sub-processor the record of processing
+ * ACTUALLY names" -- returned it. So the test asserting that the disclosure and the record agree
+ * "in both directions" was comparing the disclosure against a hand-typed constant, and a recipient
+ * missing from the record was missing from the constant too. **Two lists agreeing is not evidence
+ * when one of them is a copy of the other.**
+ *
+ * That is how `/brief` posted figures to OpenRouter for as long as it has existed while four
+ * separate artefacts all said there were four sub-processors. Reading the activities makes the
+ * arrow point one way: add a recipient to an activity and every disclosure downstream gains it, or
+ * fails the build for not having.
+ */
+export const RECIPIENTS: readonly string[] = [
+  ...new Set(PROCESSING_ACTIVITIES.flatMap((a) => a.recipients)),
+].sort();

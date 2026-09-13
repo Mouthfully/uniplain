@@ -2,6 +2,11 @@ import { readdirSync, readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 import { NO_PERSONAL_DATA, PROCESSING_ACTIVITIES, RECIPIENTS } from "./activities";
+import type { ReactElement } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
+
+import PrivacyPage from "../privacy/page";
+import { SUB_PROCESSORS } from "./sub-processors";
 
 const MIGRATIONS = new URL("../../../../supabase/migrations/", import.meta.url).pathname;
 
@@ -119,32 +124,55 @@ describe("what the record refuses to assert", () => {
     }
   });
 
-  it("marks the platform data activity as a processor role and nothing else as one", () => {
+  it("marks exactly the activities done on a customer's instruction as processor-role", () => {
     // THE DISTINCTION A B2B BUYER IS ACTUALLY BUYING. Their data subjects are theirs; ours are
     // ours. A record that blurred it would either claim their obligations or disclaim ours.
+    //
+    // A CLOSED LIST RATHER THAN A COUNT. This read `toEqual(["platform-data"])` and went red when
+    // `insight-generation` was added, which is the assertion working: generating a brief from a
+    // customer's figures on their request is processor-role, and it had to be argued rather than
+    // waved through. It stays an exact list so the next one is argued too -- loosening it to
+    // "at least one" would let a controller-role activity be relabelled to dodge the check.
     const processors = PROCESSING_ACTIVITIES.filter((a) => a.role === "processor").map((a) => a.id);
-    expect(processors).toEqual(["platform-data"]);
+    expect(processors.sort()).toEqual(["insight-generation", "platform-data"]);
   });
 });
 
 describe("the sub-processors", () => {
-  it("are exactly the ones the privacy notice discloses", () => {
-    // Two lists of the same fact in two files. The notice is the published one and this is the
-    // operational one; a recipient in one and not the other is a disclosure defect either way.
-    const notice = readFileSync(new URL("../privacy/page.tsx", import.meta.url).pathname, "utf8");
+  it("are exactly the ones the privacy notice publishes", () => {
+    // READS THE RENDERED PAGE, NOT ITS SOURCE. This used to `readFileSync` the page and look for
+    // each name in the text, which passed on a name that appeared anywhere in the file -- in a
+    // comment, in an unused constant, in a clause about something else. It now renders, because
+    // the property that matters to a customer's counsel is what the page SAYS, and because the
+    // clause is generated from `SUB_PROCESSORS` and no longer contains any of these names as
+    // literals at all.
+    const notice = renderToStaticMarkup(PrivacyPage() as ReactElement);
     for (const name of RECIPIENTS) {
       expect(notice, `${name} processes data and the privacy notice does not name it`).toContain(
         name,
       );
     }
+    // And nothing beyond the record, so the notice cannot over-disclose either: a provider named
+    // to a reader and absent from the operational list is a disclosure nobody is keeping.
+    for (const provider of SUB_PROCESSORS) {
+      expect(
+        (RECIPIENTS as readonly string[]).includes(provider.name),
+        `the notice publishes ${provider.name}, which no processing activity sends data to`,
+      ).toBe(true);
+    }
   });
 
-  it("names no recipient in an activity that is not in the disclosed set", () => {
+  it("names no recipient that is not a disclosed sub-processor", () => {
+    // THIS USED TO COMPARE AGAINST `RECIPIENTS`, WHICH IS NOW DERIVED FROM THESE SAME ACTIVITIES --
+    // so written that way it would assert that a list equals itself and pass forever. It is pointed
+    // at `SUB_PROCESSORS` instead, which is the published disclosure and the thing that can
+    // actually disagree.
+    const disclosed = SUB_PROCESSORS.map((p) => p.name);
     for (const a of PROCESSING_ACTIVITIES) {
       for (const r of a.recipients) {
         expect(
-          (RECIPIENTS as readonly string[]).includes(r),
-          `${a.id} sends data to ${r}, which is not in the disclosed sub-processor list`,
+          disclosed.includes(r),
+          `${a.id} sends data to ${r}, which is not in the published sub-processor list`,
         ).toBe(true);
       }
     }

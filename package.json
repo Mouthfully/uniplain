@@ -26,6 +26,7 @@
     "check:erasure": "node scripts/check-erasure.mjs",
     "check:fix": "biome check --write .",
     "check:providers": "node scripts/check-providers.mjs",
+    "check:recipients": "node scripts/check-recipients.mjs",
     "check:registry": "node scripts/check-registry.mjs",
     "check:tokens": "node scripts/check-tokens.mjs"
   },

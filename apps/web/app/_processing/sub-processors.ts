@@ -130,6 +130,18 @@ export const SUB_PROCESSORS: readonly SubProcessor[] = [
     location: null,
   },
   {
+    name: "OpenRouter",
+    // TODAY'S DATE, AND IT IS NOT A BACKDATE. OpenRouter has been receiving figures since `/brief`
+    // shipped; what began today is the DISCLOSURE. `since` starts the notice trail, and dating it
+    // to when the call started would open a notice window that closed before anyone could be told.
+    // The gap itself is recorded in `recipients.ts` rather than smoothed over by a date.
+    since: "2026-09-13",
+    role: "Generates the written brief. Receives the figures computed for one workspace and an opaque, salted identifier for that workspace; receives nothing the customer typed, and no entity or account id. Every call asks the provider to deny data collection and to retain nothing.",
+    // OpenRouter routes to providers it selects, so the place a given call is served from is not
+    // this company's to state. Null is the admission, per the field's own rule.
+    location: null,
+  },
+  {
     name: "Stripe",
     since: "2026-09-13",
     role: "Processes payments. Holds the card details that never reach this application.",
