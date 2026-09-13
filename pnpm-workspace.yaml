@@ -37,7 +37,7 @@ catalog:
   "@vitejs/plugin-react": 6.1.1
 
   # --- tooling ---
-  "@biomejs/biome": 2.5.12
+  "@biomejs/biome": 2.5.13
 
   # The envelope is a runtime contract, not just a type: specification section 2 says the API
   # "refuses to emit an unlabelled conversion count", and a TypeScript type refuses nothing at
