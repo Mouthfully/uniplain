@@ -232,11 +232,34 @@ function HeroDashboard() {
           </div>
           <p className="text-ink-subtle mt-1 mb-4 text-[10px]">{HERO.micro}</p>
 
-          <div className="grid grid-cols-3 gap-2">
+          {/* THREE COLUMNS ONLY WHEN THREE COLUMNS FIT. Measured in a production build: at 360 this
+              row gave each figure a 13px-wide cell and "฿15,420" needs 67px, so the three
+              takings figures were drawn straight through one another -- 67px of numeral in 13px of
+              cell, with "Delivery share" 39px in the same 13px. A currency figure that overlaps the
+              next one is the one thing this product may not do, whatever it is a picture of. The
+              stops are the widths at which a 67px figure and the 8px gaps actually clear the
+              105px rail and the 40px of panel padding beside them.
+
+              EVERY STOP HERE WAS READ OFF THE RUNNING PAGE, and the first two guesses were wrong,
+              which is the reason for saying so. The text box is the cell minus its own 8px of
+              padding a side, so the arithmetic that looked right at 430 -- "the grid is 240px, a
+              third of that is 74" -- left the figure 10px wider than the box it was in. Measured
+              widths of this grid: 141px at 320, 177 at 360, 204 at 390, 240 at 430, 276 at 470,
+              289 at 480, 557 at 768. "฿15,420" is 67px at 18px and 61px at 16px, and a cell gives
+              its text (grid - 8 x gaps) / columns - 16. So: one column below 360, two to 480, and
+              three only from 480, where the figure has 8px in hand rather than none.
+
+              The figure drops to 16px below the three-column stop for the same reason -- at 360 in
+              two columns at 18px it measured 67px of content in a 67px box, which is a pass with
+              nothing left over: one longer sample value and the takings figure touches the orders
+              figure. */}
+          <div className="grid grid-cols-1 gap-2 min-[360px]:grid-cols-2 min-[480px]:grid-cols-3">
             {HERO_METRICS.map((metric) => (
               <div key={metric.label} className="border-line-soft rounded-md border px-2 py-3">
                 <span className="text-ink-subtle block text-[10px]">{metric.label}</span>
-                <strong className="text-ink my-0.5 block text-lg font-bold">{metric.value}</strong>
+                <strong className="text-ink my-0.5 block text-base font-bold min-[480px]:text-lg">
+                  {metric.value}
+                </strong>
                 <em className="text-brand-mint text-[10px] not-italic">{metric.delta}</em>
               </div>
             ))}

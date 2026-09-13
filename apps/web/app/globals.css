@@ -73,6 +73,30 @@
   background: var(--mp-glow-hero);
 }
 
+/* THE GLOW WAS THE HOME PAGE'S SIDEWAYS SCROLL. ALL OF IT, AT EVERY WIDTH.
+ *
+ * The inset above bleeds the wash 30px past each edge of the hero, which is the design and which
+ * is free on a desktop: the section is 1200px wide inside a wider viewport, so -30px lands in the
+ * margin. Below about 1260px the section IS the viewport, so the right-hand 30px lands outside the
+ * document and the page scrolls sideways -- measured at 320, 360, 390 and 768, +30px every time,
+ * the same 30px, which is what gave it away: a content problem would have changed with the width.
+ * (The left-hand 30px costs nothing; there is no scrollable area to the left of zero.)
+ *
+ * `overflow-x: clip` and not `hidden`: `hidden` on one axis forces the other to `auto`, which
+ * would turn the hero into a vertical scroll container and break `position: sticky` inside it.
+ * `clip` clips without scrolling and leaves `overflow-y: visible` alone, so the -70px/-50px
+ * vertical bleed still paints.
+ *
+ * The media query is what keeps this from costing the design anything: above 1260px nothing is
+ * clipped and the bleed is exactly as drawn. Below it, the wash stops at the section edge instead
+ * of 30px past it -- on a phone, where it was never visible, because it was off-screen.
+ */
+@media (width < 1260px) {
+  .hero-glow {
+    overflow-x: clip;
+  }
+}
+
 /* ---------------------------------------------------------------------------------------------
  * THE INTEGRATIONS MARQUEE.
  *
@@ -138,4 +162,106 @@
     justify-content: center;
     animation: none;
   }
+}
+
+/* ==============================================================================================
+ * THE PHONE. Three rules, each one the single place a measured defect is fixed.
+ *
+ * Every number quoted below was read in a production build by apps/web/scripts/mobile-audit.mjs
+ * (`node apps/web/scripts/mobile-audit.mjs`), not inferred from the classes. Re-run it after
+ * touching anything here; it exits 0 whatever it finds, so it will not fail a build for you.
+ *
+ * These rules are UNLAYERED on purpose. `@import "tailwindcss"` puts every utility inside
+ * `@layer utilities`, and unlayered CSS outranks every cascade layer no matter what the
+ * specificity is. That is the mechanism that lets a one-line rule below re-bind a utility that
+ * appears on 104 elements, and it is why moving any of this into a `@layer` would silently
+ * disable it.
+ * ============================================================================================== */
+
+/* ----------------------------------------------------------------------------------------------
+ * 1. THE PAGE GUTTER, IN ONE PLACE.
+ *
+ * `px-8` is not "32px of horizontal padding" in this codebase -- it is THE PAGE GUTTER. Of its
+ * 104 occurrences in apps/web, 103 sit on an `mx-auto max-w-[...]` shell: the header, the footer,
+ * every marketing section, every connector page, both auth screens. The 104th is the navigation
+ * panel this same change added, which is `absolute inset-x-0` under the header rather than a
+ * centred shell -- full-bleed, and wanting exactly the gutter the header above it has. So it is
+ * the rule's case too, and it is named here rather than left to look like the counter-example the
+ * paragraph claims not to have. Nothing in the app asks for `px-8` meaning anything else, which is
+ * what makes re-binding the utility honest rather than a hack.
+ *
+ * The alternative was a shared wrapper component or a new class, and both of them are the same
+ * edit repeated 104 times -- with the thirteenth section anyone adds next year left out of it,
+ * which is exactly how this defect reached production in the first place.
+ *
+ * WHAT MOVED: the token is `clamp(16px, 5vw, 32px)`, so at 320px the gutter is 16px a side
+ * instead of 32 and a phone gets 32px of its screen back; from 640px up it computes to 32px,
+ * which is what shipped, so no tablet or desktop layout changes by a pixel.
+ *
+ * IF YOU EVER WANT A LITERAL 32px OF INLINE PADDING that is not a page gutter, write
+ * `px-[32px]`. Do not "fix" this rule by deleting it.
+ * ---------------------------------------------------------------------------------------------- */
+.px-8 {
+  padding-inline: var(--mp-gutter-page);
+}
+
+/* ----------------------------------------------------------------------------------------------
+ * 2. A SCROLLER THAT ACTUALLY CONTAINS WHAT IT SCROLLS.
+ *
+ * "Every wide table sits inside `overflow-x-auto`" was true and was not enough. /pricing still
+ * scrolled the whole DOCUMENT sideways by 373px at 390px wide, with 373px of blank background to
+ * the right of the page. The scroller was doing its job -- its own scrollLeft reached 456 -- but
+ * the comparison table's 26 `.sr-only` cells are `position: absolute`, and an absolutely
+ * positioned box is laid out inside its nearest POSITIONED ancestor. A `position: static`
+ * scroller is not one, so those 26 boxes belonged to the initial containing block, sat at their
+ * static positions 780px out, and were clipped by nothing.
+ *
+ * `position: relative` makes the scroller the containing block, which is the whole fix: the
+ * boxes move inside it and its own `overflow-x` clips them. Proven twice in the harness --
+ * `display:none` on every `.sr-only` took /pricing to 320, and `position:relative` on the two
+ * scrollers took it to 320.
+ *
+ * It is a rule and not two class edits because the next wide table will be written by someone
+ * who has never read this paragraph, and `relative` costs a scroller nothing: `position:
+ * relative` with `z-index: auto` creates no stacking context, and no scroller in this app has an
+ * absolutely positioned descendant that wants a further-out containing block (counted). The
+ * sticky first column of the /pricing matrix is `position: sticky`, which is unaffected.
+ * ---------------------------------------------------------------------------------------------- */
+.overflow-x-auto {
+  position: relative;
+}
+
+/* ----------------------------------------------------------------------------------------------
+ * 3. THAI HEADINGS GET THEIR OWN LEADING. NOTHING LATIN CHANGES.
+ *
+ * What the harness actually found, against the prediction it was built to test: Thai display type
+ * does NOT clip. No ancestor of the hero h1 clips on either axis, and decoding the screenshots
+ * row by row, the ink reaches 1-2px above and 0-5px below the element's own box with nothing
+ * severed. So no leading was loosened on the strength of clipping, because clipping does not
+ * reproduce.
+ *
+ * What reproduces is worse than clipping and is measured: at 38px with the authored
+ * `leading-[1.06]`, consecutive line boxes advance 40.27px while the Thai string's real ink is
+ * 52px tall, so the lines OVERLAP by 11.72px of ink. Four wrapped lines paint one contiguous band
+ * with no blank pixel row anywhere in it -- the same string at a leading that cannot collide
+ * paints six separated bands. Latin on the same element is 37px of ink in that 40.28px box, i.e.
+ * 3.28px of clearance: Thai needs 29% more vertical room than the leading gives it and Latin
+ * needs 8% less. One leading cannot serve both, which is why this is a second token and not an
+ * edit to --mp-leading-hero.
+ *
+ * `:lang(th)` is the whole scope. It matches only an element inside a `lang="th"` subtree, so on
+ * today's `lang="en"` pages this rule computes to nothing at all and no shipped heading moves --
+ * verified in the harness, which now substitutes Thai both with and without the language tag and
+ * reports both. `.font-display` rather than `h1, h2, h3` because the display register is what
+ * carries the tight leadings; body copy is already set at 1.45-1.5, which Thai clears.
+ *
+ * WHAT THIS DOES NOT FIX, deliberately. --mp-font-display carries no Thai face, so Thai in a
+ * heading is drawn by a system last-resort face rather than by the Noto Sans Thai this app
+ * loads -- measured, the string advances 1066px under the computed display stack against
+ * 1025.56px under Noto Sans Thai named explicitly. Appending the face is a founder call the token
+ * file has already written down and is not a leading question; the value above is derived from
+ * the worse (current) face so that it holds either way.
+ * ---------------------------------------------------------------------------------------------- */
+.font-display:lang(th) {
+  line-height: var(--mp-leading-display-th);
 }

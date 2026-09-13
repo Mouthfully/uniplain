@@ -486,9 +486,9 @@ async function measureRoute(page) {
  * page painted a Thai codepoint in it. A face still "unloaded" after the substitution is proof
  * the heading did not use it.
  */
-async function measureThai(page, lineHeightOverride, which, forceThai) {
+async function measureThai(page, lineHeightOverride, which, forceThai, tagLang) {
   return page.evaluate(
-    `((over, which, forceThai) => {
+    `((over, which, forceThai, tagLang) => {
     ${PAGE_HELPERS}
 
     function inkOf(el, text) {
@@ -655,9 +655,18 @@ async function measureThai(page, lineHeightOverride, which, forceThai) {
     const text = which === 'h1' ? ${JSON.stringify(THAI_LONG)} : ${JSON.stringify(THAI)};
     const fontsBefore = mpFontStatuses();
     const forced = forceThai && thaiFace ? '"' + thaiFace + '", ' + getComputedStyle(target).fontFamily : null;
+    /* TAG THE ELEMENT'S LANGUAGE BEFORE ANYTHING IS READ OFF IT.
+     *
+     * globals.css gives Thai its own display leading through \`:lang(th)\`, and a rule that
+     * matches on language is invisible to a probe that substitutes Thai TEXT into an element the
+     * document still calls English -- which is what the earlier variants do, deliberately, because
+     * that is the untagged case. Setting \`lang\` here is not cosmetic: it is the whole difference
+     * between measuring the rule and measuring its absence, and it has to happen before
+     * getComputedStyle, or the value read back is the one from before the rule applied. */
+    if (tagLang) target.lang = tagLang;
     const result = probe(target, which, text, forced);
-    return { which, thaiFace, forcedFamily: forced, probe: result, fontsBefore, fontsAfter: mpFontStatuses() };
-  })(${lineHeightOverride === undefined ? "null" : lineHeightOverride}, ${JSON.stringify(which)}, ${forceThai ? "true" : "false"})`,
+    return { which, thaiFace, lang: target.lang || null, forcedFamily: forced, probe: result, fontsBefore, fontsAfter: mpFontStatuses() };
+  })(${lineHeightOverride === undefined ? "null" : lineHeightOverride}, ${JSON.stringify(which)}, ${forceThai ? "true" : "false"}, ${JSON.stringify(tagLang || null)})`,
   );
 }
 
@@ -762,6 +771,25 @@ async function main() {
     }
     const port = Number(value("port", "3123"));
     base = `http://127.0.0.1:${port}`;
+
+    /* REFUSE A PORT SOMEONE ELSE IS ON, rather than measuring whatever answers.
+     *
+     * waitForServer only asks "did something reply". A leftover `next start` from an earlier run
+     * replies instantly -- while serving a .next directory that has since been rebuilt or deleted,
+     * which is how this harness produced a full page of numbers about an unstyled document. The
+     * spawned child does exit with EADDRINUSE, but the old server answers the first poll before
+     * that exit is observed, so the race is always lost. Checking first removes the race. */
+    const inUse = await fetch(base, { redirect: "manual" }).then(
+      () => true,
+      () => false,
+    );
+    if (inUse) {
+      throw new Error(
+        `something is already listening on ${base}. This harness will not measure a server it did not ` +
+          "start -- it is probably a leftover `next start` serving an older build. Stop it (fuser -k " +
+          `${port}/tcp) or pass --port= with a free port.`,
+      );
+    }
     /* THE CHILD'S OUTPUT GOES TO A FILE, NOT TO A PIPE NOBODY READS. An unread pipe is how the
      * first run of this script hung with no output at all: `next start` failed, the reason sat
      * unread in a pipe, and waitForServer polled a port that was never going to answer. */
@@ -783,6 +811,44 @@ async function main() {
   const browser = await chromium.launch();
   const decoder = await (await browser.newContext()).newPage();
   await decoder.setContent("<html><body></body></html>");
+
+  /**
+   * REFUSE TO MEASURE AN UNSTYLED PAGE.
+   *
+   * This is not hypothetical. Two `next start` processes sharing one .next directory make one of
+   * them serve a 500 for the CSS chunk, and the page still renders -- as unstyled HTML. Every
+   * number the harness then produces is real, reproducible, and about a document nobody will ever
+   * see: the hero image reported 1186px wide because `w-full` was not applied, and the nav
+   * reported display:block because `hidden` was not either. A run like that is indistinguishable
+   * from a genuinely broken layout unless something checks, so something checks.
+   *
+   * The probe is a property only the stylesheet can produce: `header nav` is `hidden md:flex`, so
+   * below md its computed display must be `none`. If it is anything else, the CSS did not arrive.
+   */
+  async function assertStyled(page, where) {
+    const styled = await page.evaluate(() => {
+      const sheets = [...document.styleSheets].reduce((n, s) => {
+        try {
+          return n + s.cssRules.length;
+        } catch {
+          return n;
+        }
+      }, 0);
+      const nav = document.querySelector("header nav");
+      return {
+        ruleCount: sheets,
+        navDisplay: nav ? getComputedStyle(nav).display : null,
+        bodyFont: getComputedStyle(document.body).fontFamily,
+      };
+    });
+    if (styled.ruleCount === 0 || (styled.navDisplay !== null && styled.navDisplay !== "none")) {
+      throw new Error(
+        `stylesheet did not apply at ${where} (${styled.ruleCount} rules, header nav display=${styled.navDisplay}, ` +
+          `body font=${styled.bodyFont}). Measuring this would produce confident numbers about an unstyled ` +
+          "document. Most likely another `next start` is serving the same .next directory -- stop it and rerun.",
+      );
+    }
+  }
 
   const report = {
     measuredAt: new Date().toISOString(),
@@ -829,6 +895,8 @@ async function main() {
         continue;
       }
       await page.evaluate(() => document.fonts.ready);
+      /* Below md, so the nav probe in assertStyled is meaningful. */
+      if (width < 768) await assertStyled(page, `${route} @${width}`);
       const landed = new URL(page.url()).pathname;
       const measured = await measureRoute(page);
       report.routes[`${route}@${width}`] = { route, width, status, landed, ...measured };
@@ -881,6 +949,15 @@ async function main() {
        * bands" are two numbers with no scale. */
       { lh: 2, forceThai: true, name: "lh2-reference-face-fixed" },
       { lh: 2, forceThai: false, name: "lh2-reference-as-shipped" },
+      /* THE TWO ROWS THAT MEASURE THE FIX RATHER THAN THE DEFECT. Everything above substitutes
+       * Thai text into an element the document still declares English, which is the honest reading
+       * of an untranslated page. These two tag the element `lang="th"` first, which is what a Thai
+       * page does and what globals.css's `:lang(th)` rule keys on. The leading is left as authored
+       * on purpose: the point is to see what the STYLESHEET does, not what an override does, so if
+       * the rule is ever deleted these two rows collapse back onto `as-shipped` and the collision
+       * reappears in the report. Nothing forces a number here. */
+      { lh: null, forceThai: false, lang: "th", name: "lang-th-as-shipped" },
+      { lh: null, forceThai: true, lang: "th", name: "lang-th-face-fixed" },
     ];
     for (const variant of VARIANTS) {
       const lh = variant.lh;
@@ -892,6 +969,7 @@ async function main() {
           lh === null ? undefined : lh,
           which,
           variant.forceThai,
+          variant.lang,
         );
         /* The Thai face is preload:false; if this heading pulled it, it is fetched only now. */
         await page.evaluate(() => document.fonts.ready);
@@ -952,6 +1030,7 @@ async function main() {
           variant: variant.name,
           leading: lh === null ? "as-authored" : lh,
           faceForcedTo: pass.forcedFamily,
+          lang: pass.lang,
           which,
           probe,
           thaiFaceBefore: pass.fontsBefore.filter((f) => /Thai/i.test(f.family)),
@@ -1011,7 +1090,7 @@ function summarise(report) {
     );
     for (const c of (r.provenCulprits || []).slice(0, 4)) {
       L.push(
-        `      PROVEN -${c.removesPx}px  ${c.tag}  ${c.endsOverflow ? "removing it ends the overflow" : "document still " + c.documentWidthWithoutIt + "px without it"}` +
+        `      PROVEN -${c.removesPx}px  ${c.tag}  ${c.endsOverflow ? "removing it ends the overflow" : `document still ${c.documentWidthWithoutIt}px without it`}` +
           `  position:${c.position}  "${c.text}"`,
       );
       L.push(`          ${c.selector}`);
@@ -1083,7 +1162,8 @@ function summarise(report) {
     if (!p) continue;
     const face = t.thaiFaceAfter.map((f) => `${f.family}:${f.status}`).join(",") || "no-thai-face";
     L.push(
-      `  @${t.width} ${t.which} [${t.variant}] lh=${t.leading} size ${p.fontSizePx}px box ${p.lineHeightPx}px ` +
+      `  @${t.width} ${t.which} [${t.variant}] lang=${t.lang || "(untagged)"} lh=${t.leading} ` +
+        `size ${p.fontSizePx}px box ${p.lineHeightPx}px ` +
         `ink ${p.ink.inkHeight}px (over ${p.inkOverflowsLineBoxPx}px) lines ${p.lineCount}`,
     );
     L.push(

@@ -679,7 +679,7 @@ export default function PrivacyPage() {
                       {clause.title}
                     </h3>
                     {clause.open === true ? (
-                      <span className="border-line bg-surface text-ink-subtle rounded-full border px-2.5 py-1 text-[10px] font-bold tracking-[0.08em] uppercase">
+                      <span className="border-line bg-surface text-ink-subtle rounded-full border px-2.5 py-1 text-xs font-bold tracking-[0.08em] uppercase">
                         {OPEN_BADGE}
                       </span>
                     ) : null}

@@ -636,7 +636,14 @@ export default function SearchConsoleConnectorPage() {
                 {/* The track. The metric caption sits over a mint-to-blue rule; the arrow is
                     decorative, the caption carries the meaning. */}
                 <div className="min-w-0 flex-1 px-2 text-center">
-                  <span className="text-ink-faint text-[8px] md:text-[9px]">
+                  <span /* 8px. The smallest type measured anywhere in the app, below the 9px the static audit
+                      assumed was the floor, and it is not decoration -- it names the three metrics this
+                      connector actually reads. `text-xs` is 12px, which is the floor for anything a
+                      customer is expected to read on a phone. It costs the diagram a line of wrap at
+                      320 and takes the caption from 9px to 12px on desktop too; the alternative was a
+                      `md:` split that keeps 9px for people with the best screens and the worst eyes. */
+                    className="text-ink-faint text-xs"
+                  >
                     {PANEL_FLOW_METRICS}
                   </span>
                   <div className="mt-3.5 flex items-center gap-1">

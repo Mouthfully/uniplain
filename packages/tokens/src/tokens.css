@@ -307,6 +307,33 @@
   --mp-leading-code: 1.65; /* the code <pre> */
 
   /* ---------------------------------------------------------------------------------
+   * ONE LEADING FOR THAI, AND WHY IT IS NOT AN ADJUSTMENT OF THE TEN ABOVE.
+   *
+   * DO NOT "SIMPLIFY" THIS INTO THE LATIN SCALE. The ten values above were extracted from the
+   * artboard element by element and every heading on the site is set to one of them; raising
+   * any of them to make Thai fit would re-space a hundred Latin headings to fix a script that
+   * is not on the page yet. This token exists so the two can move independently, and
+   * globals.css applies it through `:lang(th)` alone -- nothing Latin can ever reach it.
+   *
+   * THE NUMBER IS MEASURED, NOT CHOSEN. apps/web/scripts/mobile-audit.mjs substitutes a Thai
+   * string with marks on both levels (sara-u below, mai-tho above) into the hero h1 in a
+   * production build and reads the real ink extents from TextMetrics:
+   *
+   *     Latin at 38px:  37px of ink in a 40.28px line box   ->  3.28px of clearance
+   *     Thai  at 38px:  52px of ink in the same 40.28px box -> -11.72px, i.e. the lines
+   *                     OVERLAP; four wrapped lines paint one contiguous ink band with no
+   *                     blank pixel row anywhere in it
+   *
+   * 52 + 3.2 = 55.2, and 55.2 / 38 = 1.45. So 1.45 is "the ink, plus the clearance Latin
+   * already gets", and it is derived from the WORSE of the two faces the string can land in
+   * (see the display-stack note further up: --mp-font-display carries no Thai face, so Thai in
+   * a heading is drawn by a system last-resort face today, 52px of ink; in Noto Sans Thai it
+   * is 49px). Tightening this to suit the better face would break the case that actually
+   * ships. Nothing here loosens Latin, and nothing here decides the face question.
+   * --------------------------------------------------------------------------------- */
+  --mp-leading-display-th: 1.45; /* Thai display headings only; see the note above */
+
+  /* ---------------------------------------------------------------------------------
    * TRACKING -- negative on display type, positive on uppercase caps. This is the one
    * typographic instruction section 14 and the artboard agree on.
    * --------------------------------------------------------------------------------- */
@@ -360,6 +387,33 @@
    * --------------------------------------------------------------------------------- */
   --mp-container: 1280px; /* 13 uses, always with --mp-gutter horizontally */
   --mp-gutter: 40px; /* every full-width section's x-padding */
+  /* ---------------------------------------------------------------------------------
+   * THE GUTTER apps/web ACTUALLY SHIPS, AND WHY IT IS A CLAMP AND NOT A NUMBER.
+   *
+   * --mp-gutter above is the ARTBOARD's gutter: 40px, one value, desktop only, and the
+   * artboard has no phone frame to contradict it. apps/web does not use it -- all 104 of its
+   * horizontal page paddings are the Tailwind utility `px-8` (32px): 103 on an `mx-auto
+   * max-w-[...]` shell and one on the full-bleed navigation panel, which wants the header's
+   * gutter and not a centred one. There is no `px-8` in the app that is not a page gutter; that
+   * was counted, not assumed, and it is what lets globals.css bind the utility to this token in
+   * one rule instead of editing 104 call sites.
+   *
+   * A FIXED 32px IS 64px OF A 320px PHONE -- a fifth of the screen spent on nothing, and it is
+   * load-bearing rather than cosmetic: measured in a production build, the header's minimum
+   * content width was 366px against a 320px viewport, and 64px of that 366 was this padding.
+   * The clamp gives the phone its width back (16px a side at 320, 18px at 360) and is
+   * numerically identical to today's 32px from 640px up, so no desktop or tablet layout moves.
+   *
+   * 5vw is the middle term rather than a breakpoint because a gutter that steps at a
+   * breakpoint is wrong on both sides of it; the floor is 16px because below that the text
+   * column starts to read as touching the bezel.
+   *
+   * NOT FOR THE NON-CSS SURFACES. ../scripts/build-tokens.mjs copies this string verbatim into
+   * the TS map that the Worker, the rendered email and the PDF export read, and `vw` means
+   * nothing in any of them. Those surfaces want --mp-gutter (40px), which is why this is a
+   * second token and not a re-valuing of the first.
+   * --------------------------------------------------------------------------------- */
+  --mp-gutter-page: clamp(16px, 5vw, 32px); /* apps/web's page gutter; see the note above */
   --mp-section-y: 96px; /* 8 uses -- the section rhythm */
   --mp-section-y-cta: 104px; /* the final CTA band, the one section that breaks it */
 

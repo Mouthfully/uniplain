@@ -181,7 +181,8 @@ export function Faq() {
             becomes a real href the moment the help centre has a route. */}
         <a
           href="#docs"
-          className="text-accent mt-6 inline-flex items-center gap-3 text-sm font-bold hover:underline"
+          /* 171x20 measured: under the 24x24 WCAG 2.5.8 floor. See the note in UseCases. */
+          className="text-accent mt-4 inline-flex min-h-[44px] items-center gap-3 text-sm font-bold hover:underline"
         >
           {HELP_LINK_LABEL}
           <span aria-hidden="true">&rarr;</span>
@@ -191,7 +192,11 @@ export function Faq() {
       <div className="min-w-0">
         {QUESTIONS.map((item) => (
           <details key={item.question} className="group border-line border-b py-[18px]">
-            <summary className="text-ink flex cursor-pointer list-none justify-between gap-5 text-sm font-bold [&::-webkit-details-marker]:hidden">
+            {/* The six questions are the only interactive thing in this section and they
+                measured 21px tall for the one-line ones -- below the 24px WCAG 2.5.8 floor, on the
+                control a phone reader taps most. min-h-[44px] on the summary box only; the
+                question keeps its own type and its own leading. */}
+            <summary className="text-ink flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-5 text-sm font-bold [&::-webkit-details-marker]:hidden">
               {item.question}
               {/* Hidden from assistive tech: <details> already announces expanded/collapsed. */}
               <span aria-hidden="true" className="text-ink-subtle shrink-0 leading-[1.5]">
