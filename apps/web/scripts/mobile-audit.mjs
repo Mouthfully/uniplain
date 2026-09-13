@@ -20,10 +20,15 @@
  * measured rather than predicted. A `<canvas>` in the page is used the same way to get the font's
  * own ink extents via TextMetrics.actualBoundingBoxAscent/Descent.
  *
- * PINNED PLAYWRIGHT. `playwright@1.56.0` is the release whose chromium revision is 1194, which is
- * what is installed under PLAYWRIGHT_BROWSERS_PATH. Bumping playwright without a matching browser
- * download makes this script fail at launch with "Executable doesn't exist"; that is the version
- * pin's whole job, so change both together or neither.
+ * THE BROWSER AND THE LIBRARY ARE PINNED TO EACH OTHER, AND THE PIN HAS ALREADY BEEN BROKEN ONCE.
+ * Playwright refuses to start any Chromium but the exact build its release expects, so bumping the
+ * library past a provisioned browser makes this script -- and every other harness here -- die at
+ * launch with "Executable doesn't exist". That refusal is correct: a measurement taken in a browser
+ * the library is not expecting is a finding about nothing.
+ *
+ * Where the browser is PROVISIONED rather than downloaded, `PLAYWRIGHT_CHROMIUM_EXECUTABLE` names
+ * the binary to use instead; see `scripts/_browser.mjs`, which is the only place any harness here
+ * opens a browser. Unset, this is Playwright's own pinning, unchanged.
  *
  *   usage:  node apps/web/scripts/mobile-audit.mjs
  *           node apps/web/scripts/mobile-audit.mjs --no-build          reuse .next
@@ -43,7 +48,7 @@ import { mkdirSync, openSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { chromium } from "playwright";
+import { launchBrowser } from "./_browser.mjs";
 
 const WEB_DIR = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 /* The workspace-local binary, not `npx`: `npx` may go to the network and may resolve to a
@@ -808,7 +813,7 @@ async function main() {
     await waitForServer(base, 120, () => serverExit);
   }
 
-  const browser = await chromium.launch();
+  const browser = await launchBrowser();
   const decoder = await (await browser.newContext()).newPage();
   await decoder.setContent("<html><body></body></html>");
 

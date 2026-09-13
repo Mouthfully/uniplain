@@ -141,7 +141,18 @@ export function sqlString(value: string, field: string): string {
  * head is recognisable and the secret's must never be printed at all.
  */
 export async function fingerprint(secret: string): Promise<string> {
-  const digest = await webcrypto.subtle.digest("SHA-256", new TextEncoder().encode(secret));
+  // THE COPY IS NOT CEREMONY, AND IT IS NOT A CAST EITHER.
+  //
+  // `TextEncoder.encode` is typed as `Uint8Array<ArrayBufferLike>`, and `ArrayBufferLike` includes
+  // `SharedArrayBuffer` -- which `crypto.subtle.digest` genuinely cannot accept, because a digest
+  // over memory another thread can write to while it is being read is not a digest of anything.
+  // The type is telling the truth; it is the runtime guarantee that is missing, not the annotation.
+  //
+  // So this copies into a buffer that is demonstrably not shared, rather than asserting the
+  // encoder's is. `as BufferSource` would have been one character of diff and would have silenced
+  // the one check standing between a fingerprint and a race.
+  const bytes = new Uint8Array(new TextEncoder().encode(secret));
+  const digest = await webcrypto.subtle.digest("SHA-256", bytes);
   return [...new Uint8Array(digest)]
     .slice(0, 4)
     .map((b) => b.toString(16).padStart(2, "0"))

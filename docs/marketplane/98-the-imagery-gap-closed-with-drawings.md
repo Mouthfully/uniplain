@@ -51,6 +51,17 @@ made rather than one invented to score.
 | `/pricing`, `/docs` | 1 each | 1 each — see §6 |
 | **total across eight landing pages** | **14** | **20** |
 
+**CORRECTION, AND THE REASON IT IS RECORDED RATHER THAN EDITED AWAY.** Both columns above were
+measured against a base that did not yet include #85, which **deliberately deleted the four bar
+charts from the reports section** -- they illustrated four documents that do not exist, and the
+`aria-label="Sample figures"` admitting it was alt text no sighted reader ever met. That was the
+right call and it removes four painted pictures from the home page. Re-measured on the main these
+figures actually landed on: **10 before, 16 after.**
+
+**The delta is +6 either way**, which is what this unit did; the endpoints moved because another
+unit correctly took something away. Two true measurements of different trees, and the one that
+describes today's is the second.
+
 **The references were NOT re-measured with this ruler, and that is a finding rather than an
 omission.** Chromium cannot reach either site through this environment's egress proxy — the tunnel
 closes mid-exchange on both, reproducibly — so their painted-picture count is unknown. Their tag
