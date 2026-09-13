@@ -158,7 +158,7 @@ export function UseCases() {
       aria-labelledby="use-cases-heading"
       className="mx-auto max-w-[1200px] px-8 py-12 md:py-20"
     >
-      <div className="mx-auto mb-8 max-w-[720px] text-center md:mb-[38px]">
+      <div className="reveal mx-auto mb-8 max-w-[720px] text-center md:mb-[38px]">
         <span className="text-ink-faint block text-[11px] font-bold tracking-[0.14em] uppercase md:text-xs">
           {EYEBROW}
         </span>
@@ -173,12 +173,12 @@ export function UseCases() {
 
       {/* One column below 768px: three 30px-padded cards side by side on a phone leave the body
           copy two words to a line. The reference collapses at the same point. */}
-      <ul className="grid gap-4 md:grid-cols-3 md:gap-[22px]">
+      <ul className="reveal-group grid gap-4 md:grid-cols-3 md:gap-[22px]">
         {CASES.map((useCase) => (
           <li key={useCase.id} className="flex">
             {/* `flex flex-col` plus `flex-1` on the body is what keeps the three CTAs on one
                 baseline when the headings wrap to different line counts. */}
-            <article className="border-line bg-surface-subtle flex flex-1 flex-col rounded-lg border p-[26px] md:p-[30px]">
+            <article className="lift border-line bg-surface-subtle flex flex-1 flex-col rounded-lg border p-[26px] md:p-[30px]">
               {/* Decorative: the eyebrow and heading beside it carry the meaning, so the mark is
                   hidden rather than labelled, which would announce each card twice. */}
               <svg

@@ -58,6 +58,32 @@ const MENU_ESCAPE_SCRIPT = `document.addEventListener("keydown",function(e){if(e
  *      screen that attaches a data source, which is what the product is for -- was reachable from
  *      no page on the site.
  *
+ *   2a. AND THEN `lg:` WAS REVEALING A NAV THAT DOES NOT FIT AT lg, FOR THE SAME REASON, BECAUSE
+ *      THE NAV GREW AFTERWARDS. Measured in a real Chromium against a production build, at the
+ *      widths nobody had measured -- the earlier audit covered 320, 360, 390 and 768, all phones:
+ *
+ *          1024px   the page scrolled sideways 231px; "Sign in" AND the primary CTA were off-screen
+ *          1152px   103px of sideways scroll; the CTA off-screen
+ *          1280px   15px of sideways scroll; the CTA still clipped
+ *          1440px+  the page fits, the header still overflows its own box by 55px
+ *
+ *      The primary call to action on the site was past the right edge of a 13-inch laptop. Not a
+ *      regression in this file: `NAV` went from six entries to nine, one at a time, each addition
+ *      individually right ("a page nothing links to is a page nobody uses") and none of them
+ *      measured against the width of the bar. Ten links -- "Sign in" is one of them -- plus a logo
+ *      and a CTA need about 1250px.
+ *
+ *      So the row moves to `xl:` and the gaps tighten -- 48px to 24px between the header's three
+ *      groups, 28px to 20px between links. Below xl the drawer carries everything, which is the
+ *      same trade this comment's item 2 already made one breakpoint down.
+ *
+ *      THIS IS A PATCH, NOT THE FIX, and the difference is worth writing down: ten links is a
+ *      sitemap rather than a navigation, and five of them (`/connections`, `/brief`, `/dashboard`,
+ *      `/members`, `/account`) are signed-in surfaces that a logged-out visitor is being offered
+ *      and would be bounced from. They cannot simply be removed -- this header IS the product's
+ *      chrome as well as the marketing site's, so deleting them strands a signed-in customer. The
+ *      real answer is a header that knows which of the two it is, and that is its own unit of work.
+ *
  *   2. `md:` WAS REVEALING A NAV THAT DOES NOT FIT AT md. At exactly 768px the six links appear and
  *      the header's minimum content width goes from 767px to 964px, so all 19 header-bearing routes
  *      scrolled sideways by 196px. The sweep: broken at 320 (+46) and 360 (+6), clean 375-767,
@@ -81,16 +107,16 @@ const MENU_ESCAPE_SCRIPT = `document.addEventListener("keydown",function(e){if(e
 export function SiteHeader() {
   return (
     <>
-      <header className="relative mx-auto flex h-[94px] max-w-[1200px] items-center gap-4 px-8 lg:gap-12">
+      <header className="relative mx-auto flex h-[94px] max-w-[1200px] items-center gap-4 px-8 xl:gap-6">
         <a href="/" className="flex shrink-0 py-2.5">
           <img src={brand.logoPath} alt={brand.productName} width={146} height={42} />
         </a>
 
-        {/* The row. `hidden lg:flex` rather than `hidden md:flex` -- see 2 above. It is also FIRST
+        {/* The row. `hidden xl:flex` -- see 2 and 2a above; it does not fit at lg either. It is also FIRST
             among the header's two <nav> elements on purpose: the harness probes
             `header nav` to prove the stylesheet arrived, and that probe must find the one whose
             computed display is none below the breakpoint. */}
-        <nav aria-label={NAV_MENU.navLabel} className="hidden flex-1 gap-7 lg:flex">
+        <nav aria-label={NAV_MENU.navLabel} className="hidden flex-1 gap-5 xl:flex">
           {NAV.map((item) => (
             <a
               key={item.href}
@@ -104,13 +130,13 @@ export function SiteHeader() {
 
         <a
           href="/dashboard"
-          className="bg-accent text-ink-on-accent hover:bg-accent-hover ml-auto hidden min-h-[44px] items-center gap-3 rounded-[10px] px-5 text-sm font-bold transition-colors lg:ml-0 lg:inline-flex"
+          className="bg-accent text-ink-on-accent hover:bg-accent-hover ml-auto hidden min-h-[44px] shrink-0 items-center gap-3 rounded-[10px] px-5 text-sm font-bold whitespace-nowrap transition-colors xl:ml-0 xl:inline-flex"
         >
           {SITE.ctaNav}
           <span aria-hidden="true">&rarr;</span>
         </a>
 
-        <details id={MENU_ID} className="group ml-auto lg:hidden">
+        <details id={MENU_ID} className="group ml-auto xl:hidden">
           {/* THE SUMMARY CARRIES NO `display`, AND THAT IS THE FIX RATHER THAN THE STYLE.
               It was `inline-flex`, and WebKit stops treating a <summary> as the disclosure control
               when its display is flex, inline-flex or grid -- the drawer opened on iPhone and then

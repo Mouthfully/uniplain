@@ -165,6 +165,150 @@
 }
 
 /* ==============================================================================================
+ * THE SCROLL REVEAL, AND THE ONE RULE IT CANNOT BREAK.
+ *
+ * ==============================================================================================
+ * THE PAGE IS COMPLETE AND READABLE WITH THIS ENTIRE BLOCK REMOVED
+ * ==============================================================================================
+ *
+ * That is not a nicety, it is the whole design. The usual way to build this -- `opacity: 0` in a
+ * stylesheet, an IntersectionObserver that adds a class -- makes the page's default state INVISIBLE
+ * and repaints it only if a script runs. Every path where that script does not run is then a blank
+ * page: a JavaScript error earlier in the bundle, a blocked third party, a text-mode browser, a
+ * crawler that does not execute scripts, a reader whose extension disabled the observer, and the
+ * markdown twins' whole audience of machines. This site publishes `llms.txt` precisely because
+ * things that do not run scripts come here to read it.
+ *
+ * So the reveal is opt-IN, and the opt-in is a `@supports` test rather than a script. Default: the
+ * element is opaque and in place. Inside the support query: it animates. There is no arrangement
+ * of failures that leaves content hidden, because hiding it requires a feature that, if present,
+ * also un-hides it.
+ *
+ * NO JAVASCRIPT AT ALL. `animation-timeline: view()` drives the animation from the element's own
+ * position in the scrollport, computed by the compositor. No observer, no scroll listener, no
+ * hydration cost, and no frame dropped on a slow phone -- which is the device this product's
+ * customer is holding. Where the property is unsupported, the `@supports` block never applies and
+ * the page is the static page it already was; that is a fallback by construction rather than a
+ * claim about any particular browser version.
+ *
+ * ONLY `opacity` AND `transform`. Both are composited and neither participates in layout, so no
+ * reveal can shift a line of text under a reader's thumb. `motion.test.ts` refuses a layout
+ * property in the keyframe rather than trusting the next person; see `mp-reveal` in tokens.css.
+ *
+ * REDUCED MOTION TURNS IT OFF ENTIRELY, and the `no-preference` query is what does it -- the
+ * animation is never declared for a reader who asked for stillness, rather than declared and then
+ * overridden. An override can be beaten by specificity; a declaration that was never written
+ * cannot.
+ * ============================================================================================== */
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    /* `.reveal-group > *` CARRIES THE ANIMATION TOO, so a grid opts its children in by marking the
+       grid rather than by adding a class to every card. Twelve `<li>`s each carrying `reveal` is
+       twelve chances to forget one, and a card that does not reveal in a row of cards that do
+       reads as a rendering fault rather than as a choice. */
+    .reveal,
+    .reveal-group > * {
+      animation: mp-reveal linear both;
+      animation-timeline: view();
+      /* Finished well before the element reaches the middle of the screen. A reveal still running
+         where the eye has arrived is a reveal the reader is waiting out. */
+      animation-range: entry 4% cover 24%;
+    }
+
+    /* The sideways entrance, for a split section's copy column. See `mp-reveal-side`. It takes
+       the same range as `.reveal` so the two halves of a split arrive together rather than in
+       sequence -- the variety is in the DIRECTION, not in the timing. */
+    .reveal-side {
+      animation: mp-reveal-side linear both;
+      animation-timeline: view();
+      animation-range: entry 4% cover 24%;
+    }
+
+    /* THE STAGGER IS A RANGE OFFSET, NOT A DELAY. `animation-delay` on a scroll timeline is
+       measured in the timeline's own units, so a delay in milliseconds means nothing here. Moving
+       each child's range a few percent later is the same idea expressed in the units the timeline
+       actually has: the second card starts when the page has travelled a little further. Four
+       steps, because a grid of four is the widest this page renders. */
+    .reveal-group > *:nth-child(1) {
+      animation-range: entry 4% cover 22%;
+    }
+    .reveal-group > *:nth-child(2) {
+      animation-range: entry 8% cover 26%;
+    }
+    .reveal-group > *:nth-child(3) {
+      animation-range: entry 12% cover 30%;
+    }
+    .reveal-group > *:nth-child(n + 4) {
+      animation-range: entry 16% cover 34%;
+    }
+  }
+}
+
+/* ----------------------------------------------------------------------------------------------
+ * THE HERO, ON LOAD. Two animations, both decorative, neither able to hide a word.
+ *
+ * These are time-driven rather than scroll-driven, because the hero is what a reader is already
+ * looking at: an entrance keyed to scroll position would have finished before they saw it.
+ *
+ * `.draw-trend` HAS NO fill-mode, so the line is fully drawn before the animation starts and after
+ * it ends -- see `mp-draw` in tokens.css. `.hero-glow::before` paints a gradient and holds no
+ * content at all. Neither can leave a reader looking at something incomplete.
+ *
+ * THE DRIFT IS 26 SECONDS AND ALTERNATES. A wash that loops by jumping back to its start pulses
+ * once a cycle, which the eye catches even at this size; `alternate` turns the return into the
+ * other half of the same slow breath. The duration is long enough that no reader ever sees the
+ * whole cycle -- which is the point of it.
+ * ---------------------------------------------------------------------------------------------- */
+@media (prefers-reduced-motion: no-preference) {
+  .draw-trend {
+    animation: mp-draw var(--mp-motion-slow) var(--mp-motion-settle);
+  }
+
+  .hero-glow::before {
+    animation: mp-drift 26s var(--mp-motion-standard) infinite alternate;
+  }
+}
+
+/* ----------------------------------------------------------------------------------------------
+ * THE LIFT -- a card answering a pointer.
+ *
+ * Declared outside the `@supports` block because a transition needs no scroll timeline and every
+ * browser has had these two properties for a decade. The reduced-motion query is still the gate:
+ * `no-preference` rather than an override, for the same reason as above.
+ *
+ * THE HOVER STATE IS ALSO A FOCUS STATE. A card a mouse can lift and a keyboard cannot is a card
+ * whose affordance is invisible to half its readers. `:focus-within` rather than `:focus` because
+ * the thing being focused is the link inside the card, not the card.
+ *
+ * `box-shadow` IS NOT ANIMATED HERE. It cannot be composited, so animating it repaints the card
+ * on every frame -- and on a four-card grid on a mid-range phone that is the difference between a
+ * lift and a stutter. The shadow is applied at full strength on both states by the utility the
+ * component already carries; what moves is the transform.
+ * ---------------------------------------------------------------------------------------------- */
+@media (prefers-reduced-motion: no-preference) {
+  .lift {
+    transition: transform var(--mp-motion-base) var(--mp-motion-standard);
+    will-change: transform;
+  }
+
+  .lift:hover,
+  .lift:focus-within {
+    transform: translateY(var(--mp-motion-lift));
+  }
+
+  /* The arrow on a call to action, sliding the width of its own stroke. Enough to read as
+     responsive, not enough to look like it is leaving. */
+  .nudge {
+    transition: transform var(--mp-motion-fast) var(--mp-motion-standard);
+  }
+
+  .nudge-host:hover .nudge,
+  .nudge-host:focus-visible .nudge {
+    transform: translateX(3px);
+  }
+}
+
+/* ==============================================================================================
  * THE PHONE. Three rules, each one the single place a measured defect is fixed.
  *
  * Every number quoted below was read in a production build by apps/web/scripts/mobile-audit.mjs

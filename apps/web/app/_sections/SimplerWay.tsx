@@ -116,7 +116,7 @@ export function SimplerWay() {
       id="product"
       className="mx-auto grid max-w-[1200px] items-center gap-8 px-8 py-12 md:grid-cols-2 md:gap-10 md:py-20 lg:gap-20"
     >
-      <div className="min-w-0">
+      <div className="reveal-side min-w-0">
         <span className="text-ink-faint block text-xs font-bold tracking-[0.14em] uppercase">
           {EYEBROW}
         </span>
@@ -130,21 +130,23 @@ export function SimplerWay() {
 
         <a
           href="/dashboard"
-          className="bg-surface text-accent border-line hover:bg-surface-subtle mt-6 inline-flex min-h-[46px] items-center gap-3 rounded-md border px-[22px] text-sm font-bold transition-colors"
+          className="nudge-host bg-surface text-accent border-line hover:bg-surface-subtle mt-6 inline-flex min-h-[46px] items-center gap-3 rounded-md border px-[22px] text-sm font-bold transition-colors"
         >
           {CTA_LABEL}
-          <span aria-hidden="true">&#9655;</span>
+          <span aria-hidden="true" className="nudge inline-block">
+            &#9655;
+          </span>
         </a>
       </div>
 
       {/* Two-up inside the column at every width the design keeps it there; the reference only
           drops the pair to a single card once the viewport is narrower than a phone in portrait,
           which is why the breakpoint is pinned to its 390px rather than to a Tailwind default. */}
-      <div className="grid min-w-0 grid-cols-1 gap-4 min-[390px]:grid-cols-2">
+      <div className="reveal-group grid min-w-0 grid-cols-1 gap-4 min-[390px]:grid-cols-2">
         {CAPABILITIES.map((capability) => (
           <article
             key={capability.title}
-            className="border-line bg-surface rounded-lg border p-5 md:p-6"
+            className="lift border-line bg-surface rounded-lg border p-5 md:p-6"
           >
             <svg
               viewBox="0 0 24 24"

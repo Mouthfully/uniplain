@@ -146,7 +146,7 @@ export function FeatureGrid() {
       aria-labelledby="feature-grid-heading"
       className="mx-auto grid max-w-[1200px] items-center gap-8 px-8 py-12 md:grid-cols-2 md:gap-16 md:py-20"
     >
-      <div className="md:order-2">
+      <div className="reveal-side md:order-2">
         <span className="text-ink-faint block text-[11px] font-bold tracking-[0.14em] uppercase md:text-xs">
           {EYEBROW}
         </span>
@@ -163,11 +163,11 @@ export function FeatureGrid() {
 
       {/* Two columns from 640px up. Below that the reference goes single-column: a 2x2 of 20px-
           padded cards on a phone leaves the body copy three words to a line. */}
-      <ul className="grid gap-4 sm:grid-cols-2 md:order-1">
+      <ul className="reveal-group grid gap-4 sm:grid-cols-2 md:order-1">
         {CARDS.map((card) => (
           <li
             key={card.id}
-            className="border-line-soft bg-surface rounded-lg border p-5 shadow-[0_7px_24px] shadow-line-soft md:p-6"
+            className="lift border-line-soft bg-surface rounded-lg border p-5 shadow-[0_7px_24px] shadow-line-soft md:p-6"
           >
             {/* Decorative: the title beside it carries the meaning, so the mark is hidden rather
                 than labelled, which would make a screen reader announce each card twice. */}

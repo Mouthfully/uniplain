@@ -396,12 +396,32 @@ export function FinalCta() {
     // No `.section` class in the reference, so this one carries margins rather than the 80px
     // section padding: the panel sits tight under the FAQ and holds the page's bottom margin.
     <section className="mx-auto mt-5 mb-[45px] max-w-[1200px] px-8 md:mb-[70px]">
-      <div className="bg-surface-inset flex flex-col gap-6 rounded-xl p-[30px] md:flex-row md:items-center md:justify-between md:p-12">
+      {/* THE PAGE'S ONE CONTRAST BAND, AND WHY IT IS THIS PANEL.
+          -----------------------------------------------------------------------------------
+          Measured against the references the founder named: supermetrics.com bands its home page
+          with SIX theme tones, three of them dark (`dark`, `dark-purple`, `dark-grey`). This page
+          had three tones and not one of them was a contrast band -- every section, top to bottom,
+          on some shade of white.
+
+          The closing call to action is the right place to spend it, and the only place spending it
+          is cheap: the panel holds one heading, one line of lead and one filled button, so the ink
+          it needs is three tokens rather than a re-inking of a whole section. Putting the band on
+          an argument section instead would mean recolouring every card, chart and caption inside
+          it, which is a much larger change for a smaller reason.
+
+          `surface-inverse` INVERTS WITH THE THEME -- deep navy under a light scheme, the light
+          ground under a dark one. That is the token behaving correctly, not a bug: what the band
+          is for is CONTRAST against the page around it, and it stays a contrast band in both.
+
+          THE BUTTON DOES NOT CHANGE. The token file is explicit that filled controls keep
+          `--mp-accent` and `--mp-ink-on-accent` everywhere; `--mp-accent-on-dark` is for accent
+          TEXT on a dark ground, which this is not. */}
+      <div className="bg-surface-inverse flex flex-col gap-6 rounded-xl p-[30px] md:flex-row md:items-center md:justify-between md:p-12">
         <div className="min-w-0">
-          <h2 className="font-display text-ink text-[28px] leading-[1.16] font-semibold tracking-[-0.03em] md:text-[30px]">
+          <h2 className="font-display text-ink-inverse-strong text-[28px] leading-[1.16] font-semibold tracking-[-0.03em] md:text-[30px]">
             {CTA_HEADING}
           </h2>
-          <p className="text-ink-muted mt-2.5 leading-[1.65]">{CTA_LEAD}</p>
+          <p className="text-ink-on-inverse mt-2.5 leading-[1.65]">{CTA_LEAD}</p>
         </div>
 
         {/* Points at the pricing section, as the reference does -- "start free" means "choose the

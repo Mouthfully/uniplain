@@ -63,29 +63,56 @@ describe("every destination is reachable from a phone", () => {
     }
   });
 
-  it("does not hide the disclosure at any width a phone or tablet has", () => {
-    // `lg:hidden` and nothing else: a `hidden` in the base classes would reproduce the original
-    // defect with a control nobody can see.
+  it("does not hide the disclosure at any width below the row's own breakpoint", () => {
+    // `xl:hidden` and nothing else: a `hidden` in the base classes would reproduce the original
+    // defect with a control nobody can see. It was `lg:hidden` until the row moved up -- see the
+    // measurement in the next block; the drawer has to cover exactly the widths the row does not.
     const details = drawer.slice(0, drawer.indexOf(">") + 1);
-    expect(details).toMatch(/class="[^"]*\blg:hidden\b/);
+    expect(details).toMatch(/class="[^"]*\bxl:hidden\b/);
     expect(details).not.toMatch(/class="[^"]*(^|\s)hidden(\s|")/);
   });
 });
 
 describe("the wide row is revealed only where it fits", () => {
-  it("is gated at lg and not at md", () => {
-    // MEASURED, not preferred: at exactly 768 the row appears and the header's minimum content
-    // width goes 767 -> 964, so all 19 header-bearing routes scrolled sideways by 196px. 964 needs
-    // the next breakpoint up. `md:flex` here is the bug, so it is asserted against by name.
-    expect(inlineRow).toContain("lg:flex");
+  it("is gated at xl, and not at lg or md", () => {
+    // MEASURED, not preferred, TWICE -- and the second measurement is why this says `xl`.
+    //
+    // First: at exactly 768 the row appeared and the header's minimum content width went
+    // 767 -> 964, so all 19 header-bearing routes scrolled sideways by 196px. That moved it to lg.
+    //
+    // Then `NAV` grew from six entries to nine, one at a time, and nobody measured the bar again.
+    // `scripts/header-fit.mjs` against a production build, with the stylesheet confirmed applied:
+    //
+    //     1024px   231px of sideways page scroll; "Sign in" AND the primary CTA off-screen
+    //     1152px   103px; the CTA off-screen
+    //     1280px    15px of page scroll, 55px of header overflow; the CTA clipped
+    //     1366px+   the page fits and the header still overflows its own box by 55px
+    //
+    // Ten links (Sign in is one of them), a logo and a CTA need about 1250px, so the row moves to
+    // xl and the gaps tighten.
+    // Both earlier spellings are asserted against by name, because each was once the right answer.
+    expect(inlineRow).toContain("xl:flex");
+    expect(inlineRow).not.toContain("lg:flex");
     expect(inlineRow).not.toContain("md:flex");
+  });
+
+  it("is not left to drift the next time a link is added", () => {
+    // THE REAL LESSON OF THE SECOND MEASUREMENT: the breakpoint was right when it was written and
+    // wrong four links later, and nothing in the build noticed. This asserts the count the measured
+    // width was taken against, so adding an eleventh link fails here -- with a pointer at the harness
+    // -- instead of silently pushing the CTA off a laptop again.
+    expect(
+      NAV.length,
+      "NAV changed size; re-run `node apps/web/scripts/header-fit.mjs` against a production " +
+        "build and move the breakpoint if the bar no longer fits, then update this number",
+    ).toBe(10);
   });
 
   it("keeps the 140x40 header CTA out of the phone bar", () => {
     // At 320 the bar's own minimum was 366px with just the logo and this CTA in it. The logo is
     // fixed at 146px by the brand guide, so the CTA is what gives way; it reappears at lg.
     const cta = html.slice(html.indexOf('<a href="/dashboard"'));
-    expect(cta).toMatch(/class="[^"]*\bhidden\b[^"]*\blg:inline-flex\b/);
+    expect(cta).toMatch(/class="[^"]*\bhidden\b[^"]*\bxl:inline-flex\b/);
   });
 });
 
