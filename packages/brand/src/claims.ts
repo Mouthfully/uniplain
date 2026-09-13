@@ -126,7 +126,7 @@ function naturalList(items: readonly string[]): string {
  * backfill is dispatched the claim widens by itself. `check-ingestable.mjs` holds this against the
  * Worker's actual dispatch in both directions, so it cannot be widened by editing this file.
  */
-export const INGESTABLE_SOURCE_IDS = ["woocommerce"] as const;
+export const INGESTABLE_SOURCE_IDS = ["loyverse", "woocommerce"] as const;
 
 /**
  * The built connectors a customer cannot yet receive data from, each with what is missing.
@@ -160,12 +160,6 @@ export const DEFERRED_SOURCE_IDS: readonly DeferredSource[] = [
     id: "google_ads",
     backfill: false,
     missing: "No backfill.ts. A client and a normaliser exist; nothing walks a window.",
-  },
-  {
-    id: "loyverse",
-    backfill: true,
-    missing:
-      "backfill.ts is written, tested and exported; runIngest does not dispatch to it. THE MOST COSTLY OF THE SIX: this is the till the product is designed around.",
   },
   {
     id: "meta_ads",

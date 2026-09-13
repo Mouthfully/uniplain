@@ -329,6 +329,15 @@ platform credentials.
 
 What stops any of this being asserted before it is true.
 
+**LOYVERSE IS NOW DISPATCHED, AND THE CLAIM WIDENED BY ITSELF.** `runIngest` gained a Loyverse
+branch — `runLoyverseBackfill` had been written, tested and exported and was called by nothing — so
+`INGESTABLE_SOURCE_IDS` gained the id and the published sentence became *"Reads Loyverse and
+WooCommerce on your own credentials"* in the same commit, because `brand.test.ts` went red on the old
+one until it did. **Two of seven connectors now deliver rows**; GA4, Meta Ads and Search Console each
+have a written backfill and need a report definition a `connections` row does not carry, and Google
+Ads and Shopify have no backfill at all. All five stay declared in `DEFERRED_SOURCE_IDS`. See
+`docs/marketplane/97-the-till-this-product-is-designed-around.md`.
+
 **THE GATE VERIFIED A PROXY, AND THE PROXY DRIFTED.** The home page published *"Reads GA4, Google
 Ads, Loyverse, Meta Ads, Search Console, Shopify and WooCommerce on your own credentials"* while
 `runIngest` refused every provider but `woocommerce` — so a customer could connect their Loyverse

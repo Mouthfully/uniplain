@@ -14,12 +14,12 @@
  * ============================================================================================
  *
  * `DueConnection.drivable` is computed from `PROVIDER_LANES`, which has five members, and it means
- * "this build has a connector for it". `INGEST_SOURCE` is `woocommerce` and `runIngest` raises
- * `unsupported_provider` for the other four. A sweep that trusted `drivable` would claim a GA4
+ * "this build has a connector for it". `INGEST_SOURCES` is what `runIngest` can drive and it
+ * raises `unsupported_provider` for anything else. A sweep that trusted `drivable` would claim a GA4
  * connection, fail, release the lease without advancing anything, and be handed the same row on the
  * next tick -- forever. With four undrivable providers ahead of it in the work list's
  * `order by last_backfill_at asc nulls first`, the one connection this build CAN pull might never
- * be reached inside a limit. So the filter is `provider === INGEST_SOURCE`, and it happens BEFORE
+ * be reached inside a limit. So the filter is membership of `INGEST_SOURCES`, and it happens BEFORE
  * the claim: a connection that cannot be pulled is never leased.
  *
  * ============================================================================================
@@ -58,7 +58,7 @@
 
 import type { SchedulerStorePort } from "@repo/store";
 
-import { INGEST_SOURCE, IngestRunFailure, type IngestDeps, runIngest } from "./ingest.js";
+import { INGEST_SOURCES, IngestRunFailure, type IngestDeps, runIngest } from "./ingest.js";
 
 /**
  * How many connections one sweep will look at.
@@ -138,7 +138,7 @@ export async function sweepDueConnections(deps: SweepDeps): Promise<SweepOutcome
   for (const connection of due) {
     // BEFORE THE CLAIM. A connection this build cannot pull must never be leased: leasing it and
     // failing is the loop that starves the one connection that can be pulled.
-    if (connection.provider !== INGEST_SOURCE) {
+    if (!(INGEST_SOURCES as readonly string[]).includes(connection.provider)) {
       skipped.push({
         connectionId: connection.connectionId,
         provider: connection.provider,

@@ -53,15 +53,37 @@
 import { connectionHealth, openCredential } from "@repo/connections";
 import type { EnvelopeRow } from "@repo/contract";
 import {
+  EMPTY_RATE_BUDGET,
+  type LoyverseBackfillBatch,
+  type LoyverseCheckpoint,
+  type LoyverseCredential,
   type WooBackfillBatch,
   type WooCheckpoint,
+  assertReadOnlyCredential,
   parseRfc3339,
+  runLoyverseBackfill,
   runWooBackfill,
 } from "@repo/connectors";
 import type { ConnectionRecord, ConnectionStorePort, IngestStorePort } from "@repo/store";
 import { type CryptoLike as VaultCrypto, kekFromBase64 } from "@repo/vault";
 
-/** The only provider this runtime can drive. See `runIngest` for why it is a refusal and not a map. */
+/**
+ * Every provider this runtime can drive.
+ *
+ * IT IS A LIST NOW BECAUSE THERE ARE TWO. It was `INGEST_SOURCE = "woocommerce"`, a single string,
+ * under a comment explaining that a map would be "four entries pointing at nothing" because the
+ * other connectors had no `backfill.ts`. Four of them grew one and the comment kept saying it --
+ * and the home page kept claiming to read seven platforms while six could not produce a row.
+ *
+ * `INGESTABLE_SOURCE_IDS` in `@repo/brand` must equal this, and `scripts/check-ingestable.mjs`
+ * holds them against each other in both directions: the published claim cannot name a source this
+ * cannot drive, and this cannot drive one the claim withholds.
+ */
+export const INGEST_SOURCES = ["loyverse", "woocommerce"] as const;
+
+export type IngestSource = (typeof INGEST_SOURCES)[number];
+
+/** @deprecated The WooCommerce id, kept for the call sites that still name it directly. */
 export const INGEST_SOURCE = "woocommerce";
 
 /**
@@ -76,7 +98,7 @@ export const SUGGESTED_FIRST_WINDOW_DAYS = 30;
 
 /** What a run reports. Numbers, a connection id, and text this repository wrote. Nothing else. */
 export interface IngestReport {
-  readonly source: typeof INGEST_SOURCE;
+  readonly source: IngestSource;
   readonly connectionId: string;
   /**
    * Pages of orders YIELDED by the backfill -- not every page fetched from the store.
@@ -99,8 +121,13 @@ export interface IngestReport {
    *
    * Reported because `pages` alone would tell an operator a busy store was cheap to read. A run
    * with `pages: 3, splits: 7` cost the merchant far more than three requests.
+   *
+   * **NULL WHERE THE SOURCE HAS NO BISECTOR, AND NOT ZERO.** Loyverse's walk is a cursor: there is
+   * no probe page to discard and nothing to split, so there is no number to report. Writing `0`
+   * would say "we measured this and it was none", which is the `?? 0` this repository refuses --
+   * an operator comparing two runs would read a Loyverse run as cheap when nothing measured it.
    */
-  readonly splits: number;
+  readonly splits: number | null;
   /**
    * The `since` the NEXT run must use. Present even on a failed run -- especially then.
    *
@@ -354,13 +381,22 @@ export async function runIngest(request: IngestRequest, deps: IngestDeps): Promi
       "bad_kek",
     );
   }
-  if (credential.kind !== "key_secret") {
-    // Unreachable through `credential_lane`, which `openCredential` already checks against the
-    // sealed blob. Asserted anyway because the alternative is `credential.key` being `undefined`
-    // and travelling into an `Authorization` header as the string "undefined".
+  // THE LANE EACH SOURCE NEEDS, CHECKED PER SOURCE.
+  //
+  // Unreachable through `credential_lane`, which `openCredential` already checks against the sealed
+  // blob. Asserted anyway because the alternative is a field being `undefined` and travelling into
+  // an `Authorization` header as the string "undefined".
+  //
+  // `PROVIDER_LANES.loyverse` is `["oauth"]` and the single-element array is a refusal rather than
+  // an omission: Loyverse issues a pasteable personal access token that "gives unlimited access to
+  // the targeted account" -- no scopes, and unlimited includes RECEIPTS_WRITE. So a Loyverse pull
+  // requires an OAuth grant, and `assertReadOnlyCredential` below says so a second time at the
+  // client boundary.
+  const needed = connection.provider === "woocommerce" ? "key_secret" : "oauth";
+  if (credential.kind !== needed) {
     throw new IngestError(
-      `connection ${connection.id} seals a ${credential.kind} credential; a WooCommerce pull needs ` +
-        "a key and a secret.",
+      `connection ${connection.id} seals a ${credential.kind} credential; a ${connection.provider} ` +
+        `pull needs a ${needed} one.`,
       "wrong_credential_lane",
     );
   }
@@ -383,6 +419,129 @@ export async function runIngest(request: IngestRequest, deps: IngestDeps): Promi
         "orders that had not been modified yet, and nothing ever re-reads a window behind the " +
         "watermark. Omit `until` to pin it to the run's start.",
       "bad_request",
+    );
+  }
+
+  const context = { workspaceId: connection.workspaceId, connectionId: connection.id };
+
+  // ============================================================================================
+  // THE LOYVERSE BRANCH, and the shape of the dispatch that was missing.
+  // ============================================================================================
+  //
+  // `runLoyverseBackfill` has been written, tested and exported since it was built; nothing called
+  // it. The work below is not the walking -- that exists -- it is resolving what the walk needs
+  // from a connection row and threading the checkpoint back out, and it is the whole difference
+  // between a merchant who connects a till and one who receives their takings.
+  //
+  // IT RETURNS EARLY RATHER THAN JOINING A SHARED LOOP. The two sources agree on almost everything
+  // and disagree on the three things that matter: the window's field names, what a checkpoint is,
+  // and what a run costs the merchant (WooCommerce meters splits, Loyverse meters an account-wide
+  // rate budget). A shared loop would have to erase those differences to a common shape, and the
+  // common shape is where a number stops meaning what its source meant by it.
+  if (connection.provider === "loyverse") {
+    if (credential.kind !== "oauth") {
+      // Unreachable: the lane check above already required `oauth` for this provider. Narrowed
+      // again because TypeScript cannot see through that comparison, and a cast here would be a
+      // cast on the object that carries the merchant's access token.
+      throw new IngestError(
+        `connection ${connection.id} seals a ${credential.kind} credential; a loyverse pull needs ` +
+          "an oauth one.",
+        "wrong_credential_lane",
+      );
+    }
+
+    const loyverseCredential: LoyverseCredential = {
+      kind: "oauth",
+      accessToken: credential.accessToken,
+      // EMPTY MEANS "NOT REPORTED", NOT "NOTHING GRANTED" -- `client.ts` takes that reading and
+      // skips the scope check rather than failing every pull on a connection that predates the
+      // column. Passing the row's value rather than `[]` is what lets it check when it can.
+      grantedScopes: connection.grantedScopes,
+    };
+
+    // DEFENCE IN DEPTH, AND NO TEST HERE DISTINGUISHES IT -- said plainly because a mutation
+    // proved it. Deleting this line leaves the whole suite green: `fetchMerchant` calls the same
+    // assertion at its own top, before its first request, so the guarantee is `client.ts`'s and
+    // this is an earlier restatement of it. That module's note is the reason to keep it anyway --
+    // "calling it three times costs nothing; missing it once costs the guarantee" -- and what it
+    // guarantees is that a token carrying RECEIPTS_WRITE never reaches a till this product only
+    // ever reads. Kept, and not credited with more than it does.
+    assertReadOnlyCredential(loyverseCredential);
+
+    let loyverseCheckpoint: LoyverseCheckpoint = {
+      updatedAfter: request.since,
+      chunks: 0,
+      rows: 0,
+      budget: EMPTY_RATE_BUDGET,
+    };
+    let loyversePages = 0;
+    let loyverseRead = 0;
+    let loyverseWritten = 0;
+    let loyverseComplete = false;
+
+    const loyverseRun = runLoyverseBackfill({
+      client: {
+        fetchImpl: deps.fetchImpl,
+        credential: loyverseCredential,
+        now: deps.now ?? (() => new Date()),
+        random: deps.random ?? Math.random,
+        sleep: deps.sleep ?? ((ms) => new Promise((resolve) => setTimeout(resolve, ms))),
+      },
+      window: { updatedAfter: request.since, updatedBefore: until },
+      // Not null by this point -- `assertRunnable` refused a connection without one. It matters
+      // more here than the column's name suggests: `dimensions.date` is COMPUTED in this zone, so a
+      // guess moves receipts onto the wrong calendar day rather than mislabelling the right one.
+      timezone: connection.timezone as string,
+      fetchedAt,
+      onChunk: (c: LoyverseCheckpoint) => {
+        loyverseCheckpoint = c;
+      },
+    });
+
+    const loyverseReport = (): IngestReport => ({
+      source: "loyverse",
+      connectionId: connection === null ? request.connectionId : connection.id,
+      pages: loyversePages,
+      rowsRead: loyverseRead,
+      rowsWritten: loyverseWritten,
+      chunks: loyverseCheckpoint.chunks,
+      // NULL, NOT ZERO. There is no bisector on a cursor walk, so no probe page is ever discarded
+      // and there is nothing to count. See the field's own note.
+      splits: null,
+      checkpoint: loyverseCheckpoint.updatedAfter,
+      complete: loyverseComplete,
+    });
+
+    try {
+      let next = await loyverseRun.next();
+      while (!next.done) {
+        const batch: LoyverseBackfillBatch = next.value;
+        loyversePages += 1;
+        loyverseRead += batch.rows.length;
+        loyverseWritten += await writeBatch(deps.ingest, batch.rows, context);
+        next = await loyverseRun.next();
+      }
+      loyverseCheckpoint = next.value;
+      loyverseComplete = true;
+    } catch (cause) {
+      // Identical posture to the WooCommerce path: everything written stays written, the upsert is
+      // idempotent, and the checkpoint names the last chunk read IN FULL.
+      throw new IngestRunFailure(loyverseReport(), cause);
+    }
+
+    return loyverseReport();
+  }
+
+  if (credential.kind !== "key_secret") {
+    // The mirror of the Loyverse narrowing above, and unreachable for the same reason: the lane
+    // check already required `key_secret` for this provider. TypeScript cannot see through that
+    // comparison, and the alternative to narrowing again is a cast on the object holding the
+    // merchant's store key -- which would make `credential.key` `undefined` reach an
+    // `Authorization` header as the string "undefined" the day the lane check is ever loosened.
+    throw new IngestError(
+      `connection ${connection.id} seals a ${credential.kind} credential; a ${connection.provider} ` +
+        "pull needs a key and a secret.",
+      "wrong_credential_lane",
     );
   }
 
@@ -418,7 +577,6 @@ export async function runIngest(request: IngestRequest, deps: IngestDeps): Promi
     },
   });
 
-  const context = { workspaceId: connection.workspaceId, connectionId: connection.id };
   let complete = false;
   try {
     let next = await run.next();
@@ -480,7 +638,7 @@ export class IngestRunFailure extends Error {
  * a missing timezone is an operator's, and an unusable connection is the merchant's.
  */
 function assertRunnable(connection: ConnectionRecord, now: Date): void {
-  if (connection.provider !== INGEST_SOURCE) {
+  if (!(INGEST_SOURCES as readonly string[]).includes(connection.provider)) {
     // A refusal and not a lookup table, and THE REASON GIVEN HERE WAS TRUE AND IS NOT ANY MORE.
     //
     // It read: "four of the five connectors have no `backfill.ts` yet, so a map would be four

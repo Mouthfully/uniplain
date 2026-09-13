@@ -163,10 +163,14 @@ describe("the claims gate", () => {
       "shopify",
       "woocommerce",
     ]);
-    expect(INGESTABLE_SOURCE_IDS).toEqual(["woocommerce"]);
+    expect(INGESTABLE_SOURCE_IDS).toEqual(["loyverse", "woocommerce"]);
 
     const connectors = allowedClaims().find((claim) => claim.id === "connectors");
-    expect(connectors?.text).toBe("Reads WooCommerce on your own credentials.");
+    // WIDENED BY WIRING THE DISPATCH, WHICH IS THE MECHANISM WORKING. It read "Reads WooCommerce"
+    // an hour ago. `runIngest` gained a Loyverse branch, `INGESTABLE_SOURCE_IDS` gained the id, and
+    // the sentence grew a platform -- and this assertion is what made the copy change arrive in the
+    // same commit as the feature rather than whenever somebody remembered.
+    expect(connectors?.text).toBe("Reads Loyverse and WooCommerce on your own credentials.");
 
     // THE ASSERTION THAT MAKES IT DURABLE, and the one the old pin could not express: no source a
     // customer cannot receive data from may be named in a sentence beginning "Reads". Pinning the
