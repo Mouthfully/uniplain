@@ -299,6 +299,65 @@ begin
     exists (select 1 from auth.users where id = '19000000-0000-4000-8000-00000000000a'));
 end $$;
 
+
+-- ---------------------------------------------------------------------------------------------
+-- 4. ALREADY CANCELLING IS ENOUGH, AND IT NEEDS AN ORGANISATION OF ITS OWN.
+--
+-- `cancel_at_period_end` leaves `status` at 'active' until the period runs out, so a refusal keyed
+-- on status alone would tell somebody who had just pressed cancel to go and cancel. No further
+-- charge is taken once Stripe holds that flag, which is the only thing the refusal is for.
+--
+-- A SEPARATE FIXTURE, BECAUSE THE ASSERTION HAS TO SURVIVE. The first version probed the main
+-- organisation inside a transaction it rolled back -- and the `app_test.results` row rolled back
+-- with it, exactly as in `18_membership_guards.sql`. The suite reported the same 14 assertions as
+-- before and nothing said the new one had vanished. Then the second version was anchored to a
+-- section heading copied from suite 18 that does not exist in this file, so it was never inserted
+-- at all. THE FLOOR CAUGHT BOTH. An assertion count that has to be raised by hand is the only
+-- thing standing between a suite and quietly testing less than it claims.
+-- ---------------------------------------------------------------------------------------------
+insert into auth.users (id, email) values
+  ('19000000-0000-4000-8000-00000000000f', 'erasure-cancelling@test.test');
+insert into public.organisations (id, name, slug) values
+  ('19100000-0000-4000-8000-00000000000f', 'Leaving Anyway', 'leaving-anyway-erasure-suite');
+insert into public.members (id, organisation_id, user_id, role) values
+  ('19200000-0000-4000-8000-00000000000f', '19100000-0000-4000-8000-00000000000f',
+   '19000000-0000-4000-8000-00000000000f', 'owner');
+insert into public.billing_customers (organisation_id, stripe_customer_id)
+values ('19100000-0000-4000-8000-00000000000f', 'cus_leaving_anyway');
+insert into public.subscriptions
+  (organisation_id, stripe_subscription_id, stripe_price_id, plan, billing_interval, status,
+   current_period_end, stripe_event_at, cancel_at_period_end)
+values ('19100000-0000-4000-8000-00000000000f', 'sub_leaving_anyway', 'price_leaving_anyway',
+        'growth', 'month', 'active', now() + interval '20 days', now(), true);
+
+begin;
+  set local role authenticated;
+  select set_config('request.jwt.claim.sub', '19000000-0000-4000-8000-00000000000f', true);
+
+  do $$
+  begin
+    perform public.delete_organisation('19100000-0000-4000-8000-00000000000f', 'Leaving Anyway');
+    perform app_test.check(
+      'a subscription already set to cancel does NOT refuse -- no further charge is coming', true);
+  exception when check_violation then
+    perform app_test.check(
+      'a subscription already set to cancel does NOT refuse -- no further charge is coming',
+      false, 'it refused a customer who had already cancelled');
+  when others then
+    perform app_test.check(
+      'a subscription already set to cancel does NOT refuse -- no further charge is coming',
+      false, format('%s / %s', sqlstate, sqlerrm));
+  end $$;
+commit;
+
+do $$
+begin
+  perform app_test.check('and that organisation really is gone',
+    not exists (select 1 from public.organisations where id = '19100000-0000-4000-8000-00000000000f')
+    and not exists (select 1 from public.subscriptions
+                     where organisation_id = '19100000-0000-4000-8000-00000000000f'));
+end $$;
+
 \o
 
 select name, 'FAIL' as result, detail from app_test.results where not passed order by id;
@@ -312,7 +371,7 @@ declare v_failed integer; v_total integer;
 begin
   select count(*) filter (where not passed), count(*) into v_failed, v_total from app_test.results;
   if v_failed > 0 then raise exception 'erasure: % assertion(s) failed', v_failed; end if;
-  if v_total < 12 then
-    raise exception 'erasure: only % assertion(s) ran; expected at least 12', v_total;
+  if v_total < 15 then
+    raise exception 'erasure: only % assertion(s) ran; expected at least 15', v_total;
   end if;
 end $$;

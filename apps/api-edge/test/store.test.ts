@@ -1043,11 +1043,19 @@ describe("a connection row this adapter cannot account for is refused, not repai
   });
 
   it("refuses a provider the database allows but no connector can drive", () => {
-    // `app.connection_provider` carries nine members; PROVIDER_LANES names five. `impact`, `awin`,
+    // `app.connection_provider` carries more members than PROVIDER_LANES names. `impact`, `awin`,
     // `cj` and `partnerstack` are rows the database will hold and that nothing here can pull. The
     // alternative to refusing at the read is casting a lie that surfaces as an undefined lookup
     // during a pull, hours later.
+    //
+    // `shopify` IS STILL REFUSED, AND THE REASON CHANGED UNDER IT. It used to be refused because
+    // nothing could read Shopify at all. Its connector now exists -- client, normaliser, source,
+    // redaction policy -- and it is refused because the OAUTH DOOR does not: `@repo/oauth` holds
+    // endpoints as constants and Shopify's are per-shop. Until that changes no connection can be
+    // created, so a row carrying this provider is one nothing can drive, exactly like the four
+    // affiliate networks beside it.
     expect(() => toConnectionRecord(connectionRow({ provider: "impact" }))).toThrow(StoreError);
+    expect(() => toConnectionRecord(connectionRow({ provider: "awin" }))).toThrow(StoreError);
     expect(() => toConnectionRecord(connectionRow({ provider: "shopify" }))).toThrow(StoreError);
     expect(toConnectionRecord(connectionRow({ provider: "meta_ads" })).provider).toBe("meta_ads");
   });

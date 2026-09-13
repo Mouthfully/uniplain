@@ -53,6 +53,20 @@ const LANE_TEST = "supabase/tests/08_credential_lane.sql";
  * allowed to be surplus. The list is the point: it fails on the member nobody thought about.
  */
 const DB_ONLY_PROVIDERS = {
+  // NOT "no module yet" -- the module exists. `packages/connectors/src/sources/shopify` has a
+  // client and a normaliser, `app.envelope_source` carries the source, and REDACTION_POLICIES gives
+  // it a keep-list. What does not exist is the DOOR: `@repo/oauth` holds each provider's
+  // authorization and token endpoints as CONSTANTS, and Shopify's are per-shop
+  // (https://<shop>.myshopify.com/admin/oauth/authorize). Teaching that package a shop-dependent
+  // endpoint is a change to its shape and its own unit.
+  //
+  // IT IS HERE RATHER THAN IN PROVIDER_LANES BECAUSE THE MIRROR TEST IS RIGHT. Listing a lane puts
+  // the provider on the connect screen, and a screen that offers a flow which cannot finish is the
+  // defect this whole connector was built to remove -- a connect button for something the product
+  // cannot complete. It said that for months with nothing behind it; saying it with most of it
+  // behind it would be the same promise and harder to notice.
+  shopify:
+    "connector implemented; OAuth endpoints are per-shop and @repo/oauth holds them as constants",
   impact: "affiliate network; enum written ahead of the connector, no module yet",
   awin: "affiliate network; enum written ahead of the connector, no module yet",
   cj: "affiliate network; enum written ahead of the connector, no module yet",

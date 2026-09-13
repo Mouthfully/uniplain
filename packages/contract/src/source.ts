@@ -32,6 +32,19 @@ export const SOURCES = [
   // note above. `app.envelope_source` is altered to match in
   // `20260913000300_loyverse_provider.sql`.
   "loyverse",
+
+  // APPENDED AGAIN, under the same rule and for the same reason as the two above -- an enum is
+  // ordered by definition order in Postgres, so a mid-list insert silently rewrites every ORDER BY
+  // on the column.
+  //
+  // `shopify` was slot 3 of 11A.14's launch set all along -- `metrics.ts` names it in the comment
+  // that introduced the commerce grain, beside WooCommerce and a payment gateway. What made it
+  // urgent is that `/connectors/shopify` has been a full landing page since the site shipped --
+  // headline, feature grid and a connect button -- for a platform nothing in this repository could
+  // read. A page
+  // that invites a merchant to connect something the product cannot read is the worst kind of
+  // claim there is: it ends in a button.
+  "shopify",
 ] as const;
 
 export type Source = (typeof SOURCES)[number];

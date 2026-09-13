@@ -67,6 +67,28 @@ export const OAUTH_ONLY_PROVIDERS: readonly string[] = [
   "loyverse",
 ] as const;
 
+/**
+ * SHOPIFY IS DELIBERATELY NOT ON THE LIST ABOVE, AND THIS IS THE NOTE THAT STOPS SOMEBODY ADDING IT.
+ *
+ * Its connector is real: `sources/shopify` has a client and a normaliser, `PROVIDER_LANES` gives it
+ * the `oauth` lane, `app.connection_provider` stores it, `REDACTION_POLICIES` keeps its payloads on
+ * a keep-list, and the envelope page runs its fixtures. The one thing missing is the door.
+ *
+ * `@repo/oauth` holds each provider's `authorizationEndpoint` and `tokenEndpoint` as CONSTANTS, and
+ * `ProviderId` is a closed union of three. Shopify's endpoints are per-shop --
+ * `https://<shop>.myshopify.com/admin/oauth/authorize` -- so the package has to learn a
+ * shop-dependent endpoint before the flow can start. That is a change to `@repo/oauth`'s shape and
+ * therefore its own unit, not a line here.
+ *
+ * LISTING IT ANYWAY WOULD RECREATE THE EXACT DEFECT THIS CONNECTOR WAS BUILT TO FIX: a button that
+ * invites a merchant to connect something the product cannot complete. The page said it for months
+ * with nothing behind it at all; offering it here with most of it behind it would be the same
+ * promise, one layer in, and harder to notice.
+ */
+// No constant is exported for it. `PROVIDER_LANES` is the single source of what this screen
+// offers, `check-providers.mjs` holds the reason Shopify is not in it, and a second list here would
+// be a second place the answer lives.
+
 /** Every provider this build knows, in the order the screen lists them. */
 export const ALL_PROVIDERS: readonly string[] = [
   ...TYPED_PROVIDERS.map((provider) => provider.id),

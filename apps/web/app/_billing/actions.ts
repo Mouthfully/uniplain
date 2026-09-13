@@ -116,3 +116,91 @@ export async function openBillingPortal(): Promise<never> {
   });
   redirect(session.url as Parameters<typeof redirect>[0]);
 }
+
+/**
+ * CANCELLING, WITHOUT DEPENDING ON A SETTING NOBODY IN THIS REPOSITORY CAN SEE.
+ *
+ * The portal above already offers cancellation -- IF the Stripe dashboard's portal configuration
+ * has it switched on, and whether it does is not knowable from this codebase. A customer who has
+ * decided to leave and finds no cancel button in the portal has been given a runaround by a
+ * checkbox nobody here can read.
+ *
+ * So this asks Stripe directly. `cancel_at_period_end` needs no portal configuration at all, and
+ * the webhook already handles `customer.subscription.updated`, which is exactly what this produces
+ * -- so the row's `cancel_at_period_end` and `current_period_end` are written by the same path that
+ * writes every other billing fact. NOTHING HERE WRITES THE DATABASE. This app has one billing
+ * writer and it is the webhook; a second one is how two truths about the same subscription start
+ * disagreeing.
+ *
+ * AT PERIOD END, NEVER IMMEDIATELY. An immediate cancellation takes away service the customer has
+ * already paid for, and Stripe's proration would then owe them money this product has no path to
+ * return. They keep what they bought until it runs out.
+ *
+ * AND THE DATE IS NEVER COMPUTED. `/billing` prints the stop date from `current_period_end` as
+ * Stripe reported it. Adding a month to something here would be exactly the guess wearing the
+ * costume of a fact that CLAUDE.md bans -- and it would be wrong for every customer whose billing
+ * anniversary is not today.
+ */
+export async function cancelSubscription(): Promise<never> {
+  const supabase = await supabaseServer();
+  const organisation = await currentOrganisation();
+  if (!organisation) redirect("/signin?next=%2Fbilling");
+
+  // ADMIN OR OWNER, decided by the database rather than here: `subscriptions` is readable through
+  // RLS only for a member, and the row this finds is by definition this organisation's.
+  const { data } = await supabase
+    .from("subscriptions")
+    .select("stripe_subscription_id, status, cancel_at_period_end")
+    .eq("organisation_id", organisation.id)
+    .maybeSingle();
+
+  const id = data?.stripe_subscription_id as string | undefined;
+  if (!id) redirect("/billing?cancel=none");
+
+  // ALREADY CANCELLING IS NOT AN ERROR AND NOT A NO-OP TO HIDE. Saying so is the difference between
+  // a customer believing it worked the first time and a customer pressing it again tomorrow.
+  if (data?.cancel_at_period_end === true) redirect("/billing?cancel=already");
+
+  try {
+    await stripeClient().subscriptions.update(id, { cancel_at_period_end: true });
+  } catch {
+    // The upstream message is not surfaced: it names a Stripe object and an API version, and a
+    // customer trying to stop paying is not the right reader for either.
+    redirect("/billing?cancel=failed");
+  }
+
+  // The webhook writes the row. This returns to a page that reads it, so what the customer sees
+  // next is the synced state rather than this action's optimism about it.
+  redirect("/billing?cancel=requested");
+}
+
+/**
+ * Undoing it, before the period runs out.
+ *
+ * WORTH BUILDING AT THE SAME TIME rather than later: a cancel button with no way back makes the
+ * decision feel irreversible when it is not, and the customer most likely to press it is the one
+ * having a bad month. Between pressing cancel and the period ending, nothing has been lost.
+ */
+export async function resumeSubscription(): Promise<never> {
+  const supabase = await supabaseServer();
+  const organisation = await currentOrganisation();
+  if (!organisation) redirect("/signin?next=%2Fbilling");
+
+  const { data } = await supabase
+    .from("subscriptions")
+    .select("stripe_subscription_id, cancel_at_period_end")
+    .eq("organisation_id", organisation.id)
+    .maybeSingle();
+
+  const id = data?.stripe_subscription_id as string | undefined;
+  if (!id) redirect("/billing?cancel=none");
+  if (data?.cancel_at_period_end !== true) redirect("/billing?resume=nothing");
+
+  try {
+    await stripeClient().subscriptions.update(id, { cancel_at_period_end: false });
+  } catch {
+    redirect("/billing?resume=failed");
+  }
+
+  redirect("/billing?resume=requested");
+}

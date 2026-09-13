@@ -65,8 +65,11 @@ describe("the connections list", () => {
    * up as the stored value rather than as an empty cell or the wrong word.
    */
   it("prints an unknown enum member verbatim", () => {
-    const markup = render([{ ...base, provider: "shopify", status: "paused" }]);
-    expect(markup).toContain("shopify");
+    // NOT `shopify` ANY MORE: it is a known provider now and renders as "Shopify", which is the
+    // opposite of what this test asserts. `partnerstack` is in app.connection_provider and in no
+    // label table, which is the case this exists for.
+    const markup = render([{ ...base, provider: "partnerstack", status: "paused" }]);
+    expect(markup).toContain("partnerstack");
     expect(markup).toContain("paused");
   });
 
