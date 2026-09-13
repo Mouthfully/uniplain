@@ -202,8 +202,33 @@ export const CLAIMS: readonly Claim[] = [
 
   // --- Answers -------------------------------------------------------------------------------
   {
+    // "what was ruled out" WAS IN THE MIDDLE OF THIS SENTENCE AND IS NOT IN THE SECTION IT CITES.
+    //
+    // 4.1 defines the output of `diagnose.metric` exactly: "a ranked list of hypotheses with the
+    // evidence rows attached, a confidence, and a recovery plan as ordered steps". There is no
+    // list of eliminated hypotheses in it. The phrase comes from section 14, the LANDING PAGE
+    // DRAFT -- an artboard description of a chat card showing "three causes in words with source
+    // tags, what was ruled out, and next steps".
+    //
+    // An artboard is a picture of a thing somebody would like to sell, and this repository already
+    // treats that class of source as non-binding: section 14's "nothing monthly / pay as you go"
+    // line is a FORBIDDEN_CLAIMS pattern precisely because a drawing is not a decision. So the
+    // clause was a capability sourced from a mockup and attributed to an engineering section --
+    // which is worse than an uncited claim, because the citation is what stops anyone rechecking.
+    //
+    // THE OBVIOUS REPLACEMENT WAS ALSO WRONG, and it is the more useful half of this note.
+    // 4.1's output carries "a confidence", so restoring the sentence from its own source would
+    // read "...evidence rows attached, a confidence, and a recovery plan". The engine in
+    // `packages/insights` REFUSES to produce one: "uncertainty is measured, never decorated --
+    // there is no error bar and no confidence constant anywhere". What it produces instead is a
+    // RANGE whose ends come from splitting the contributing rows on `is_provisional`, which is a
+    // measurement rather than a number attached to a guess.
+    //
+    // That is a genuine divergence between the specification and what was built, and it was built
+    // that way on purpose. It is recorded here rather than resolved by quoting the spec, because
+    // the spec is the older document and the one rule is the newer decision.
     id: "diagnose",
-    text: "Ranked causes with the evidence rows attached, what was ruled out, and a recovery plan.",
+    text: "Ranked causes with the evidence rows attached, and a recovery plan.",
     source: ["4.1"],
     requiresCapabilities: ["surface:diagnose"],
   },
@@ -383,6 +408,38 @@ export const FORBIDDEN_CLAIMS: ReadonlyArray<{ pattern: RegExp; reason: string }
   {
     pattern: /\b(rank|ranked|position)\s+\d+\s+in\s+(ai|chatgpt|perplexity|gemini)\b/i,
     reason: "Section 11.8: report confidence intervals, never a single rank.",
+  },
+  {
+    /* THE ELIMINATED-CAUSES CLAIM, AND WHY IT NEEDED A BAN RATHER THAN A DELETION.
+     *
+     * "what was ruled out" sat in the middle of the `diagnose` claim above, cited to section 4.1,
+     * and is not in section 4.1. It is in section 14 -- the LANDING PAGE DRAFT -- describing a chat
+     * card that shows "three causes in words with source tags, what was ruled out, and next steps".
+     * Section 14 is where "nothing monthly / pay as you go" comes from too, which is the ban three
+     * entries above: a drawing of a thing somebody would like to sell is not a decision to sell it.
+     *
+     * Removing the phrase from the claim was necessary and was NOT sufficient, and the gap was
+     * demonstrated rather than reasoned about. `withheld-claims.test.tsx` derives its five-word
+     * runs FROM THE CLAIM TEXT, so it caught "what was ruled out and" only for as long as the
+     * claim contained it. Deleting the phrase therefore deleted the guard with it: the same
+     * sentence written into a section body went from failing the build to passing silently, which
+     * a mutation confirmed. A cut that removes a claim and its detector in one move leaves the
+     * phrase MORE writable than before it was ever questioned.
+     *
+     * THE PATTERN IS BUILT AGAINST THIS LIST'S RECORDED NEAR-MISSES. Separators are `\W{0,4}`
+     * rather than `\s`, because `/\b\d+\s+(sources|integrations)\b/` let "200+ integrations"
+     * through on exactly that difference; and both orders are banned, because the competitor
+     * pattern taught that a `\b` boundary is not a substitute for writing out the variant.
+     *
+     * It is deliberately NARROW: it fires on eliminated CAUSES, not on the ordinary English "we
+     * ruled out storing a hash", which this repository's own design notes use.
+     */
+    pattern:
+      /\bwhat\W{1,4}(?:was|were|we|it)?\W{0,4}ruled\W{0,4}out\b|\b(?:causes?|hypothes[ei]s|hypotheses)\W{1,8}(?:that\W{1,8})?(?:were|was)?\W{0,4}(?:ruled\W{0,4}out|eliminated|excluded)\b|\b(?:ruled\W{0,4}out|eliminated|excluded)\W{1,8}(?:causes?|hypothes[ei]s|hypotheses)\b/i,
+    reason:
+      "A list of eliminated causes is section 14's landing-page artboard, not section 4.1's " +
+      "output, which is ranked hypotheses with evidence rows, a confidence and a recovery plan. " +
+      "Delete this pattern in the change that both builds the capability and sources it.",
   },
   {
     pattern: /\bfrankfurt\b|\buk gdpr\b|\bsaml sso\b|\bsso included\b/i,
