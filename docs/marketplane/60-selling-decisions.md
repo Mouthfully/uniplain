@@ -208,7 +208,7 @@ All three reverted; the suite is green.
 
 ## 6. GATE 18: every claim written ahead of its capability
 
-> **AMENDED BY `docs/marketplane/64-the-deletion-pass.md` (2026-09-13).** The ledger below is the
+> **AMENDED BY `docs/marketplane/65-the-deletion-pass.md` (2026-09-13).** The ledger below is the
 > state of the page when it was written. A later unit acted on the two groups it separates —
 > **6.3 (the contract has no shape for it)** and the language and follow-up clauses — and rewrote
 > or removed every line in them. **Sections 6.1, 6.2 and 6.4 through 6.7 still stand**: those are

@@ -1,4 +1,4 @@
-# 64. The deletion pass: a roadmap item and a promise with no path are not the same thing
+# 65. The deletion pass: a roadmap item and a promise with no path are not the same thing
 
 **PR:** #41 &nbsp;·&nbsp; **Date:** 2026-09-13 &nbsp;·&nbsp; **Status:** proposed
 
@@ -78,10 +78,24 @@ per-trade emphasis is real code; the inference is not. The step now says who sup
 ### Five audience cards kept, ten claims inside them rewritten
 
 **No card was cut, and that is a deliberate reading of what was false.** "Built for cafés" is a
-statement of *who it is for*; note 60 §6.5's finding — that four of the five trades have no
-reachable source today — makes that a hard road, not an untruth, and issue #49 asks for the
-audience by name. What was false is narrower: every `leadsWith` line named a figure **the envelope
-has no shape for**.
+statement of *who it is for*; note 60 §6.5's finding — that four of the five trades had no
+reachable source — makes that a hard road, not an untruth, and issue #49 asks for the audience by
+name. What was false is narrower: every `leadsWith` line named a figure **the envelope has no shape
+for**.
+
+**That finding moved under this unit's feet, and the change is in the right direction.** The
+Loyverse point-of-sale connector landed on this branch while the pass was being written, so the
+café now has a reachable source and the count is two of five, not one. It does **not** reopen any
+line cut here: `loyverse/normalize.ts` maps a receipt to exactly two dictionary entries — `revenue`
+and `orders` — and its own header rules out the rest for the same reasons this note gives, more
+precisely. On hourly takings: *"a GRAIN problem, not a metric problem. `dimensions.date` is a
+calendar day and the upsert key carries no time component, so there is nowhere to put it."* On
+margin: the line items carry `cost` and `cost_total` and **the column still does not exist**.
+
+It did correct one line of mine. The café card first read "what fees took back out of them", which
+is true of the schema — `fees` is in the dictionary, from WooCommerce — and **false of the shop**: a
+Loyverse-only café has nothing to deduct, because no delivery platform in that connector takes a
+cut. A figure that exists somewhere in the dictionary is not thereby a figure this customer has.
 
 | Figure | Why it has no column |
 |---|---|

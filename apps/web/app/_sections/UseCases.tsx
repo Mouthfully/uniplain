@@ -106,9 +106,14 @@ const CASES = [
   {
     id: "food",
     audience: "Cafés, bars and restaurants",
+    // "takings", NOT "after fees", and the pilot connector is why. `loyverse/normalize.ts` maps a
+    // receipt to exactly two dictionary entries -- `revenue` and `orders` -- and says in its own
+    // header that a Loyverse-only cafe has nothing to deduct: there is no delivery platform in the
+    // connector taking a cut. `fees` exists in the dictionary for WooCommerce, so putting it on the
+    // cafe card would have been true of the schema and false of the shop.
     title: "Know what yesterday actually paid you.",
-    body: "Yesterday's takings, what fees took back out of them, and the one change worth making this week.",
-    leadsWith: "Leads with takings, fees and what the ads brought",
+    body: "Yesterday's takings and how many receipts made them, against the same day last week, and the one change worth making.",
+    leadsWith: "Leads with takings and receipts by day",
     path: "M4 13h3v8H4zM10 8h3v13h-3zM16 3h3v18h-3z",
   },
   {
@@ -132,7 +137,7 @@ const CASES = [
     audience: "Clinics and salons",
     title: "Fill the days that sit empty.",
     body: "Which days fill and which sit quiet, and what you spent to bring each booking through the door.",
-    leadsWith: "Leads with takings by day and cost per booking",
+    leadsWith: "Leads with takings by day and what you spent to fill it",
     path: "M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Zm0-13v5l3.5 2",
   },
   {
