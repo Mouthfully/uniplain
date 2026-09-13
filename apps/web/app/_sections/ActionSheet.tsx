@@ -41,8 +41,21 @@ const EYEBROW = "The action sheet";
 const HEADING_TOP = "Every insight ends in a to-do,";
 const HEADING_BOTTOM = "not a chart.";
 
+/**
+ * THE SECOND SENTENCE WAS "Next Monday it checks whether each one worked and says so." It is gone,
+ * along with the `FOLLOW_UP` line it was illustrated by (see `FOOTNOTE` for what took that row)
+ * and the matching clauses in `FeatureGrid`
+ * and `SimplerWay`. Nothing in `apps/` or `packages/` compares a recommendation against what
+ * happened afterwards. That is not a cadence that a cron supplies -- it needs a record of what was
+ * recommended, a record of what the owner did, and a measurement of the period after. None of the
+ * three exists, and the first two would each be a table.
+ *
+ * The replacement sentence is the uncertainty rule, which IS real: `estimateFrom` in
+ * `packages/insights/src/figures.ts` returns a range rather than a point whenever settled and
+ * provisional rows disagree, and refuses to produce a figure at all when neither is readable.
+ */
 const LEAD =
-  "Each Monday you get a short list for the week: what to do, why, what it is worth and how long it takes. Next Monday it checks whether each one worked and says so.";
+  "Each Monday you get a short list for the week: what to do, why, what it is worth and how long it takes. Where the numbers behind a figure may still change, it gives you a range instead of a number.";
 
 /**
  * The three properties, as fragments and one short sentence pair. They carry terminal punctuation
@@ -60,13 +73,44 @@ const CTA_LABEL = "See this week's list";
 /** The card's own chrome. `SAMPLE` is the label section 5.3 makes mandatory, not a flourish. */
 const CARD_TITLE = "This week";
 const SAMPLE = "Sample figures";
-const CARD_SUMMARY = "Three actions, worth about ฿6,400 a month between them";
+/**
+ * THIS LINE ADDED A WEEKLY FIGURE INTO A MONTHLY TOTAL, which is the exact arithmetic this product
+ * refuses. It read "Three actions, worth about ฿6,400 a month between them", and ฿6,400 is roughly
+ * ฿3,600 + ฿1,840 + ฿900 -- the first two monthly, the third the top of a range quoted PER WEEK.
+ * The monthly total of the three is nearer ฿8,800 to ฿11,500, and that figure has a division by
+ * weeks-per-month buried in it that nothing on this page states.
+ *
+ * So it does not convert. It sums the two figures that share a unit and leaves the third in its
+ * own, which is exactly what `combineMetric` does with an incompatible aggregation: a total across
+ * units is not a smaller total, it is a different quantity. Both ends are exact --
+ * ฿3,100 + ฿1,840 and ฿3,600 + ฿1,840 -- so nothing here is rounded into truth either.
+ */
+export const CARD_SUMMARY = "Three actions: ฿4,940 to ฿5,440 a month, plus ฿900 to ฿1,400 a week";
+
+/**
+ * The card's footer strip, which the deleted `FOLLOW_UP` used to fill. The row is kept because the
+ * design uses it to close the card, and what goes in it is the single most heavily backed sentence
+ * on this page: `packages/insights/src/verify.ts` extracts every numeral from what the model wrote
+ * and refuses the WHOLE insight if one of them is not traceable to the input rows -- it does not
+ * strip the number, round it to something true, or retry with a sterner prompt.
+ */
+const FOOTNOTE =
+  "If a figure cannot be traced back to your own data, you get nothing rather than a guess.";
 
 /** Names the ordered list for assistive tech, which otherwise hears three bare numerals. */
 const ACTIONS_LABEL = "This week's actions, most valuable first";
 
 /**
  * The three sample actions, in value order, which is the order the section promises.
+ *
+ * EXPORTED, ALONG WITH `CARD_SUMMARY`, FOR ONE TEST AND NO OTHER CALLER.
+ * `action-sheet-arithmetic.test.tsx` checks that the summary is the sum of these, per period, with
+ * nothing converted between weeks and months. Scraping the two out of the rendered markup was tried
+ * first and is worse: the list's accessible name is an ATTRIBUTE, so stripping tags removes the
+ * boundary the scrape needed and the match ran on into the action titles, where it found a ฿5 and
+ * compared it to a total. A test that reads its own inputs out of prose is a test with a parser in
+ * it. The test still asserts both values appear in the markup, so the export cannot drift from what
+ * a reader sees.
  *
  * `impact` is a RANGE on two of the three and a point on the one whose inputs are settled -- that
  * asymmetry is the second property made visible rather than merely asserted. `note` says where the
@@ -77,7 +121,7 @@ const ACTIONS_LABEL = "This week's actions, most valuable first";
  * vendors appearing as sources anywhere on the site until one is both built and reachable, and a
  * row reading "GrabFood takes 30%" -- as the artboard's does -- is a source claim in a sentence.
  */
-const ACTIONS = [
+export const ACTIONS = [
   {
     id: "price",
     title: "Raise two delivery items by ฿5",
@@ -103,9 +147,6 @@ const ACTIONS = [
     effort: "One rota change",
   },
 ] as const;
-
-/** The following week's check, which is the half of the promise most tools never keep. */
-const FOLLOW_UP = "Last week: two of three done, ฿4,900 recovered so far.";
 
 export function ActionSheet() {
   return (
@@ -195,7 +236,7 @@ export function ActionSheet() {
         </ol>
 
         <p className="bg-surface text-ink-subtle mt-4 rounded-sm p-3 text-[11px] leading-[1.5]">
-          {FOLLOW_UP}
+          {FOOTNOTE}
         </p>
       </div>
     </section>

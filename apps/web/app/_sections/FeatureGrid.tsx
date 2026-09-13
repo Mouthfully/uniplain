@@ -56,7 +56,7 @@ const HEADING_TOP = "Four things that end";
 const HEADING_BOTTOM = "in a decision.";
 
 const LEAD =
-  "None of them hands you a chart to interpret. Yesterday in three lines at breakfast, a ranked list on Monday, a plain answer whenever you ask, and the report your bank or your accountant wants on the first.";
+  "None of them hands you a chart to interpret. Yesterday in three lines at breakfast, a ranked list on Monday, a plain answer whenever you ask, and the report your accountant wants on the first.";
 
 /**
  * The four capabilities, in the order the founder's plan lists them and the order an owner meets
@@ -68,6 +68,11 @@ const LEAD =
  * `packages/` -- which is why the accompanying design note records each of these four bodies as a
  * claim written ahead of its capability rather than leaving them to be discovered later.
  *
+ * WHAT WAS CUT, AND THE LINE IT WAS CUT ON. Being unbuilt is not by itself a reason to delete a
+ * line: a roadmap item is a promise with a path. Three clauses here had no path -- a language
+ * nothing is localised to, a comparison nothing performs, and two report names the data dictionary
+ * cannot express -- and each is annotated below at the line it left.
+ *
  * `path` is a 24-box outline mark on the same 1.7 stroke as the reference's icon set, and
  * deliberately not one of the four marks the section above already spends: repeating those here
  * would make two adjacent grids look like the same grid twice.
@@ -76,14 +81,27 @@ const CARDS = [
   {
     id: "brief",
     title: "Morning brief",
-    body: "Yesterday in three lines, anything unusual, and one thing worth doing today. Reply to ask a follow-up, in Thai or English.",
+    // "Reply to ask a follow-up, in Thai or English" was cut. Two separate things were wrong with
+    // it and only one of them is a roadmap item. No channel adapter exists, so there is nothing to
+    // reply TO -- that is unbuilt. But **nothing in this repository is localised to Thai**: not a
+    // string table, not a locale, not a model instruction. Naming a language is a specific,
+    // checkable promise, and it was the kind that a customer discovers is false on their first
+    // attempt rather than eventually.
+    body: "Yesterday in three lines, anything unusual, and one thing worth doing today.",
     tone: "text-accent",
     path: "M12 3.5 13.9 9 19.5 11 13.9 13 12 18.5 10.1 13 4.5 11 10.1 9 12 3.5ZM19 3v3m1.5-1.5h-3",
   },
   {
     id: "actions",
     title: "Action sheet",
-    body: "A short weekly list, ordered by what each item is worth. The following week it checks whether each one worked.",
+    // THE FOLLOW-UP CHECK IS GONE FROM ALL THREE PLACES IT WAS WRITTEN -- here, `ActionSheet`'s
+    // lead and card, and `SimplerWay`'s fourth step. Nothing compares a recommendation against
+    // what happened afterwards, anywhere in `apps/` or `packages/`, and the sentence describes a
+    // mechanism rather than a schedule: a weekly cron would not produce it.
+    //
+    // The replacement half is the part that IS real: `rankActions` orders by value and `Estimate`
+    // carries a range when the inputs are unsettled, both in `packages/insights`.
+    body: "A short weekly list, ordered by what each item is worth, with the worth worked out from your own numbers.",
     tone: "text-brand-mint",
     path: "M9 5H6a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V6a1 1 0 0 0-1-1h-3m-6 0a3 3 0 0 1 6 0m-6 0h6m-6.5 9.5 2 2 4-4.5",
   },
@@ -105,7 +123,9 @@ const CARDS = [
   {
     id: "reports",
     title: "Consolidated reports",
-    body: "The monthly investor update, the P&L by unit and channel, the bank loan pack and the accountant export, from one set of numbers.",
+    // The four names track `Reports.tsx`, which replaced two of them: there is no `unit` dimension
+    // and no cost metric for a P&L, and no bank connector for a loan pack. See that file's header.
+    body: "The monthly investor update, revenue and ad spend by channel, orders and takings by day, and the accountant export, from one set of numbers.",
     tone: "text-accent",
     path: "M7 3h7l5 5v13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Zm7 0v5h5M9 13h6m-6 4h4",
   },

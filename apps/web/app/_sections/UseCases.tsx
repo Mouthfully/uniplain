@@ -44,9 +44,13 @@
  * meant fifteen such marks, and for four of the five trades the source that matters is a Thai POS
  * or a delivery platform that section 5.1 says may not appear on this site at all until one is
  * both built and reachable. A logo is a promise with no sentence to qualify it. In its place each
- * card carries the line the plan itself uses for per-trade emphasis -- "A cafe gets hourly revenue
- * and delivery share; a guesthouse gets occupancy and commission cost" -- which is content, sits in
- * the same slot, and promises a layout rather than a connector.
+ * card carries a per-trade emphasis line, which is content, sits in the same slot, and promises a
+ * layout rather than a connector.
+ *
+ * THOSE LINES ARE NO LONGER THE PLAN'S OWN. The plan's wording is "A cafe gets hourly revenue and
+ * delivery share; a guesthouse gets occupancy and commission cost", and three of those four figures
+ * have no column in the envelope. See the note on `CASES` below for which, and why the fix was to
+ * rewrite the figure rather than to drop the trade.
  *
  * Section copy. `scripts/check-copy.mjs` refuses a sentence typed into the JSX, so every line
  * arrives from here. Eyebrows are stored in sentence case because the capitals are CSS.
@@ -66,6 +70,35 @@ const CTA_LABEL = "See a sample dashboard";
  * against. `leadsWith` is the per-trade emphasis the plan promises; it describes a layout, not a
  * source, and names no platform.
  *
+ * ============================================================================================
+ * EVERY `body` AND `leadsWith` ON THIS SECTION WAS REWRITTEN, AND NONE OF THE FIVE CARDS WAS CUT.
+ * ============================================================================================
+ *
+ * The audience is not the false part. Saying this is built for cafés is a statement of who it is
+ * for, and `docs/marketplane/60` section 6.5's finding -- that four of these five trades have no
+ * reachable source today -- makes that a hard road, not an untruth. What was false is narrower and
+ * worse: every `leadsWith` line named a figure **the envelope has no shape for**, which is note
+ * 60's section 6.3, the group it calls worse than unbuilt.
+ *
+ *   hourly revenue, utilisation by hour   `date` is a calendar day and the upsert key has NO time
+ *                                         component. There is nowhere to put an hourly figure.
+ *   delivery share, occupancy             not metrics in `packages/contract/src/metrics.ts`.
+ *   margin by listing                     margin needs a cost of goods, which the dictionary does
+ *                                         not have -- AND the WooCommerce entity is `shop_order`,
+ *                                         so there is no per-listing granularity to carry it. Two
+ *                                         independent blocks on one line.
+ *   one export per client                 no export exists, and multi-client switching sits behind
+ *                                         `surface:agency-switching`, which is WITHHELD.
+ *
+ * So each line was rewritten to a figure the dictionary actually holds -- revenue, orders,
+ * net_revenue, fees, commission, spend, conversions -- at the grain the envelope actually stores,
+ * which is a DAY and a SOURCE. A trade-specific layout over figures that exist is the promise the
+ * per-trade code (`leadingMetrics`) can keep; a trade-specific figure that has no column is not.
+ *
+ * The hourly framing survives in exactly one place, the hero, where it is drawn inside a panel
+ * labelled as a sample and issue #49 asks for it by name. A sample may illustrate a number it does
+ * not yet have; a capability line may not.
+ *
  * `path` is the reference's own 24-box outline mark where the trade matches one of its three, and
  * the same icon family for the two it did not have.
  */
@@ -73,41 +106,41 @@ const CASES = [
   {
     id: "food",
     audience: "Cafés, bars and restaurants",
-    title: "Know which hours pay, before you open.",
-    body: "Yesterday's takings by hour, what delivery really came to, and the one change worth making this week.",
-    leadsWith: "Leads with hourly revenue and delivery share",
+    title: "Know what yesterday actually paid you.",
+    body: "Yesterday's takings, what fees took back out of them, and the one change worth making this week.",
+    leadsWith: "Leads with takings, fees and what the ads brought",
     path: "M4 13h3v8H4zM10 8h3v13h-3zM16 3h3v18h-3z",
   },
   {
     id: "stay",
     audience: "Hotels and guesthouses",
     title: "See which nights to hold and which to fill.",
-    body: "Occupancy against the same week last year, and what each booking channel costs you to fill a room.",
-    leadsWith: "Leads with occupancy and channel cost",
+    body: "What each night took against the same week last year, and what you spent to fill the rooms.",
+    leadsWith: "Leads with takings by night and cost to fill",
     path: "M3 21V8l9-5 9 5v13M9 21v-6h6v6",
   },
   {
     id: "sellers",
     audience: "Online sellers",
-    title: "Find the listing that costs you on every order.",
-    body: "Orders, fees and ad spend on one line per listing, so a product that sells well and earns nothing shows up.",
-    leadsWith: "Leads with margin by listing and by channel",
+    title: "Find out what an order is really worth.",
+    body: "Orders, the fees taken out of them, and the ad spend beside both, so a busy day that earns nothing shows up.",
+    leadsWith: "Leads with fees and ad spend against orders",
     path: "m3 7 9-5 9 5v10l-9 5-9-5V7Zm0 0 9 5 9-5m-9 5v10",
   },
   {
     id: "clinics",
     audience: "Clinics and salons",
-    title: "Fill the hours that sit empty.",
-    body: "Which hours book out, which treatments bring people back, and where an hour of staff time earns least.",
-    leadsWith: "Leads with utilisation by hour and by treatment",
+    title: "Fill the days that sit empty.",
+    body: "Which days fill and which sit quiet, and what you spent to bring each booking through the door.",
+    leadsWith: "Leads with takings by day and cost per booking",
     path: "M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Zm0-13v5l3.5 2",
   },
   {
     id: "accountants",
     audience: "Accountants",
-    title: "Close every client's month from one export.",
-    body: "The same set of numbers for each client, on the first, with every figure linking back to where it came from.",
-    leadsWith: "Leads with one export per client, on the first",
+    title: "Close a client's month with every figure traceable.",
+    body: "The same set of numbers each month, with every figure linking back to the source it came from and the time it was read.",
+    leadsWith: "Leads with the source and read time on every figure",
     path: "M7 3h7l5 5v13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Zm7 0v5h5M9 13h6m-6 4h4",
   },
 ] as const;

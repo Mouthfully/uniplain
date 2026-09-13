@@ -9,9 +9,31 @@
  * capability (consolidated reports) with nowhere else to live, and it is exactly a four-up of
  * named, finished documents.
  *
- * THE FOUR ARE THE PLAN'S OWN LIST: monthly investor update, P&L by unit and channel, bank loan
- * pack, accountant export. Not a category each -- a document each, with a name the person who
- * asked for it would use.
+ * THE FOUR WERE THE PLAN'S OWN LIST and two of them are no longer on it: monthly investor update,
+ * **P&L by unit and channel**, **bank loan pack**, accountant export. Not a category each -- a
+ * document each, with a name the person who asked for it would use.
+ *
+ * WHY TWO WERE REPLACED RATHER THAN LEFT AS A ROADMAP LINE. `docs/marketplane/60` groups the
+ * unbacked copy by what is missing, and these two sit in the group it calls worse than unbuilt:
+ * the contract has no shape for them, so no amount of building delivers them without a dictionary
+ * change first.
+ *
+ *   * "P&L by unit and channel" is blocked twice. `dimensionsSchema` carries date, currency,
+ *     timezone and attribution_window -- there is no `unit`. And a P&L needs costs:
+ *     `packages/contract/src/metrics.ts` has `spend`, `fees` and `commission`, and nothing that
+ *     is a cost of goods or an operating expense. A profit-and-loss statement cannot be computed
+ *     from a dictionary with no cost side.
+ *
+ *   * "Bank loan pack" has no bank. `packages/connectors/src/sources` holds air4thai, ga4,
+ *     google_ads, meta_ads, search_console and woocommerce. Note 60 section 1.3 records Thai
+ *     deposit data as regulator-blocked until roughly 2027, so this is not a connector somebody
+ *     writes next quarter.
+ *
+ * The two replacements are named for what the envelope can actually express today: `source` IS the
+ * channel, and revenue, orders, net_revenue, fees and spend are all in the dictionary. None of the
+ * four is GENERATED yet -- that is a real gap and note 60 section 6.2 records it -- but a report
+ * that has not been written is a roadmap item, and a report the data model cannot express is a
+ * promise with nothing behind it.
  *
  * THE CARDS ARE LINKS, NOT BUTTONS. The reference ships each card as `<button data-template="...">`,
  * wired by its own script to open the page's `<dialog id="demo">` with a preview. Neither that
@@ -54,7 +76,7 @@ const HEADING_TOP = "The report a finance team";
 const HEADING_BOTTOM = "would write. On the 1st.";
 
 const LEAD =
-  "Every unit, channel, bank account and ad account consolidated into one set of numbers, then written up as the document your co-founder, your bank or your accountant actually asked for. Every figure links back to where it came from.";
+  "Every sales channel and ad account consolidated into one set of numbers, then written up as the document your co-founder or your accountant actually asked for. Every figure links back to where it came from and when it was read.";
 
 const CTA_LABEL = "See what is in one";
 
@@ -70,7 +92,8 @@ const CHART_LABEL = "Sample figures";
  * pairs, transcribed from the reference's inline styles and left exactly as drawn.
  *
  * NONE OF THESE IS GENERATED TODAY. There is no report writer anywhere in `apps/` or `packages/`,
- * and the accompanying design note records all four as claims written ahead of the capability.
+ * and the accompanying design note records all four as claims written ahead of the capability. The
+ * difference the header draws still holds: all four are unbuilt, and all four are now expressible.
  */
 const REPORTS = [
   {
@@ -87,7 +110,7 @@ const REPORTS = [
     ],
   },
   {
-    name: "P&L by unit and channel",
+    name: "Revenue and ad spend by channel",
     bars: [
       [29, 0.45],
       [45, 0.52],
@@ -100,7 +123,7 @@ const REPORTS = [
     ],
   },
   {
-    name: "Bank loan pack",
+    name: "Orders and takings by day",
     bars: [
       [23, 0.45],
       [39, 0.52],

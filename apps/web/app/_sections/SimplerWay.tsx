@@ -61,8 +61,23 @@ const CTA_LABEL = "See how it works";
  * marks are 24px-grid outlines on a 1.75 stroke, per the brand guide's "Shape and interface
  * details", and they are the reference's own four in the reference's own order.
  *
- * STEP FOUR IS THE ONE MOST PRODUCTS LEAVE OUT, which is why it is here: a recommendation nobody
- * ever checks is indistinguishable from a guess.
+ * STEP FOUR USED TO BE "Check" -- "Next week it says whether it worked, in your own numbers" -- on
+ * the argument that a recommendation nobody ever checks is indistinguishable from a guess. The
+ * argument is right and the capability does not exist: nothing in `apps/` or `packages/` compares a
+ * recommendation against what happened afterwards, and it is not a cron away. It needs a record of
+ * what was recommended, a record of what the owner did about it, and a measurement of the period
+ * after -- two tables and a job, none of which is written.
+ *
+ * So the step now carries the property that IS true at the end of the sequence, and is the reason
+ * the whole product exists: every figure names its source and the moment it was read, and says so
+ * while it may still change. `fetched_at` and `is_provisional` are envelope columns that
+ * `/dashboard` renders today. The follow-up check belongs in this section when it is built; a step
+ * that describes it before then is the guess it warns against.
+ *
+ * STEP TWO went the same way. It read "It works out what kind of business you run from the data",
+ * and nothing infers a business type: `leadingMetrics(business)` in
+ * `packages/insights/src/figures.ts` takes the type as an INPUT. The per-trade emphasis is real
+ * code; the inference is not, so the step now says who supplies it.
  */
 const CAPABILITIES = [
   {
@@ -73,7 +88,7 @@ const CAPABILITIES = [
   },
   {
     title: "Learn",
-    body: "It works out what kind of business you run from the data.",
+    body: "You say what kind of business you run. It works out which numbers matter for it.",
     tone: "text-brand-mint",
     path: "m12 3 9 5-9 5-9-5 9-5ZM3 12l9 5 9-5M3 16l9 5 9-5",
   },
@@ -84,10 +99,14 @@ const CAPABILITIES = [
     path: "M4 13h3v8H4zM10 8h3v13h-3zM16 3h3v18h-3z",
   },
   {
-    title: "Check",
-    body: "Next week it says whether it worked, in your own numbers.",
+    title: "Trace",
+    body: "Every figure says which source it came from, and when it was read.",
     tone: "text-accent",
-    path: "M16 21v-3a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v3m20 0v-3a4 4 0 0 0-3-3.9M9 10a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm8-8a4 4 0 0 1 0 8",
+    // The mark changed with the step. The reference's fourth was a group-of-people outline, drawn
+    // for "Check" when that step was about a human being told whether something worked; on a step
+    // about a figure's link back to its source it reads as the wrong noun. A chain link on the same
+    // 24 box and 1.75 stroke as the other three.
+    path: "M9 15l6-6M10.5 7.5 12 6a4.2 4.2 0 0 1 6 6l-1.5 1.5m-3 3L12 18a4.2 4.2 0 0 1-6-6l1.5-1.5",
   },
 ] as const;
 

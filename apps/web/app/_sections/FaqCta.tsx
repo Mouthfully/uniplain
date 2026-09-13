@@ -89,9 +89,14 @@ const PRODUCT = brand.productName;
 const QUESTIONS = [
   {
     question: `What does ${PRODUCT} send me each morning?`,
+    // The second sentence was "You can reply to ask a follow-up, in Thai or English." It is gone
+    // for the reason given at `FeatureGrid`'s brief card: no channel adapter exists, so there is
+    // nothing to reply to, and -- the half that is not merely unbuilt -- NOTHING IN THIS REPOSITORY
+    // IS LOCALISED TO THAI. Not a string table, not a locale, not a model instruction. Naming a
+    // language is a specific promise a customer tests on their first attempt.
     answer:
       "Yesterday in three lines, anything that looks unusual, and one thing worth doing today. " +
-      "You can reply to ask a follow-up, in Thai or English.",
+      "Every figure in it names the source it came from and the time it was read.",
   },
   {
     question: "Where do the numbers come from?",
