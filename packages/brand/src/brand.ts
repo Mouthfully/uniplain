@@ -105,6 +105,31 @@ export interface Brand {
    * "EU hosting" conflates and which of them residency alone does not solve.
    */
   readonly dataRegion: string | null;
+  /**
+   * WHETHER THIS PRODUCT IS OFFERED TO PEOPLE IN THE UNION. A DECISION, RECORDED.
+   *
+   * It was taken -- "keep the EU, build the GDPR work", and then "keep the EU, accept the gap until
+   * you designate" -- and it lived nowhere. What lived in the repository was its CONSEQUENCES,
+   * scattered: a euro price in `_billing/plans.ts`, a footer reading "businesses everywhere", a
+   * pricing page advertising currency choice. `_processing/territorial-scope.ts` reads all three
+   * and reports them as Art. 3(2)(a) factors, correctly. None of them says anybody chose.
+   *
+   * THE REASON THAT MATTERS IS THE DOOR SWINGS BOTH WAYS AND ONLY ONE SIDE WAS BUILT. Art. 27
+   * applies because Art. 3(2)(a) is engaged, and Art. 3(2)(a) is engaged because of three product
+   * decisions expressed in code. A company that decided not to offer into the Union would need none
+   * of it -- no representative, no Clauses, no counsel on Art. 3(2) -- and would be selling lawfully
+   * into its actual market on the day it decided. That is not a recommendation and it is not this
+   * file's call; it is the alternative, and it was invisible.
+   *
+   * So the decision is a fact, and `territorial-scope.test.ts` holds it against the three signals in
+   * BOTH directions: setting this false while a euro price or universal copy still ships fails the
+   * build, because a page that offers to the Union while the record says it does not is a wrong
+   * answer in the most consequential place this repository has one. And leaving it true while every
+   * signal is gone fails too.
+   *
+   * TRUE TODAY, WHICH IS THE FOUNDER'S ANSWER AND NOT A DEFAULT.
+   */
+  readonly unionOffering: boolean;
   /** GDPR Article 27 representative. A non-EU controller serving EU data subjects generally
    *  needs one designated in writing. Until this is set, no GDPR-compliance claim may render. */
   readonly euRepresentative: string | null;
@@ -238,6 +263,7 @@ export const brand: Brand = {
   // `data-region` claim: that claim says "the region you choose", and there is one region, chosen
   // here. It stays withheld behind `surface:region-choice` until a customer can actually choose.
   dataRegion: "ap-southeast-1",
+  unionOffering: true,
   euRepresentative: null,
   dpaAvailable: true,
 
