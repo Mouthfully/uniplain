@@ -49,12 +49,16 @@ export const TYPED_PROVIDERS: readonly TypedProvider[] = [
 /**
  * The providers that can only be connected through an authorisation screen.
  *
- * LISTED RATHER THAN OMITTED. A customer who connects WooCommerce and sees nothing else has no way
- * to tell whether Google Ads is coming, missing, or was never supported -- so the screen names them
- * and says they are not available yet. A button that starts a flow this build does not have is the
- * one thing worse than saying so: `/v1/connections` refuses `credential_lane: oauth` by design,
- * because an authorisation arrives at a redirect URI as a code to exchange rather than as a string
- * anybody can type.
+ * LISTED RATHER THAN OMITTED, and now OFFERED rather than merely listed. Until the Worker grew
+ * `POST /v1/connections/oauth/start` and `/callback` these four were named on the screen and marked
+ * unavailable, because a button that starts a flow the build does not have is worse than saying so.
+ * The flow exists; the button starts it. What has NOT changed is why they are on a separate list
+ * from `TYPED_PROVIDERS`: `/v1/connections` still refuses `credential_lane: oauth`, because an
+ * authorisation arrives at a redirect URI as a code to exchange rather than as a string anybody can
+ * type, and these four have no string to type at all.
+ *
+ * THE ORDER IS THE ORDER THE SCREEN LISTS THEM IN, and the first is the default selection of the
+ * authorisation form -- which is why it is a list and not a set.
  */
 export const OAUTH_ONLY_PROVIDERS: readonly string[] = [
   "ga4",

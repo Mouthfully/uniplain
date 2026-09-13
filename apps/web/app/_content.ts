@@ -478,10 +478,58 @@ export const CONNECTIONS = {
     "Nothing here tested the credential. Whether it opens the account is settled by the first read.",
   connectAnother: "Add another connection",
 
-  oauthHeading: "Connected another way",
+  /* -------------------------------------------------------------------------------------------
+   * THE SECOND KIND OF CONNECTION, AND WHY ITS COPY IS SEPARATE FROM THE FIRST.
+   *
+   * These sentences describe a different promise, and a customer has to be able to tell the two
+   * apart before they press anything. The form above asks for a secret the customer already holds
+   * and sends it once. This one asks for no secret at all: it sends the customer to the provider,
+   * the provider issues the permission, and what comes back is exchanged out of sight. Blurring
+   * them would be a promise about where a credential goes, made to the wrong half of the screen.
+   * ------------------------------------------------------------------------------------------- */
+  oauthHeading: "Authorise a source",
   oauthNote:
-    "These sources are authorised on the provider's own consent screen rather than by pasting a credential. That flow is not built yet, so there is nothing here to press.",
-  oauthBadge: "Not yet available",
+    "These sources are not connected by pasting anything. You are sent to the provider's own consent screen, you grant read access there, and you come back here. No key of yours is typed on this page and none is asked for.",
+  oauthAccountNote:
+    "Name the account before you go. Nothing after the consent screen asks again, and an authorisation cannot be filed under an account it was never told about.",
+  oauthLeaveNote:
+    "This takes you to the provider and brings you back. The permission it issues is sealed by the service that stores credentials, exactly as a pasted key is, and is never held by this site.",
+  oauthSubmit: "Continue to the provider",
+  oauthPending: "Taking you to the provider…",
+  oauthConnectedHeading: "That source is authorised.",
+  oauthConnectedBody:
+    "The permission is stored and the connection is below. Nothing here tested what it can read; the first read settles that.",
+
+  /**
+   * WHAT EACH SOURCE FILES ITS ROWS UNDER, in the platform's own vocabulary and in the exact shape
+   * the connector uses. Each of these is read off the client that will be handed the value --
+   * `ga4/client.ts` documents `properties/123456`, `google_ads/client.ts` refuses anything but
+   * digits, `search_console/client.ts` takes either property form, and `loyverse/normalize.ts`
+   * files every row under the merchant id. A hint invented here would be a confident sentence about
+   * somebody else's product, and the connection would be filed under an account nobody has.
+   */
+  oauthFields: {
+    ga4: {
+      accountLabel: "Property",
+      accountHint:
+        "The property this connection reads, in Google's own form: properties/ followed by the numeric id.",
+    },
+    google_ads: {
+      accountLabel: "Customer id",
+      accountHint:
+        "The customer id of the account this connection reads, digits only. Leave out any dashes it is displayed with.",
+    },
+    search_console: {
+      accountLabel: "Property",
+      accountHint:
+        "The property exactly as Search Console holds it: sc-domain:example.com for a domain property, or the full address with https for a URL-prefix one.",
+    },
+    loyverse: {
+      accountLabel: "Merchant id",
+      accountHint:
+        "The merchant id of the account, which is what every receipt is filed under. It identifies the account rather than one shop, so a two-shop owner names it once.",
+    },
+  } as Record<string, { readonly accountLabel: string; readonly accountHint: string }>,
 
   expiryLegend: "Does this token expire?",
   expiryNever: "It does not expire",
@@ -582,6 +630,95 @@ export const CONNECTIONS = {
     /* Neither refusal nor success. */
     unreachable:
       "The service that stores credentials could not be reached, so this did not finish. Reload this page to see whether the connection was created before retrying.",
+    unexpected:
+      "That answer was not one this screen recognises, so it cannot say what happened. Reload this page to see whether the connection was created.",
+  },
+
+  /* -------------------------------------------------------------------------------------------
+   * THE AUTHORISATION DOOR'S OWN REFUSALS, SHARING NOTHING WITH THE TABLE ABOVE.
+   *
+   * `POST /v1/connections/oauth/*` answers with the same vocabulary as `POST /v1/connections` for
+   * the questions that are genuinely the same -- `unknown_provider`, `bad_kek`, `forbidden` -- so
+   * reusing the sentences is the obvious thing to do and it is wrong. More than half of them
+   * describe a credential somebody typed: "refused as typed", "paste the full address", "cannot be
+   * connected by typing a credential". Nobody typed anything on this path, and a customer told to
+   * check what they pasted will go looking for a field that is not on their screen.
+   *
+   * So every code gets a sentence written for THIS door, and `_oauth-refusals.test.ts` reads the
+   * code list off the endpoint's own source. The cost is duplication of the two or three that
+   * really are identical; the thing bought is that no sentence here describes the other screen.
+   *
+   * THE FOUR AT THE TOP NEVER COME FROM THE ENDPOINT. They are what the return leg decides for
+   * itself when it cannot even ask -- see `_oauth.ts` -- and they are the ones that would otherwise
+   * be a bare redirect to a sign-in page after a customer has just granted access.
+   * ------------------------------------------------------------------------------------------- */
+  oauthErrors: {
+    sessionLapsed:
+      "You were signed out while you were at the provider, so this connection was not completed. Sign in and start it again. The access you granted is safe to grant a second time.",
+    lostContext:
+      "This browser no longer has the request that started this authorisation, so there is no account to file it under and nothing was stored. Start the connection again in this browser, without closing the tab.",
+    contextMismatch:
+      "What came back does not match the authorisation this browser started, so nothing was stored. Filing it under the account named for a different request is the one thing worse than refusing it. Start the connection again.",
+    noState:
+      "The provider sent this browser back without saying which authorisation it was answering, so nothing could be completed and nothing was stored.",
+    noCode:
+      "The provider sent this browser back with neither a permission nor a reason, so there was nothing to exchange and nothing was stored.",
+
+    /* Refused here, before the customer is sent anywhere. */
+    noWorkspace:
+      "Your account has no workspace yet, so there is nowhere to put a connection. You were not sent anywhere.",
+    unknownProvider: "Choose one of the sources listed here. You were not sent anywhere.",
+    missingAccount:
+      "Name the account this connection should read before you go. You were not sent anywhere.",
+    workspaceUnavailable:
+      "Your workspace could not be read just now, so nothing was started. Try again in a moment.",
+    notDeployed:
+      "This deployment does not know where to start an authorisation, so nothing was started. That is a setting on our side, not something you can fix.",
+    unusableAnswer:
+      "The service answered something this screen could not use to send you on, so you were not sent. Nothing was authorised and nothing was stored.",
+
+    /* Refused by `POST /v1/connections/oauth/start` or `/callback`, one sentence per code. */
+    unauthorized:
+      "Your session was not accepted, so nothing was stored. Sign in again and start the connection over.",
+    forbidden:
+      "Your account may not add a connection to this workspace, so nothing was stored. An owner or admin of the organisation can add it, or grant you access.",
+    already_connected:
+      "That account is already connected in this workspace, so nothing was changed. Replacing a live permission is an edit rather than a second connection.",
+    bad_request:
+      "The account you named was refused before anything was stored. Check it against the shape the field describes, then start the connection again.",
+    unknown_provider: "This build cannot connect that source, so nothing was stored.",
+    unsupported_lane:
+      "That source has no consent screen to send you to, so there is nothing here to authorise.",
+    invalid_credential:
+      "The permission the provider issued was refused before anything was stored. Start the connection again.",
+    credential_expired:
+      "The permission the provider issued had already expired when it arrived, so nothing was stored. Start the connection again.",
+    bad_kek:
+      "Credentials cannot be sealed on this deployment right now, so nothing was stored. Nothing you change here will help; quote the reference below.",
+    not_configured:
+      "This deployment is not registered with that provider, so there is no consent screen to send you to and nothing was started. That is a setting on our side.",
+    state_mismatch:
+      "That authorisation could not be matched to one this workspace started. It may have been completed already, or belong to another workspace. Nothing was stored; start the connection again.",
+    authorization_expired:
+      "Too long passed between starting this authorisation and coming back, so it was refused and nothing was stored. Start the connection again.",
+    provider_denied:
+      "The provider did not grant access, either because it was declined on the consent screen or because the provider itself refused. Nothing was stored.",
+    token_exchange_failed:
+      "The provider would not exchange that authorisation, so nothing was stored. An authorisation can only be exchanged once; start the connection again.",
+    missing_refresh_token:
+      "The provider issued a permission that cannot be renewed, which would stop working within the hour, so nothing was stored. Remove this app's access in your account at the provider, then start the connection again.",
+    missing_scope:
+      "The provider came back without a permission this source needs in order to read anything, so nothing was stored. Start again and grant everything the consent screen asks for.",
+    store_unavailable:
+      "The database could not be reached, so this did not finish and nothing partial was stored. Start the connection again, and quote the reference below if it keeps happening.",
+
+    /* Our fault rather than the customer's, and said so rather than dressed as their mistake. */
+    clientFault:
+      "This screen sent something the service would not read, so nothing was stored. That is a fault on our side.",
+
+    /* Neither refusal nor success. */
+    unreachable:
+      "The service that stores credentials could not be reached, so this did not finish. Reload this page to see whether the connection was created before starting again.",
     unexpected:
       "That answer was not one this screen recognises, so it cannot say what happened. Reload this page to see whether the connection was created.",
   },
