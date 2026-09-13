@@ -212,10 +212,11 @@ export const PROCESSING_ACTIVITIES: readonly ProcessingActivity[] = [
     subjects: "People who asked to be told about the product before it launched.",
     categories: "An email address and the page it was submitted from.",
     basis:
-      "Consent at the time of collection. The purpose it was collected for no longer exists as a feature, which is the condition that ends a retention basis -- so these rows are held with no current purpose and that is recorded here rather than glossed.",
+      "Consent at the time of collection. The purpose it was collected for no longer exists as a feature, which is the condition that ends a retention basis -- so these rows are held with no current purpose and that is recorded here rather than glossed. Collection is closed in the schema and not merely in the interface: the write path was revoked from every role the internet can reach, so this entry's claim is enforced rather than asserted.",
     recipients: ["Supabase"],
     retention: null,
-    evidence: "supabase/migrations/20260912000700_waitlist.sql, apps/web/app/access/page.tsx",
+    evidence:
+      "supabase/migrations/20260912000700_waitlist.sql, supabase/migrations/20260913001500_close_waitlist_collection.sql, supabase/tests/23_waitlist_closed.sql, apps/web/app/access/page.tsx",
   },
 ];
 
