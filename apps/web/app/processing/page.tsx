@@ -3,6 +3,13 @@ import type { Metadata } from "next";
 import { Footer, SiteHeader } from "../_chrome";
 import { NO_PERSONAL_DATA, PROCESSING_ACTIVITIES } from "../_processing/activities";
 import { PROCESSING_COPY } from "../_processing/content";
+import {
+  SECTION_28_LIMBS,
+  SECTION_29_LIMBS,
+  transferPosition,
+  transferReason,
+  transferRecords,
+} from "../_processing/transfer-basis";
 
 /**
  * THE RECORD OF PROCESSING ACTIVITIES, PUBLISHED.
@@ -137,6 +144,55 @@ export default function ProcessingPage() {
                 {entry.why}
               </p>
             ))}
+          </section>
+
+          {/* THE TRANSFER POSITION, UNDER THE LAW THAT ACTUALLY BINDS. `scc-annexes.ts` prepares the
+              Commission's Clauses, which are the GDPR instrument for a law whose application here
+              is still undecided. PDPA s.5 binds this controller today. See transfer-basis.ts. */}
+          <section className="border-line bg-surface mt-6 rounded-xl border p-6">
+            <h2 className="font-display text-ink text-xl font-semibold tracking-[-0.02em]">
+              {PROCESSING_COPY.transferHeading}
+            </h2>
+            <p className="text-ink-subtle mt-2 max-w-[620px] text-xs leading-relaxed">
+              {PROCESSING_COPY.transferNote}
+            </p>
+            <p className="text-ink-muted mt-4 max-w-[620px] text-sm leading-relaxed">
+              {transferReason()}
+            </p>
+            <p className="text-ink mt-4 max-w-[620px] text-sm leading-relaxed font-bold">
+              {transferPosition()}
+            </p>
+
+            <ul className="mt-6">
+              {transferRecords().map((record) => (
+                <li key={record.processor} className="border-line mt-4 border-t pt-4">
+                  <p className="text-ink text-sm font-bold">
+                    {record.processor}
+                    {record.destination === null ? null : ` — ${record.destination}`}
+                  </p>
+                  <p className="text-ink-muted mt-1 text-sm leading-relaxed">{record.note}</p>
+                </li>
+              ))}
+            </ul>
+
+            <h3 className="text-ink mt-8 text-sm font-bold">
+              {PROCESSING_COPY.transferLimbHeading}
+            </h3>
+            <ul className="mt-2">
+              {[...SECTION_28_LIMBS, ...SECTION_29_LIMBS].map((limb) => (
+                <li key={limb.id} className="mt-4">
+                  <p className="text-ink-subtle text-xs">
+                    {PROCESSING_COPY.transferStateLabels[limb.state]}
+                  </p>
+                  <p className="text-ink mt-1 text-sm leading-relaxed font-bold">{limb.test}</p>
+                  <p className="text-ink-muted mt-1 text-sm leading-relaxed">{limb.finding}</p>
+                </li>
+              ))}
+            </ul>
+
+            <p className="text-ink-subtle mt-6 max-w-[620px] text-xs leading-relaxed">
+              {PROCESSING_COPY.transferAdequacyUnverified}
+            </p>
           </section>
 
           <section className="border-line mt-6 rounded-xl border border-dashed p-6">

@@ -125,3 +125,45 @@ export function targetingSignals(): readonly ScopeFactor[] {
 export function unrepresentedOffering(): boolean {
   return targetingSignals().length > 0 && brand.euRepresentative === null;
 }
+
+/**
+ * WHAT WOULD HAVE TO CHANGE FOR THE OFFERING TO STOP REACHING THE UNION.
+ *
+ * Generated from the signals that are actually present, so it is a work list rather than an
+ * opinion. It exists because the Art. 27 obligation has been described in four documents as
+ * something to obtain, and never once as something to make inapplicable -- and Art. 27 applies only
+ * because Art. 3(2)(a) is engaged, and Art. 3(2)(a) is engaged because of these three decisions.
+ *
+ * THIS IS NOT A RECOMMENDATION. The founder chose to keep the Union twice, on the record, and
+ * `brand.unionOffering` is that answer. What was missing was the other side of the door written
+ * down anywhere, so a decision taken when the cost was abstract could be retaken now that it is a
+ * representative, a set of Clauses and a counsel opinion.
+ */
+export function closingRequirements(): readonly string[] {
+  return targetingSignals().map((factor) => {
+    switch (factor.id) {
+      case "member-state-currency":
+        return "Stop quoting a euro price. `CURRENCIES` in `apps/web/app/_billing/plans.ts` is where the offering accepts a Member State's currency, and the EDPB treats that as a targeting factor in its own right.";
+      case "universal-offer":
+        return "Stop addressing the offering without territorial limit. The footer constants in `_content.ts` render site-wide; a site that named its markets would not read as an offer to the Union.";
+      case "currency-choice-offered":
+        return "Stop presenting currency choice as a feature of the offering. `apps/web/app/pricing/page.tsx` heads the page with it, and that factor speaks to what the controller ENVISAGES -- the question Art. 3(2)(a) actually asks -- rather than to what a payment processor happens to support.";
+      default:
+        return `Remove the factor "${factor.id}", which this function does not have a description for -- add one rather than leaving a gap in a work list somebody would act on.`;
+    }
+  });
+}
+
+/**
+ * Whether the recorded decision and the site agree.
+ *
+ * `"coherent"` in both directions. The two incoherent states are named separately because they are
+ * different failures with different owners: a site offering to the Union while the record says it
+ * does not is a compliance exposure nobody has decided to take, and a record saying the Union is
+ * served by a site that names no territory is a set of obligations being carried for nothing.
+ */
+export function offeringCoherence(): "coherent" | "offers-undeclared" | "declared-unoffered" {
+  const signals = targetingSignals().length > 0;
+  if (brand.unionOffering === signals) return "coherent";
+  return brand.unionOffering ? "declared-unoffered" : "offers-undeclared";
+}

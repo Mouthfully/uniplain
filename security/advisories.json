@@ -1,0 +1,4 @@
+{
+  "note": "Acknowledged dependency advisories, read by scripts/check-advisories.mjs. An entry suppresses ONE advisory by its GHSA id -- never a module, so acknowledging today's finding cannot hide tomorrow's in the same package -- and stops working on its expiry date, which may be at most 90 days out. Every field is required, and a reason under 60 characters is refused: say why the advisory does not reach anything a customer relies on, and what would change that. An entry for an advisory the audit no longer reports also fails, so this file cannot silt up. Empty is the correct state; the mechanism exists so that the first high-severity advisory with no published fix does not leave the only options as a red build forever or deleting the gate.",
+  "acknowledged": []
+}
