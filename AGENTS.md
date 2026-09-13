@@ -89,8 +89,25 @@ becomes available.
 
    What the record itself reports as still missing is unchanged and is listed on that page: no
    transfer instrument, no DPA, no retention schedule, no DPO.
-6. **s.30–s.36 — no data-subject rights path at all.** No intake, no identity check, no clock, no
-   export, no rectification, no objection, no erasure.
+6. **s.30–s.36 — a rights path exists; the PUBLISHED channel did not receive.** *This entry read
+   "no data-subject rights path at all" long after `/data-requests` shipped with an intake, a
+   status trail and the Art. 18 restriction added to its enum and its form. It was stale, which is
+   worth recording: a gap list that is not re-read describes a system that no longer exists.*
+
+   What was genuinely wrong is narrower and worse. `/privacy`'s rights clause ended **"The contact
+   address at the top of this page reaches the same people"**, and `brand.ts` recorded in a comment
+   beside that same address that the zone holds no MX record and mail to it bounces. Both were in
+   the repository at once. **A request sent to a bouncing address and never answered is
+   indistinguishable, from the outside, from a company that read it and ignored you** — and for a
+   data subject with no account the mailbox was the only channel published.
+
+   Now: `brand.supportMailboxDeliverable` is a fact rather than a comment, `/privacy` and `/terms`
+   both publish the admission beside the address, the rights clause names the registered postal
+   address instead, and `scripts/check-mailbox.mjs` holds the fact against the zone over DNS in
+   **both** directions — publishing a working mailbox by flipping a boolean fails, and adding the
+   records without flipping it fails too, so the five-minute DNS task becomes a red build on the
+   day it is done. **Still absent: the records themselves, and any channel for a data subject with
+   no account other than post.**
 7. **s.19 / s.23 at the waiting list.** *Partly fixed:* the form now carries a purpose, a retention
    statement and a link to the notice. Still absent: a consent artefact recording what was agreed
    and when.

@@ -214,8 +214,8 @@ jobs:
   # It is required all the same. `scripts/check-advisories.mjs` refuses to treat an audit that could
   # not run as a pass, so "we could not check" is a failure rather than a silence -- the same
   # posture as the Worker reporting `not_configured` instead of "nothing to do".
-  advisories:
-    name: advisories
+  external:
+    name: external
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
@@ -237,3 +237,13 @@ jobs:
       # why it is separate.
       - name: Advisory guard
         run: node scripts/check-advisories.mjs
+
+      # The other check that asks the outside world a question, and it belongs in this job for the
+      # same reason. `/privacy` publishes a contact address as the statutory rights channel and the
+      # zone holds no MX record, so mail to it bounces. `brand.supportMailboxDeliverable` records
+      # that and every page reads it; this holds the boolean against the actual zone in BOTH
+      # directions, so publishing a working mailbox by flipping a boolean fails, and adding the
+      # records without flipping it fails too.
+      - name: Mailbox guard
+        if: ${{ !cancelled() }}
+        run: node scripts/check-mailbox.mjs

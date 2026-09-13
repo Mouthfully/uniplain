@@ -25,6 +25,7 @@
     "check:dictionary": "node scripts/check-dictionary.mjs",
     "check:erasure": "node scripts/check-erasure.mjs",
     "check:fix": "biome check --write .",
+    "check:mailbox": "node scripts/check-mailbox.mjs",
     "check:providers": "node scripts/check-providers.mjs",
     "check:recipients": "node scripts/check-recipients.mjs",
     "check:registry": "node scripts/check-registry.mjs",

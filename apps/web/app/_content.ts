@@ -803,3 +803,35 @@ export const CONNECTIONS = {
 
   referenceLabel: "Reference",
 } as const;
+
+/**
+ * WHETHER THE PUBLISHED CONTACT ADDRESS RECEIVES MAIL, SAID ON THE PAGES THAT PUBLISH IT.
+ *
+ * `/privacy` told a data subject, in the clause about their statutory rights, that "the contact
+ * address at the top of this page reaches the same people". `brand.ts` recorded beside the address
+ * -- in a comment, which checks nothing -- that the zone holds no MX record and that mail to it
+ * bounces. Both statements were in the repository at once and only one of them was true.
+ *
+ * A RIGHTS CHANNEL THAT DOES NOT RECEIVE IS NOT A RIGHTS CHANNEL. The person it misleads is the one
+ * trying to exercise a right, and nothing tells them their message went nowhere -- an outcome that
+ * looks exactly like being ignored. So while `brand.supportMailboxDeliverable` is false the pages
+ * say so, and they name the routes that do work: the registered postal address, which is a real
+ * channel for a Thai juristic person and is already published in the same panel, and the signed-in
+ * screen for a member of an account.
+ *
+ * IT READS AS AN ADMISSION BECAUSE IT IS ONE. The alternative was to leave the address up and say
+ * nothing, which is the version that was already there.
+ */
+export const CONTACT_DELIVERY_LINE = brand.supportMailboxDeliverable
+  ? null
+  : "That mailbox is not yet receiving mail: the domain holds no MX record, so anything sent to it bounces rather than arriving. Until it does, the registered postal address above is the route that reaches this company, and a member of an account can file a request from the Your data screen inside the product.";
+
+/**
+ * The sentence the rights clause ends on, which used to name a channel that does not receive.
+ *
+ * Derived rather than typed for the reason the whole page is: the day the MX records exist, one
+ * brand fact changes and this sentence changes with it, in every document that renders it.
+ */
+export const RIGHTS_CHANNEL_LINE = brand.supportMailboxDeliverable
+  ? "The contact address at the top of this page reaches the same people."
+  : "A person who is not signed in to an account should use the registered postal address at the top of this page, because the contact address beside it is not yet receiving mail and a request sent there would not arrive.";

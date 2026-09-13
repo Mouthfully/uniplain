@@ -56,6 +56,30 @@ export interface Brand {
    */
   readonly apiBaseUrl: string | null;
   readonly supportEmail: string;
+  /**
+   * WHETHER THAT MAILBOX RECEIVES MAIL. A FACT ONLY DNS CAN MAKE TRUE.
+   *
+   * This was recorded in a comment beside the address -- "VERIFIED NOT YET DELIVERABLE... mail to
+   * this address bounces until that is finished" -- and a comment is not a check on anything. So
+   * `/privacy` went on saying, in the clause about a data subject's statutory rights, that "the
+   * contact address at the top of this page reaches the same people". It does not reach anybody.
+   *
+   * **A rights channel that does not receive is not a rights channel**, and publishing one as
+   * though it were is the same defect as a number that looks right: the person it misleads is the
+   * one trying to exercise a right, and nothing tells them their message went nowhere.
+   *
+   * So it is a fact, read by the pages that publish a contact route, and it behaves like
+   * `soc2TypeIIReport` and `iso27001Certificate`: **false until a third party makes it true** --
+   * here the third party being the zone's MX records rather than an auditor. Flipping it turns
+   * `brand.test.ts` red until the admission copy is removed in the same change, so a published
+   * channel cannot appear by a one-character edit any more than a certification claim can.
+   *
+   * Verified over DNS-over-HTTPS against Cloudflare's resolver: MX and TXT both return NOERROR
+   * with no answer section, only an SOA in the authority section. NODATA, not NXDOMAIN -- the zone
+   * exists and is served and holds neither record. No TXT also means no SPF and no DKIM, so
+   * outbound mail from the domain cannot be authenticated either.
+   */
+  readonly supportMailboxDeliverable: boolean;
   /** Not yet distinct from support. Set when a legal inbox exists. */
   readonly legalEmail: string | null;
   readonly postalAddress: PostalAddress;
@@ -177,6 +201,7 @@ export const brand: Brand = {
   // must not happen is the two drifting apart silently, so `brand.test.ts` asserts the address is
   // on `domain` and 53-the-rename.md carries the delivery check as an open item.
   supportEmail: "contact@uniplain.com",
+  supportMailboxDeliverable: false,
   legalEmail: null,
 
   postalAddress: {

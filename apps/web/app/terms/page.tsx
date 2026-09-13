@@ -2,6 +2,7 @@ import { brand, formatAddress } from "@repo/brand";
 import type { Metadata } from "next";
 
 import { Footer, SiteHeader } from "../_chrome";
+import { CONTACT_DELIVERY_LINE } from "../_content";
 import { SUB_PROCESSORS } from "../_processing/sub-processors";
 
 /**
@@ -528,6 +529,16 @@ export default function TermsPage() {
                     {brand.supportEmail}
                   </a>
                 </dd>
+                {/* SIX CLAUSES BELOW SEND A CUSTOMER TO "THE CONTACT ADDRESS ABOVE" -- a refund
+                    request, a deletion request, a dispute notice under clause 15, and the notices
+                    clause itself. Every one of them is a contractual route, and clause 15 sets a
+                    thirty-day clock running from a notice sent to an address that bounces. The
+                    admission belongs here, where the address is, rather than in any one of them. */}
+                {CONTACT_DELIVERY_LINE === null ? null : (
+                  <dd className="text-ink-muted mt-2 text-xs leading-[1.5] font-normal">
+                    {CONTACT_DELIVERY_LINE}
+                  </dd>
+                )}
               </div>
             </dl>
           </div>
