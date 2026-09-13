@@ -175,12 +175,12 @@ export function Faq() {
         </h2>
         <p className="text-ink-muted mt-5 max-w-[475px] leading-[1.65]">{LEAD}</p>
 
-        {/* The reference points this at a documentation page that is not part of the built app, so
-            it lands on an in-page anchor that does not exist yet -- the same placeholder the
-            pricing section's plan buttons use. It scrolls nowhere rather than 404ing, and it
-            becomes a real href the moment the help centre has a route. */}
+        {/* THE HELP CENTRE HAS A ROUTE NOW, and this comment used to say it did not. `/docs`
+            shipped and this link was never updated, so the closing section of the home page sent
+            readers to an anchor no element carries. That is the failure mode of a placeholder that
+            reads like a decision: it survives the thing it was waiting for. */}
         <a
-          href="#docs"
+          href="/docs"
           className="text-accent mt-6 inline-flex items-center gap-3 text-sm font-bold hover:underline"
         >
           {HELP_LINK_LABEL}

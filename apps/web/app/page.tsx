@@ -126,8 +126,12 @@ export default function Page() {
             </p>
 
             <div className="mt-8 flex flex-wrap gap-3">
+              {/* `/signin` AND NOT AN ANCHOR. This read `href="#start"` -- a placeholder carried
+                  over from the reference design, pointing at an id no element in this app has. The
+                  most important button on the site scrolled nowhere. There is no separate sign-up:
+                  the magic link creates the account on first use, so "start free" IS sign in. */}
               <a
-                href="#start"
+                href="/signin"
                 className="bg-accent text-ink-on-accent hover:bg-accent-hover inline-flex min-h-[46px] items-center gap-3 rounded-[10px] px-[22px] text-sm font-bold transition-colors"
               >
                 {SITE.ctaPrimary}
