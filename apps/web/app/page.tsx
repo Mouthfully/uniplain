@@ -309,13 +309,25 @@ function HeroDashboard() {
         </div>
       </div>
 
-      <p className="text-ink-faint mt-2 text-right text-[10px]">{SITE.heroVisualLabel}</p>
+      {/* THE FLOATING PILL HANGS OFF THE BOTTOM EDGE OF THE CARD, which is what `-mt-4` is for --
+          and it has to sit DIRECTLY AFTER THE CARD for that to be true. It did not: the sample
+          label was between them, so the negative margin pulled the pill up over a line of text
+          instead of over the card, and "Sample figures. An illustration, not a customer." rendered
+          underneath the pill's own background. The label is right-aligned and full width, the pill
+          is centred and narrower, so the two collided in the middle at every width the label did
+          not happen to be short.
 
-      {/* The floating pill the reference hangs off the bottom edge of the card. */}
+          A negative margin is a claim about the element above it. Keeping the pill adjacent to the
+          card is what makes the claim true, so the label now follows the pill rather than splitting
+          the pair -- `hero-overlay.test.tsx` asserts that order rather than the pixel value. */}
       <div className="border-line bg-surface text-ink-muted mx-auto -mt-4 flex w-max items-center gap-2.5 rounded-md border px-4 py-2.5 text-xs shadow-[0_8px_20px_rgb(20_57_75/0.04)]">
         <img src={brand.logoMarkPath} alt="" width={22} height={25} />
         {SITE.syncPill}
       </div>
+
+      {/* Centred rather than right-aligned now that it sits under a centred pill: a caption hard
+          against the right edge under a middle-aligned pill reads as two unrelated fragments. */}
+      <p className="text-ink-faint mt-3 text-center text-[10px]">{SITE.heroVisualLabel}</p>
     </div>
   );
 }
