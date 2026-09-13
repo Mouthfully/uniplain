@@ -1,0 +1,15 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    // `send.ts` uses the same WHATWG globals `packages/insights` does -- fetch, Response,
+    // RequestInit, AbortController -- which `lib: ["ES2022"]` alone does not declare. "DOM" is the
+    // smallest lib that does, and the caveat there applies here: internal packages ship raw
+    // TypeScript and compile under the CONSUMER's tsconfig, so nothing leaks. It is also why this
+    // package can run in the Worker as well as in Next, which is the whole reason it is one `fetch`
+    // and not an SDK.
+    "lib": ["ES2022", "DOM"],
+    "types": [],
+    "noEmit": true
+  },
+  "include": ["src/**/*.ts"]
+}
