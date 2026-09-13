@@ -120,3 +120,9 @@ psql -d "$DB" -q -f "$HERE/15_force_rls.sql"
 
 echo "==> oauth pending suite"
 psql -d "$DB" -q -f "$HERE/16_oauth_pending.sql"
+
+echo "==> organisation members suite"
+psql -d "$DB" -q -f "$HERE/17_organisation_members.sql"
+
+echo "==> membership guards suite"
+psql -d "$DB" -q -f "$HERE/18_membership_guards.sql"
