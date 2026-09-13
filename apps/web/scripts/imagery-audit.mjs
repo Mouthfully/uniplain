@@ -18,7 +18,7 @@
  * painted box is large enough to read as a picture rather than as a bullet. That is the number a
  * visitor experiences, and it is the number that cannot be inflated by adding more bullets.
  */
-import { chromium } from "playwright";
+import { launchBrowser } from "./_browser.mjs";
 
 const BASE = process.env.BASE ?? "http://127.0.0.1:3312";
 const PAGES = (
@@ -31,15 +31,9 @@ const PAGES = (
 /** Below this, an element is a glyph. A 28px icon is 784px^2; the floor sits well above it. */
 const PICTURE_AREA_FLOOR = 6000;
 
-// MEASURING THE REFERENCES WITH THE SAME RULER IS THE POINT OF THE HARNESS, so it has to be
-// able to reach them. Outbound HTTPS in this environment goes through an agent proxy that
-// Chromium does not read from the environment the way Node does; a bare launch reports
-// ERR_CONNECTION_RESET, which looks exactly like a site refusing us. Passing it explicitly is the
-// difference between "the reference has no imagery" and "we could not load the reference".
-const proxy = process.env.HTTPS_PROXY ?? process.env.https_proxy;
-const browser = await chromium.launch(
-  proxy && !BASE.startsWith("http://127.0.0.1") ? { proxy: { server: proxy } } : {},
-);
+// Reaching the references needs the proxy, and a provisioned browser needs its own path; both live
+// in `_browser.mjs` now, because five harnesses had five answers to the same two questions.
+const browser = await launchBrowser({ external: !BASE.startsWith("http://127.0.0.1") });
 const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
 
 let total = 0;

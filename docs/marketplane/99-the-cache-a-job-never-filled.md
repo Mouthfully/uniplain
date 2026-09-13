@@ -120,6 +120,26 @@ has nothing to do with its dependency.
   being forced onto Node 24). Real, and exactly what the open action-bump pull requests address —
   theirs to fix, not this one's.
 
+## 4b. Dependabot is off, at the founder's instruction
+
+Recorded here rather than left to be inferred from a deleted file.
+
+`.github/dependabot.yml` is removed, so **no further scheduled version-update pull requests are
+opened.** The instruction came after the eight it had already opened were merged.
+
+**What that costs, stated plainly.** The config's own header made the argument for having it: a gate
+with no path through it trains people to suppress, so updates were meant to arrive on a schedule
+before an advisory did. That path is now closed. `check-advisories` still fails any build carrying a
+high or critical advisory — that half is untouched and is not a Dependabot feature — so the
+repository is not blind to a finding; it simply has no automation that arrives ahead of one, and an
+upgrade will be found by hand under a red build. **That is the trade, and it was the founder's to
+make.**
+
+**One thing this file cannot turn off.** Dependabot's SECURITY updates and its alerts are repository
+settings rather than configuration in the tree. Deleting this file stops version updates; whether
+security updates still open pull requests is a switch in the repository's settings that no change in
+this repository can reach. Said rather than assumed.
+
 ## 5. Open or unverified spec items this builds on
 
 * **`setup-node`'s save behaviour on a missing path** is read off the failing run's own log, quoted

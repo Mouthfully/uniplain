@@ -19,10 +19,10 @@
  * Usage: node scripts/motion-check.mjs   (with a production server already running)
  *        BASE=http://127.0.0.1:3001 node scripts/motion-check.mjs
  */
-import { chromium } from "playwright";
+import { launchBrowser } from "./_browser.mjs";
 
 const URL_BASE = process.env.BASE ?? "http://127.0.0.1:3000";
-const browser = await chromium.launch();
+const browser = await launchBrowser();
 
 async function probe(label, reduced) {
   const ctx = await browser.newContext({

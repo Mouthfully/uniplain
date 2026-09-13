@@ -21,12 +21,12 @@
  * Usage: node scripts/header-fit.mjs   (with a production server already running)
  *        BASE=http://127.0.0.1:3001 node scripts/header-fit.mjs
  */
-import { chromium } from "playwright";
+import { launchBrowser } from "./_browser.mjs";
 
 const BASE = process.env.BASE ?? "http://127.0.0.1:3000";
 const WIDTHS = [360, 768, 1024, 1152, 1280, 1366, 1440, 1600, 1920];
 
-const browser = await chromium.launch();
+const browser = await launchBrowser();
 const rows = [];
 
 for (const width of WIDTHS) {

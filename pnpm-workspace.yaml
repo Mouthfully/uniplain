@@ -21,7 +21,7 @@ catalog:
 
   # --- Cloudflare Workers (apps/api-edge) ---
   wrangler: 4.129.0
-  "@cloudflare/workers-types": 5.20260907.1
+  "@cloudflare/workers-types": 5.20260910.1
   "@cloudflare/vitest-pool-workers": 0.22.0
 
   # VERSION TRAP: vitest latest is 5.0.0, but @cloudflare/vitest-pool-workers@0.22.0
