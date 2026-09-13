@@ -338,7 +338,13 @@ export const NAV_MENU = {
 
 export const DASHBOARD_LIVE = {
   heading: "Your envelope rows",
-  note: "Read from your workspace for the period above. Row-level security decided which rows these are, so this table shows what your session may see and nothing else.",
+  // THE PERIOD IS AN ARGUMENT, NOT "ABOVE". This read "Read from your workspace for the period
+  // above", and there was no period above it: the live table renders ABOVE the concept screen, and
+  // the only period badge on the page is the concept's -- frozen at June 2026 and describing
+  // illustrative figures. A reader following that pointer found a month their rows were not read
+  // for and had every reason to believe it. The window is now stated where the figures are.
+  note: (span: string) =>
+    `Read from your workspace for ${span}. Row-level security decided which rows these are, so this table shows what your session may see and nothing else.`,
   columns: {
     source: "Source",
     entity: "Entity",

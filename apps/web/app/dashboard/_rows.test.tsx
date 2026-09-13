@@ -54,7 +54,7 @@ const rows = [
   },
 ] as unknown as readonly PerformanceRow[];
 
-const text = renderToStaticMarkup(<LiveRows rows={rows} />)
+const text = renderToStaticMarkup(<LiveRows rows={rows} span="2026-06-01 to 2026-06-30" />)
   .replace(/<[^>]+>/g, " ")
   .replace(/&#x27;|&apos;/g, "'")
   .replace(/&quot;/g, '"')
