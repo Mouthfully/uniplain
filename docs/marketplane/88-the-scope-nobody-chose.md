@@ -1,6 +1,6 @@
 # 88. The scope nobody chose
 
-**PR:** #TBD &nbsp;·&nbsp; **Date:** 2026-09-13 &nbsp;·&nbsp; **Status:** proposed
+**PR:** [#76](https://github.com/Mouthfully/uniplain/pull/76) &nbsp;·&nbsp; **Date:** 2026-09-13 &nbsp;·&nbsp; **Status:** proposed
 
 ---
 
