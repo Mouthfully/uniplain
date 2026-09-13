@@ -1,6 +1,7 @@
 import { brand } from "@repo/brand";
 import type { Metadata } from "next";
 
+import { OneRowShape } from "../_art/OneRowShape";
 import { Footer, SiteHeader } from "../_chrome";
 
 /**
@@ -305,6 +306,19 @@ export default function IntegrationsPage() {
               {HEADING}
             </h1>
             <p className="text-ink-muted mt-4 text-[17px] leading-[1.65]">{LEAD}</p>
+          </div>
+
+          {/* THE FIGURE SITS BETWEEN THE PROMISE AND THE LIST, which is the only place it works.
+              Above the heading it would be a diagram of nothing yet; below the nine categories and
+              the grid it would be an appendix nobody scrolls back up from. Here it answers the
+              question the heading raises -- "together HOW?" -- before the reader starts scanning
+              logos for their own.
+
+              Capped at 900px and centred: the drawing is a single flow four fields wide, and run
+              out to the full 1200 its two halves drift far enough apart that the arrows stop
+              reading as one movement. */}
+          <div className="min-w-0 mx-auto mt-10 max-w-[900px] md:mt-12">
+            <OneRowShape />
           </div>
 
           {/* The category index. In the reference this row is a search field and a `<select>`; see

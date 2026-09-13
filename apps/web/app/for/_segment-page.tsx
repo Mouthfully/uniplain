@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
+import { SegmentRows } from "../_art/SegmentRows";
 import { Footer, SiteHeader } from "../_chrome";
 import { FOR_CLAIMS, FOR_COPY, SEGMENTS, type Segment, segmentBySlug } from "./_content";
 
@@ -148,6 +149,26 @@ export function SegmentPage({ slug }: { readonly slug: string }) {
                 </span>
               </div>
               <p className="text-ink-subtle mt-1 text-xs leading-[1.5]">{segment.briefLead}</p>
+
+              {/* THE CHART GOES ABOVE THE FIGURES, NOT BELOW THEM, and the order is the argument.
+                  A reader meets the shape of the week first -- which account did what, and which
+                  way it moved -- and then the amounts, already formatted by the engine. Putting it
+                  underneath would make it an illustration of numbers the reader has just read,
+                  which is the decorative use of a chart this page does not need.
+
+                  The label map is built from `segment.reads`, so this component never names a
+                  platform itself: one page owns the words for its own sources. */}
+              <div className="bg-surface mt-4 rounded-lg p-3 md:p-4">
+                <SegmentRows
+                  rows={segment.rows}
+                  labels={Object.fromEntries(
+                    segment.reads.map((read) => [read.source, read.label]),
+                  )}
+                  period={segment.period}
+                  comparison={segment.comparison}
+                  figureLabel={FOR_COPY.rowsFigureLabel}
+                />
+              </div>
 
               <ol aria-label={FOR_COPY.figuresLabel} className="mt-4 list-none p-0">
                 {segment.figures.map((figure) => (

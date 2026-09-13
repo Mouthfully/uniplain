@@ -1,3 +1,4 @@
+import { InsightPipeline } from "../_art/InsightPipeline";
 import { implementedSources, sourceMark } from "./_source-marks";
 import { SAMPLE_FIGURES, TOP_ACTION_IS_RANGE } from "./_sample-brief";
 
@@ -275,6 +276,26 @@ export function AssistantPanel() {
           <p className="bg-surface-subtle text-ink-subtle mt-0 rounded-sm p-3 text-[11px] leading-[1.5]">
             {CARD_FOOT}
           </p>
+        </div>
+
+        {/* THE FIGURE SPANS BOTH COLUMNS AND SITS LAST, WHICH IS BOTH A LAYOUT AND A READING
+            DECISION. The copy column argues the mechanism in four sentences and the card shows
+            three figures it produced; the drawing is what those two have in common, so it reads
+            as the summary of the panel rather than as an illustration of either half.
+
+            It is full width because it is a flow four stations long -- squeezed into one column
+            it would set at a size where the station labels stop being readable, and a diagram
+            nobody can read is worse than no diagram, because it still costs the space.
+
+            `border-line-soft` and a top rule rather than a card: the panel already has a ground
+            and a card on it, and a third container at this size would read as a fourth thing to
+            look at rather than as the shape the other two share. */}
+        {/* `md:order-3` IS LOAD-BEARING, not tidiness. The two columns above carry explicit `order`
+            for the mobile reading order, and a flex or grid child with no `order` sorts as 0 --
+            so without this the figure jumped ABOVE both of them at the first breakpoint and the
+            panel opened on a diagram of an argument nobody had made yet. */}
+        <div className="min-w-0 border-line-soft mt-2 border-t pt-6 md:order-3 md:col-span-2 md:mt-4 md:pt-8">
+          <InsightPipeline />
         </div>
       </div>
     </section>

@@ -132,6 +132,17 @@ export const FOR_COPY = {
     "Illustrative rows, not a customer. The figures are computed from them by the same code that will read yours, and no number below is typed into this page.",
 
   figuresLabel: "Figures computed from the rows, before any of them was written up",
+
+  /**
+   * The chart's accessible name. It says what the drawing IS FOR -- direction, not amount -- because
+   * the chart deliberately prints no values and a reader who cannot see it would otherwise be told
+   * a chart exists and never told that the numbers are in the list below it.
+   *
+   * No terminal punctuation: `scripts/check-copy.mjs` reads a human-visible attribute exactly as it
+   * reads a paragraph, and refuses one that ends a sentence in five words or more.
+   */
+  rowsFigureLabel:
+    "The same sample rows these figures were computed from, drawn one panel per account so the direction of each is visible; the amounts are printed in the list below rather than on the chart",
   actionHeading: "The one worth acting on",
   worthLabel: "What it is worth",
 
@@ -272,6 +283,18 @@ export interface Segment {
   readonly allProvisional: boolean;
   /** Kept so a test can license every number on the page against what the engine allowed. */
   readonly set: FigureSet;
+  /**
+   * THE ROWS THEMSELVES, carried through so the page can DRAW them.
+   *
+   * The figures above are the engine's answers; these are what it was asked. `SegmentRows` plots
+   * them, which means the chart and the figure list beside it read the same array -- a chart that
+   * disagreed with the number next to it would need somebody to have written a second set of rows,
+   * and there is nowhere to write one.
+   */
+  readonly rows: readonly InsightRow[];
+  /** The window the figures cover, and the one they are compared against. Both are the draft's. */
+  readonly period: { readonly from: string; readonly to: string };
+  readonly comparison: { readonly from: string; readonly to: string };
 }
 
 /* ==============================================================================================
@@ -690,6 +713,9 @@ export function buildSegment(draft: SegmentDraft): Segment {
     sources: draft.reads.map((read) => read.source),
     allProvisional: set.allProvisional,
     set,
+    rows: draft.rows,
+    period: draft.period,
+    comparison: draft.comparison,
   };
 }
 

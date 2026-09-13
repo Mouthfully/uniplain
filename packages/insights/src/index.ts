@@ -4,6 +4,7 @@
 export {
   ACTION_KINDS,
   BUSINESS_TYPES,
+  METRIC_LABELS,
   TAKINGS_METRICS,
   allowedNumbers,
   buildFigureSet,
