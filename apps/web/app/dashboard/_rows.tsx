@@ -76,7 +76,7 @@ function Status({ provisional }: { provisional: boolean }) {
   );
 }
 
-export function LiveRows({ rows }: { rows: readonly PerformanceRow[] }) {
+export function LiveRows({ rows, span }: { rows: readonly PerformanceRow[]; span: string }) {
   // Derived from the rows rather than from the dictionary: a source that reports four of the
   // twelve metrics gets four columns, and the other eight do not become a wall of dashes.
   const metrics: readonly MetricName[] = presentMetrics(rows);
@@ -87,7 +87,7 @@ export function LiveRows({ rows }: { rows: readonly PerformanceRow[] }) {
         {DASHBOARD_LIVE.heading}
       </h2>
       <p className="text-ink-muted mt-2 max-w-[720px] text-sm leading-relaxed">
-        {DASHBOARD_LIVE.note}
+        {DASHBOARD_LIVE.note(span)}
       </p>
 
       {metrics.length === 0 ? (
