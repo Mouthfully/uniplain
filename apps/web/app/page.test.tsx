@@ -178,6 +178,38 @@ describe("the page is banded, so the eye can find where an idea starts", () => {
     ).toBeGreaterThanOrEqual(2);
   });
 
+  it("carries exactly one contrast band, and inks it for the ground it is on", () => {
+    /**
+     * THE ONE WAY THIS BAND FAILS, AND IT FAILS INVISIBLY IN REVIEW.
+     *
+     * `surface-inverse` is deep navy under a light scheme. `text-ink` is near-black. A heading that
+     * keeps `text-ink` when its panel turns dark is black on navy -- unreadable, and unreadable in
+     * a way that looks fine in a diff, because the class it kept is the class every other heading
+     * on the page has.
+     *
+     * Measured in a real browser, both schemes: heading 15.87:1 and 16.5:1, lead 10.47:1 and 7:1,
+     * button ink on fill 4.86:1. All above 4.5. This asserts the pairing that produces them.
+     */
+    const panels = [
+      ...html.matchAll(/<div class="([^"]*bg-surface-inverse[^"]*)"[\s\S]{0,1400}?<\/div>/g),
+    ];
+    expect(panels.length, "the contrast band is gone").toBe(1);
+
+    const panel = panels[0]?.[0] ?? "";
+    // A NEGATIVE LOOKAHEAD, NOT A WORD BOUNDARY. `\btext-ink\b` also matches inside
+    // `text-ink-inverse-strong`, because `\b` fires at the hyphen -- so the first version of this
+    // assertion failed on the CORRECT markup and would have passed on nothing useful. The token
+    // has to end there, not merely have a boundary after it.
+    expect(panel, "a heading on the inverse ground keeps the light-ground ink").not.toMatch(
+      /class="[^"]*\btext-ink(?![-\w])/,
+    );
+    expect(panel, "body copy on the inverse ground keeps the light-ground ink").not.toMatch(
+      /class="[^"]*\btext-ink-muted(?![-\w])/,
+    );
+    expect(panel).toMatch(/\btext-ink-inverse-strong\b/);
+    expect(panel).toMatch(/\btext-ink-on-inverse\b/);
+  });
+
   it("spends the stronger tone once, on one band", () => {
     // `surface-inset` is the brand guide's "soft feature background". Used everywhere it stops
     // being an emphasis; used nowhere the product moment reads like every other section.

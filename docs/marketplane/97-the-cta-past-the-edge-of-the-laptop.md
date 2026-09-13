@@ -157,7 +157,8 @@ backgrounds"*, which is this exact job; used everywhere it stops being an emphas
 product moment reads like every other section. **No new value is introduced** — three existing
 tokens, no literal.
 
-Measured after, in a real browser, both schemes:
+Measured after, in a real browser, both schemes — **these are the counts before the contrast band
+in §3d, which adds one more tone to each**:
 
 | | distinct grounds | ink contrast |
 |---|---|---|
@@ -179,6 +180,76 @@ rhythm readable *as* a rhythm instead of as eleven independent decisions.
 **No band wrapper may set `overflow`.** `animation-timeline: view()` resolves against the nearest
 scrollport, so an `overflow-hidden` on a wrapper would silently retime every reveal below it against
 the wrong box — and nothing would look broken enough to investigate. A test refuses it.
+
+## 3d. The one contrast band, and the verdict against the two references
+
+Banding by argument closed the flat-ribbon defect but left one measured gap open. supermetrics.com
+bands its home page with **six** `data-theme` tones, and **three of them are dark** (`dark` ×5,
+`dark-purple` ×3, `dark-grey` ×1). This page had three light tones and **not one contrast band** —
+every section, top to bottom, on some shade of white. A page that only ever gets lighter and darker
+by two per cent has a rhythm you have to look for.
+
+The closing call to action is where that is spent, and the only place spending it is cheap. The
+panel holds one heading, one line of lead and one filled button, so inking it for a dark ground is
+three tokens. Putting the band on an argument section instead would mean re-inking every card, chart
+and caption inside it — a far larger change for a smaller reason.
+
+`surface-inverse` **inverts with the theme**: deep navy under a light scheme, the light ground under
+a dark one. That is the token behaving correctly. What the band is for is contrast *against the page
+around it*, and it stays a contrast band in both. The button does not change — the token file is
+explicit that filled controls keep `--mp-accent` and `--mp-ink-on-accent` everywhere, and
+`--mp-accent-on-dark` is for accent **text** on a dark ground, which this is not.
+
+Measured in a real browser, both schemes:
+
+| | panel | heading | lead | button ink on fill |
+|---|---|---|---|---|
+| light | `rgb(23, 35, 50)` | **15.87 : 1** | **10.47 : 1** | 4.86 : 1 |
+| dark | `rgb(244, 246, 250)` | **16.50 : 1** | **7.00 : 1** | 4.86 : 1 |
+
+Ground tones on the home page now: **light 4** (page white, `surface-subtle`, `surface-inset`, the
+contrast band), **dark 3** (page, ground, the contrast band).
+
+### The verdict the brief asked for
+
+The instruction was to match or beat supermetrics.com and windsor.ai on design and animation. Both
+were fetched and their stylesheets counted; the numbers below are from that measurement, not from
+memory. Stated plainly, including where this page loses:
+
+| Dimension | supermetrics | windsor | here | verdict |
+|---|---|---|---|---|
+| keyframes defined | 6 | 8 | 7 | **match** |
+| distinct entrance variants | 4 | 1 | 2 | **behind** |
+| entrance trigger | class applied by JS | class applied by JS | scroll-driven CSS, no JS | **beat** |
+| stagger | none in CSS | none | 4-step, CSS only | **beat** |
+| transition duration | `.2s` ×30 | `.2s` / `.3s` | 200ms | **match** |
+| SVG draw-on | none | none | yes, `pathLength="1"` | **beat** |
+| `prefers-reduced-motion` blocks | **0** | **0** | 4, and every animation gated by one | **beat** |
+| JavaScript cost of motion | JS-driven | JS-driven | **zero bytes** | **beat** |
+| home-page ground tones | 6 (3 dark) | 20 background declarations | 4 light / 3 dark, 1 contrast band | **behind** |
+| imagery | 91 `<picture>`, 112 `<img>`, 2 video | 179 `<img>`, 24 `<svg>` | 1 screenshot, 1 logo strip | **well behind** |
+
+**On animation this page beats both references, and it is not close.** They animate by having
+JavaScript add a class; this animates on the scroll timeline with no script at all, so the motion
+costs nothing to download, nothing to hydrate and nothing on the main thread. Neither reference ships
+a single `prefers-reduced-motion` block — on both of those sites, a visitor who has asked their
+operating system to stop moving things is ignored. Here the motion is *opt-in to the preference*:
+every animation lives inside `@media (prefers-reduced-motion: no-preference)` nested in
+`@supports (animation-timeline: view())`, so turning the whole motion system off leaves a complete,
+correct page rather than a blank one. Durations and keyframe count match the references because they
+were retuned *against* them, not guessed.
+
+**On design the verdict splits.** Banding, rhythm and the contrast band now read as deliberate, and
+the header fits at every laptop width the references fit at — which it did not before this branch.
+But the references are **image-dense and this page is not**: 203 image elements on one and 203 on
+the other, against one product screenshot here. That is photography, illustration and product
+footage — **assets, not CSS** — and no amount of motion or banding work closes it. It is a
+commissioning decision with a budget attached, and inventing placeholder imagery to close a gap on
+paper would make the page worse, not better.
+
+So: **beats both on animation technique, accessibility and page weight; matches on timing and
+density of motion; remains behind on imagery, and will until someone buys imagery.** That last line
+is the finding, recorded here rather than left for the next person to rediscover.
 
 ## 4. Cost estimate
 
@@ -246,7 +317,7 @@ every edit is a class name, a stylesheet rule, a token or a comment. `check-copy
 ## 8. Verification
 
 ```
-pnpm -r test                      # 0  — web 833, api-edge 328, insights 146
+pnpm -r test                      # 0  — web 841, api-edge 328, insights 146
 pnpm -r typecheck                 # 0
 pnpm exec biome lint .            # 0
 pnpm exec biome format .          # 0
@@ -266,11 +337,13 @@ worth reading here.
 | Mutation | What caught it |
 |---|---|
 | apply the reveal outside `@supports` | `declares the animation only inside the support query` |
+| keep `text-ink` on the heading when its panel turns dark | `carries exactly one contrast band, and inks it for the ground it is on` |
+| unwrap the contrast band back to `surface-inset` | the same test |
 | give the hero draw-on a `fill-mode` | `draws the trend line without ever leaving it half drawn` |
 | animate `margin-top` in the reveal keyframe | `animates exactly opacity and transform, and nothing else` |
 | add an eleventh nav link | `is not left to drift the next time a link is added` |
 
-**Four mutations passed before they failed, and three of those were the guard being wrong.**
+**Five mutations passed before they failed, and four of those were the guard being wrong.**
 
 1. **`margin-top` walked straight through the layout check.** The ban list matched `margin` exactly,
    so it caught the one spelling nobody would write. The list is stems now (`margin` catches
@@ -287,6 +360,12 @@ worth reading here.
    test — it renamed a class inside the block rather than moving a declaration out of it. Redone
    properly, it fails, and a second assertion was added for the other way to build the same defect
    (a bare `opacity: 0` on a reveal class anywhere in the file).
+
+4. **`\btext-ink\b` matched `text-ink-inverse-strong`.** The first contrast-band assertion failed
+   on the *correct* markup, because `\b` fires at the hyphen — so a word boundary is no evidence the
+   token ended there. It is a negative lookahead now, `text-ink(?![-\w])`. Worth writing down
+   because the failure was loud this time; the same pattern written as a "must contain" rather than
+   a "must not contain" would have passed on nothing useful and said so silently.
 
 **And a measurement was wrong in a way that would have shipped a false report.** The first run of
 the header numbers was taken against a server still serving a previous build's asset hashes, so no
