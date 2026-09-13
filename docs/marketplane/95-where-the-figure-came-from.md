@@ -1,4 +1,11 @@
-# 90. Where the figure came from
+# 95. Where the figure came from
+
+> **Renumbered from 90 on merge.** #80 was open while #75 through #78 merged, and both
+> branches read the highest number on `main` rather than the highest number *claimed*. Five
+> notes collided — 86 through 90 — and git had nothing to say about it, because ten different
+> filenames sharing five numbers is not a conflict. `check-design-notes.mjs` now refuses a
+> duplicate prefix, which is the only reason this is the last time. Commit messages and PR
+> bodies written before the merge still say 90; they are history and are left alone.
 
 **PR:** #TBD &nbsp;·&nbsp; **Date:** 2026-09-13 &nbsp;·&nbsp; **Status:** proposed
 

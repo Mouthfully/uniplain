@@ -1,4 +1,11 @@
-# 89. The last sentence nobody checked
+# 94. The last sentence nobody checked
+
+> **Renumbered from 89 on merge.** #80 was open while #75 through #78 merged, and both
+> branches read the highest number on `main` rather than the highest number *claimed*. Five
+> notes collided — 86 through 90 — and git had nothing to say about it, because ten different
+> filenames sharing five numbers is not a conflict. `check-design-notes.mjs` now refuses a
+> duplicate prefix, which is the only reason this is the last time. Commit messages and PR
+> bodies written before the merge still say 89; they are history and are left alone.
 
 **PR:** #70 &nbsp;·&nbsp; **Date:** 2026-09-13 &nbsp;·&nbsp; **Status:** proposed
 
@@ -10,8 +17,10 @@ Two units: the **SCC annexes**, generated from the record, and the **Art. 27(2) 
 settles whether a representative in the Union is required at all.
 
 *(Correction: the commit shipping the annexes says they are recorded in note 88. They are recorded
-here — 88 covers the breach register and the DPO assessment. The commit message is wrong and the
-note it names does not contain them.)*
+here — note 93, which this file's neighbour became on merge, covers the breach register and the DPO
+assessment. The commit message is wrong on both counts now: it names a note that does not contain
+them, and the number it names belongs to a different note entirely. See the renumbering block at the
+top of this file.)*
 
 ### 1.1 The SCC annexes — the half that is ours
 

@@ -143,6 +143,14 @@ jobs:
         if: ${{ !cancelled() }}
         run: node scripts/check-erasure.mjs
 
+      # Two design notes sharing a number has happened four times and never once as a merge
+      # conflict: two branches open at the same time, each reading the highest number on main
+      # rather than the highest number CLAIMED, and ten filenames sharing five numbers is not
+      # something git has an opinion about. It merges clean and ships an ambiguous citation.
+      - name: Design-note guard
+        if: ${{ !cancelled() }}
+        run: node scripts/check-design-notes.mjs
+
   # Row-level security is the whole tenant-isolation guarantee, so it is a regression gate rather
   # than a one-off check someone once ran. `supabase start` needs Docker-in-Docker and a full
   # Supabase stack; this needs a database, so it runs the real migrations against a plain
