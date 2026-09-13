@@ -938,7 +938,14 @@ function render(name: MetricName, value: number, currency: string): Rendered | n
   return renderCount(value);
 }
 
-const METRIC_LABELS: Readonly<Record<MetricName, string>> = {
+/**
+ * EXPORTED SO NOBODY WRITES A SECOND ONE. The marketing site draws a chart per source on each
+ * `/for/*` page and has to name the metric under it; the alternative to reading this map is a
+ * hand-typed label in the web app, which is how a page ends up calling `net_revenue` "revenue"
+ * and quietly contradicting the figure printed beside it. These are the dictionary's own words for
+ * the dictionary's own names, and there is one copy.
+ */
+export const METRIC_LABELS: Readonly<Record<MetricName, string>> = {
   spend: "advertising spend",
   impressions: "impressions",
   clicks: "clicks",
