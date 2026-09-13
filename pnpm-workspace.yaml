@@ -12,7 +12,7 @@ catalog:
   "@types/react": 19.2.18
   "@types/react-dom": 19.2.7
   # @types/node tracks the Node major this repo runs on (v22), not the latest major.
-  "@types/node": 22.20.1
+  "@types/node": 26.5.1
 
   # --- language + styling ---
   typescript: 7.0.2
