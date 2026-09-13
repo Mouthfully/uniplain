@@ -56,6 +56,30 @@ export interface Brand {
    */
   readonly apiBaseUrl: string | null;
   readonly supportEmail: string;
+  /**
+   * WHETHER THAT MAILBOX RECEIVES MAIL. A FACT ONLY DNS CAN MAKE TRUE.
+   *
+   * This was recorded in a comment beside the address -- "VERIFIED NOT YET DELIVERABLE... mail to
+   * this address bounces until that is finished" -- and a comment is not a check on anything. So
+   * `/privacy` went on saying, in the clause about a data subject's statutory rights, that "the
+   * contact address at the top of this page reaches the same people". It does not reach anybody.
+   *
+   * **A rights channel that does not receive is not a rights channel**, and publishing one as
+   * though it were is the same defect as a number that looks right: the person it misleads is the
+   * one trying to exercise a right, and nothing tells them their message went nowhere.
+   *
+   * So it is a fact, read by the pages that publish a contact route, and it behaves like
+   * `soc2TypeIIReport` and `iso27001Certificate`: **false until a third party makes it true** --
+   * here the third party being the zone's MX records rather than an auditor. Flipping it turns
+   * `brand.test.ts` red until the admission copy is removed in the same change, so a published
+   * channel cannot appear by a one-character edit any more than a certification claim can.
+   *
+   * Verified over DNS-over-HTTPS against Cloudflare's resolver: MX and TXT both return NOERROR
+   * with no answer section, only an SOA in the authority section. NODATA, not NXDOMAIN -- the zone
+   * exists and is served and holds neither record. No TXT also means no SPF and no DKIM, so
+   * outbound mail from the domain cannot be authenticated either.
+   */
+  readonly supportMailboxDeliverable: boolean;
   /** Not yet distinct from support. Set when a legal inbox exists. */
   readonly legalEmail: string | null;
   readonly postalAddress: PostalAddress;
@@ -81,6 +105,31 @@ export interface Brand {
    * "EU hosting" conflates and which of them residency alone does not solve.
    */
   readonly dataRegion: string | null;
+  /**
+   * WHETHER THIS PRODUCT IS OFFERED TO PEOPLE IN THE UNION. A DECISION, RECORDED.
+   *
+   * It was taken -- "keep the EU, build the GDPR work", and then "keep the EU, accept the gap until
+   * you designate" -- and it lived nowhere. What lived in the repository was its CONSEQUENCES,
+   * scattered: a euro price in `_billing/plans.ts`, a footer reading "businesses everywhere", a
+   * pricing page advertising currency choice. `_processing/territorial-scope.ts` reads all three
+   * and reports them as Art. 3(2)(a) factors, correctly. None of them says anybody chose.
+   *
+   * THE REASON THAT MATTERS IS THE DOOR SWINGS BOTH WAYS AND ONLY ONE SIDE WAS BUILT. Art. 27
+   * applies because Art. 3(2)(a) is engaged, and Art. 3(2)(a) is engaged because of three product
+   * decisions expressed in code. A company that decided not to offer into the Union would need none
+   * of it -- no representative, no Clauses, no counsel on Art. 3(2) -- and would be selling lawfully
+   * into its actual market on the day it decided. That is not a recommendation and it is not this
+   * file's call; it is the alternative, and it was invisible.
+   *
+   * So the decision is a fact, and `territorial-scope.test.ts` holds it against the three signals in
+   * BOTH directions: setting this false while a euro price or universal copy still ships fails the
+   * build, because a page that offers to the Union while the record says it does not is a wrong
+   * answer in the most consequential place this repository has one. And leaving it true while every
+   * signal is gone fails too.
+   *
+   * TRUE TODAY, WHICH IS THE FOUNDER'S ANSWER AND NOT A DEFAULT.
+   */
+  readonly unionOffering: boolean;
   /** GDPR Article 27 representative. A non-EU controller serving EU data subjects generally
    *  needs one designated in writing. Until this is set, no GDPR-compliance claim may render. */
   readonly euRepresentative: string | null;
@@ -177,6 +226,7 @@ export const brand: Brand = {
   // must not happen is the two drifting apart silently, so `brand.test.ts` asserts the address is
   // on `domain` and 53-the-rename.md carries the delivery check as an open item.
   supportEmail: "contact@uniplain.com",
+  supportMailboxDeliverable: false,
   legalEmail: null,
 
   postalAddress: {
@@ -213,6 +263,7 @@ export const brand: Brand = {
   // `data-region` claim: that claim says "the region you choose", and there is one region, chosen
   // here. It stays withheld behind `surface:region-choice` until a customer can actually choose.
   dataRegion: "ap-southeast-1",
+  unionOffering: true,
   euRepresentative: null,
   dpaAvailable: true,
 

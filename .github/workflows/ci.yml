@@ -134,6 +134,24 @@ jobs:
         if: ${{ !cancelled() }}
         run: node scripts/check-registry.mjs
 
+      # A SUB-PROCESSOR WAS RECEIVING DATA AND WAS DISCLOSED NOWHERE. `/brief` posted a workspace's
+      # figures to openrouter.ai from the day it shipped, while `/privacy` said "Four providers
+      # process data on our behalf" and the record, the sub-processor list, the Art. 30 record and
+      # SCC Annex III all agreed with it. They agreed because they were copies of each other: the
+      # two-way test between the disclosure and the "record" compared it against a hand-typed
+      # constant. Two lists omitting the same thing agree perfectly. This reads the SOURCE, which is
+      # the one input the lists cannot be a copy of.
+      # The home page claimed to read seven platforms and the Worker could read one. The capability
+      # gate passed because it checked `IMPLEMENTED_SOURCE_IDS.length > 0` -- that SOMETHING is
+      # implemented -- while licensing a claim that named all seven. This checks the thing itself.
+      - name: Ingestable guard
+        if: ${{ !cancelled() }}
+        run: node scripts/check-ingestable.mjs
+
+      - name: Recipient guard
+        if: ${{ !cancelled() }}
+        run: node scripts/check-recipients.mjs
+
       # `deleteWorkspacePayloads` is written, tested and called by nothing -- which is correct only
       # because `putPayload` is called by nothing either. The day the archive is wired into ingest,
       # closing an account would delete thirteen tables by cascade, report success, and leave the
@@ -200,3 +218,47 @@ jobs:
           PGUSER: postgres
           PGPASSWORD: postgres
         run: ./supabase/tests/run-local.sh
+
+  # A SEPARATE JOB, AND THE SEPARATION IS THE POINT.
+  #
+  # `pnpm audit` is the only step in this workflow that depends on a service outside it: it asks the
+  # registry what is known about the versions in the lockfile. Run inside `verify`, a registry
+  # outage would turn the whole gate red and read exactly like a broken test, and the reflex on a
+  # red build is to re-run it rather than to read it. Here it fails on its own, with its own name.
+  #
+  # It is required all the same. `scripts/check-advisories.mjs` refuses to treat an audit that could
+  # not run as a pass, so "we could not check" is a failure rather than a silence -- the same
+  # posture as the Worker reporting `not_configured` instead of "nothing to do".
+  external:
+    name: external
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Install Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: pnpm
+
+      # `pnpm audit` reads the lockfile and needs no node_modules, so nothing is installed here.
+      # That also means this job cannot be broken by an install failure, which is the other half of
+      # why it is separate.
+      - name: Advisory guard
+        run: node scripts/check-advisories.mjs
+
+      # The other check that asks the outside world a question, and it belongs in this job for the
+      # same reason. `/privacy` publishes a contact address as the statutory rights channel and the
+      # zone holds no MX record, so mail to it bounces. `brand.supportMailboxDeliverable` records
+      # that and every page reads it; this holds the boolean against the actual zone in BOTH
+      # directions, so publishing a working mailbox by flipping a boolean fails, and adding the
+      # records without flipping it fails too.
+      - name: Mailbox guard
+        if: ${{ !cancelled() }}
+        run: node scripts/check-mailbox.mjs

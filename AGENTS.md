@@ -13,9 +13,9 @@ environment is marked *unverified* rather than laundered into a fact.
 | Framework | Implemented | Partial | Absent | N/A | Of |
 |---|---|---|---|---|---|
 | SOC 2 Type II | **0** | 19 | 15 | 1 | 35 |
-| ISO/IEC 27001:2022 | 4 | 14 | 6 | — | 24 |
-| GDPR | 3 | 9 | 12 | 1 | 25 |
-| PDPA (Thailand) | 2 | 3 | 12 | 3 | 20 |
+| ISO/IEC 27001:2022 | 5 | 14 | 5 | — | 24 |
+| GDPR | 4 | 9 | 11 | 1 | 25 |
+| PDPA (Thailand) | 3 | 3 | 11 | 3 | 20 |
 
 Zero SOC 2 criteria are fully implemented. That is not a failure of engineering — it is what a
 framework built around policies, an auditor and an observation window looks like when measured
@@ -71,7 +71,27 @@ becomes available.
    one-hour TTL and a single-use `delete … returning`, both in `20260913000400_oauth_pending.sql`.
    Across all migrations there are exactly three `delete from` statements, and none names a
    tenancy table.
-2. **s.28 — every byte crosses a border with no mechanism.** Five transfers, each needing a s.28 or
+2. **s.28 — every byte still crosses a border with no mechanism, and the position is now assessed
+   and published rather than noted here.** `apps/web/app/_processing/transfer-basis.ts` scores all
+   six s.28 exceptions and both s.29 routes against the record, generated from `SUB_PROCESSORS` so
+   it cannot fall behind the disclosure, and `/processing` publishes it. **No basis is claimed.**
+   Two limbs — the contractual ones — are recorded as *open, needing counsel* rather than as "no",
+   because they are the ones that plausibly carry and a source file does not get to decide them;
+   the consent limb is **deliberately not claimed**, since nothing in this system asks anyone to
+   consent to an inadequate destination.
+
+   Three findings came out of generating it rather than writing it. **Four of the five recipients
+   carry `location: null`, so s.28's question cannot be reached for them at all** — adequacy is a
+   property of a named country and the country is not named. **Whether the Committee has published
+   an adequacy list could not be established** from any source checked, and is recorded as unknown
+   rather than assumed either way, because "no list exists" closes a route and "we did not find
+   one" does not. And `/privacy` opened its transfers clause "Those transfers are **necessary** to
+   provide the service a customer has asked for", which reads as the contractual-necessity limb
+   being asserted in a published notice; the word is gone and the clause now names the PDPA
+   position instead of only the GDPR one. The two PDPC notifications took effect **2024-03-24**,
+   checked against published commentary rather than recalled.
+
+   *Original entry, still true of the instruments themselves:* Five transfers, each needing a s.28 or
    s.29 basis: Supabase (Singapore), Cloudflare R2, Vercel, Stripe, **and OpenRouter**, which
    receives prompts built from a tenant's figures.
 3. **s.40 — the company calls itself a processor and has no instrument.** `/privacy` declares
@@ -89,8 +109,25 @@ becomes available.
 
    What the record itself reports as still missing is unchanged and is listed on that page: no
    transfer instrument, no DPA, no retention schedule, no DPO.
-6. **s.30–s.36 — no data-subject rights path at all.** No intake, no identity check, no clock, no
-   export, no rectification, no objection, no erasure.
+6. **s.30–s.36 — a rights path exists; the PUBLISHED channel did not receive.** *This entry read
+   "no data-subject rights path at all" long after `/data-requests` shipped with an intake, a
+   status trail and the Art. 18 restriction added to its enum and its form. It was stale, which is
+   worth recording: a gap list that is not re-read describes a system that no longer exists.*
+
+   What was genuinely wrong is narrower and worse. `/privacy`'s rights clause ended **"The contact
+   address at the top of this page reaches the same people"**, and `brand.ts` recorded in a comment
+   beside that same address that the zone holds no MX record and mail to it bounces. Both were in
+   the repository at once. **A request sent to a bouncing address and never answered is
+   indistinguishable, from the outside, from a company that read it and ignored you** — and for a
+   data subject with no account the mailbox was the only channel published.
+
+   Now: `brand.supportMailboxDeliverable` is a fact rather than a comment, `/privacy` and `/terms`
+   both publish the admission beside the address, the rights clause names the registered postal
+   address instead, and `scripts/check-mailbox.mjs` holds the fact against the zone over DNS in
+   **both** directions — publishing a working mailbox by flipping a boolean fails, and adding the
+   records without flipping it fails too, so the five-minute DNS task becomes a red build on the
+   day it is done. **Still absent: the records themselves, and any channel for a data subject with
+   no account other than post.**
 7. **s.19 / s.23 at the waiting list.** *Partly fixed:* the form now carries a purpose, a retention
    statement and a link to the notice. Still absent: a consent artefact recording what was agreed
    and when.
@@ -208,6 +245,7 @@ rather than deferred. Progress against the articles this section previously list
 | Art. 44–49 transfers | **Still absent — no instrument entered. The annexes are prepared** | Every recipient is in a third country from the Union's standpoint and so is the controller. No SCCs, no BCRs, no derogation, and Art. 30(1)(e) still reports `absent` — a test asserts it, so preparing the annexes cannot be mistaken for entering the Clauses. `apps/web/app/_processing/scc-annexes.ts` generates **Annex I.B** (transfer description) from the processor activities, **Annex II** from the security measures and **Annex III** from the sub-processor list, so the annexes cannot drift from the record the way a Word document does. **I.A (exporter) and I.C (competent supervisory authority) are left for the customer** — Clause 13 points at the exporter's Member State, and naming Thailand's PDPC there would be filled in, plausible and wrong. The operative Clauses are Decision (EU) 2021/914 and are deliberately not reproduced |
 | Art. 33(5) / 34 breach documentation | **The register exists; the notification decision is a person's** | `20260913001700_breach_register.sql`. `security_events` is the raw material an assessment reads and is not a breach record — no notion of who was affected, likely consequences, or whether anyone was told. `public.breach_records` carries the Art. 33(3) elements, **nullable** because Art. 33(4) permits phased reporting, with `app.breach_record_gaps` reporting what is still missing so a partial record cannot read as finished. `app.breach_notification_deadline` returns awareness + 72h for a **controller** breach (Art. 33(1), PDPA s.37(4) — a period both statutes state, so encoding it records a fact rather than guessing one) and **NULL for a processor** breach, whose duty under Art. 33(2) is without undue delay with no period named. 27 assertions in `24_breach_register.sql` |
 | Art. 28(3) processor terms | **All eight sub-paragraphs met** | `apps/web/app/_processing/article-28.ts` maps each sub-paragraph to the clause answering it, and `article-28.test.tsx` requires the quoted commitment to appear in the RENDERED page. The assessment found (b) confidentiality absent entirely and (a), (f), (g), (h) partial. **(d) was closed by dropping an assumption, not a dependency**: it was recorded as blocked on the MX record, but Art. 28(2) says *inform*, not send — a dated change list on `/sub-processors` published 30 days ahead, plus an in-product notice on the dashboard, informs the controller and gives it the window to object. `sub-processor-notice.test.tsx` asserts the contract's period is the code's, both window edges, and that the dashboard is wired to it |
+| Art. 30(1)(d) recipients / PDPA s.23(4) | **A recipient was undisclosed for as long as `/brief` has existed, and is now disclosed and enforced** | `apps/web/app/brief/actions.ts` posts a workspace's computed figures to `openrouter.ai` on a platform key. OpenRouter was in no processing activity, no sub-processor list, on no page, in no generated Art. 30 record and in no SCC annex, while `/privacy` said in words **"Four providers process data on our behalf"**. Two guards already covered this and both passed: `sub-processors.test.tsx` compares the disclosure and the record "in both directions", and the record side was `recipientsInRecord()` — documented as reading the activities, **returning a hand-typed constant**. Two lists that omit the same thing agree perfectly. `RECIPIENTS` is now derived from the activities, the `/privacy` clause is generated from `SUB_PROCESSORS` with **no count in it**, and `scripts/check-recipients.mjs` holds the classification of every `https://` host in shipped source against the disclosure — the one input the lists cannot be copies of. A `tenant-platform` host outside connector or OAuth code is refused, because BYOC means the call is made where a per-workspace credential is opened |
 | Art. 37 DPO / PDPA s.41 | **Assessed: no limb engaged on the record as it stands.** Not the same claim as "none is required" | `apps/web/app/_processing/dpo-requirement.ts` scores the three limbs both statutes name against the record of processing. (a) no public function. **Art. 37(1)(b)** is the one this product looks like it might meet — reading a business's metrics nightly is regular and systematic, but the limb is monitoring *of data subjects*, and `envelope_rows` carries no buyer identifier. (c) no activity names an Art. 9 / s.26 category, scanned rather than remembered — a new one flips the limb and fails the build. **The scale caveat travels with it**: both (b) and (c) turn on large scale and there are no customers yet, so a limb unengaged by an empty database is not one that will stay unengaged. `brand.dataProtectionOfficer` stays `null` and no contact is printed |
 
 ---
@@ -232,12 +270,12 @@ produces a well-run system and not a certificate.**
 | A.5.17 | Authentication information managed | `20260908000600_api_keys.sql` — only a SHA-256 `key_hash` and a non-secret prefix are stored; plaintext shown once |
 | A.8.3 | Information access restricted | as A.5.15, plus no DELETE on `organisations`/`workspaces`/`invitations`/`api_keys` and no policy granting an API-key session write access. Note what this rests on: every SECURITY DEFINER writer here reaches a FORCED table through no policy admitting its owner, so the whole write path depends on the owner holding `BYPASSRLS`. Demonstrated as a mechanism in `15_force_rls.sql`; **unverified on the hosted project** |
 | A.8.33 | Test information protected | every fixture is hand-written synthetic TypeScript; no production data in any test |
+| A.8.8 (dependency half) | Known vulnerabilities identified and acted on | `scripts/check-advisories.mjs` fails the build on a high or critical advisory, as its own CI job. **Its first run found one that had been in the tree with nothing looking at it** — `sharp@0.35.2`, GHSA-rgj7-g3m4-5g8c, reached through `@cloudflare/vitest-pool-workers` — fixed by a `pnpm.overrides` pin to `>=0.35.4`. An audit that could not reach the registry **fails** rather than reporting clean, and a suppression is keyed on the advisory rather than the module and expires within 90 days. `.github/dependabot.yml` supplies the upgrades so the only route past a finding is not the suppression file. **Scanning, not ISMS work**: A.8.8 also wants a defined process, assigned ownership and a documented response time, and none of those exists |
 
 ### Absent and code-shaped, so these are ours to fix
 
-- **A.8.8 vulnerability management** — no `pnpm audit` step, no Dependabot or Renovate, no CodeQL or
-  SAST, no secret scanning, no SBOM. *Verified: one CI workflow, no dependabot config, no audit or
-  SAST step anywhere in `.github/`.*
+- **A.8.8 vulnerability management** — **partial, and the dependency half is now enforced.** See the
+  row in *Implemented* above. Still absent: no CodeQL or SAST, no secret scanning, no SBOM.
 - **A.8.15/A.8.16 logging and monitoring** — the Worker emits structured `console.log` with counts
   and reasons. That is emission, not monitoring: no alerting, no retention, no review.
 - **A.8.32 change management** — *verified: no `CODEOWNERS`, and the ten most recent commits are all
@@ -291,9 +329,42 @@ platform credentials.
 
 What stops any of this being asserted before it is true.
 
+**SEARCH CONSOLE IS DISPATCHED TOO, AND A CLAIM MADE IN TWO NOTES WAS WRONG.** Notes 105 and 97 said
+the blocker for GA4, Meta Ads and Search Console was "a report definition a `connections` row does
+not carry". Each connector carries its own default — `GA4_DEFAULT_REPORT`, `META_DEFAULT_REPORT`,
+`SEARCH_CONSOLE_DEFAULT_REPORTS` — and the dispatch invents nothing. The real blockers: Search
+Console needed a **day span**, because it reports in the platform's Pacific reporting day and
+truncating an instant picks a day by accident; **GA4 and Meta return `void` and report no
+checkpoint**, so a partial run has no honest watermark and `IngestReport.checkpoint` cannot be
+filled without the failure its own comment names. **Three of seven connectors now deliver rows.** See
+`docs/marketplane/108-a-day-based-source-asked-for-in-days.md`.
+
+**LOYVERSE IS NOW DISPATCHED, AND THE CLAIM WIDENED BY ITSELF.** `runIngest` gained a Loyverse
+branch — `runLoyverseBackfill` had been written, tested and exported and was called by nothing — so
+`INGESTABLE_SOURCE_IDS` gained the id and the published sentence became *"Reads Loyverse and
+WooCommerce on your own credentials"* in the same commit, because `brand.test.ts` went red on the old
+one until it did. **Two of seven connectors now deliver rows**; GA4, Meta Ads and Search Console each
+have a written backfill and need a report definition a `connections` row does not carry, and Google
+Ads and Shopify have no backfill at all. All five stay declared in `DEFERRED_SOURCE_IDS`. See
+`docs/marketplane/106-the-till-this-product-is-designed-around.md`.
+
+**THE GATE VERIFIED A PROXY, AND THE PROXY DRIFTED.** The home page published *"Reads GA4, Google
+Ads, Loyverse, Meta Ads, Search Console, Shopify and WooCommerce on your own credentials"* while
+`runIngest` refused every provider but `woocommerce` — so a customer could connect their Loyverse
+till, watch it go healthy and never receive a row. Every guard passed: `check-capabilities.mjs`
+asserts each id exports a client and a normaliser (true of all seven), `AVAILABLE_CAPABILITIES` read
+`IMPLEMENTED_SOURCE_IDS.length > 0` (a test that *something* is implemented, licensing a sentence
+naming seven things), and `brand.test.ts` pinned the false sentence exactly. The claim is now derived
+from `INGESTABLE_SOURCE_IDS` and reads *"Reads WooCommerce on your own credentials"*;
+`check-ingestable.mjs` holds that against the Worker's dispatch in both directions. **Four backfills
+— GA4, Loyverse, Meta Ads, Search Console — are written, tested and exported and are dispatched by
+nothing**, under a comment saying four connectors had no backfill that was true when written. See
+`docs/marketplane/105-the-claim-named-seven-and-one-worked.md`.
+
 | Control | Evidence |
 |---|---|
 | A machine-readable ban list, each entry carrying the decision that killed it | `packages/brand/src/claims.ts` → `FORBIDDEN_CLAIMS` |
+| The source claim names only sources a row can actually arrive from | `INGESTABLE_SOURCE_IDS` drives both `connectorClaim` and `source:any`; `scripts/check-ingestable.mjs` compares it to `runIngest`'s dispatch both ways, and checks each deferred connector's `backfill` flag against the filesystem |
 | SOC 2 and ISO 27001 declared as claims withheld by a brand fact only a third party can set | `claims.ts` `soc2`/`iso27001`; `brand.ts` both `false` |
 | Flipping a certification fact cannot silently publish copy — the ban and the claim are interlocked | `brand.test.ts` "does not fire on the claims that are allowed" goes red until the ban is deleted in the same change |
 | The governing law and supervisory authority stated once, as facts about the entity | `brand.governingPrivacyLaw`, `brand.supervisoryAuthority`, rendered on `/privacy` |

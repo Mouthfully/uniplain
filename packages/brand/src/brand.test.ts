@@ -8,6 +8,10 @@ import {
   allowedClaims,
   withheldClaims,
   type Capability,
+  DEFERRED_SOURCE_IDS,
+  INGESTABLE_SOURCE_IDS,
+  SOURCE_LABELS,
+  type ImplementedSourceId,
 } from "./claims.ts";
 
 describe("the brand file", () => {
@@ -138,17 +142,18 @@ describe("the claims gate", () => {
     expect(allowedClaims().map((c) => c.id)).not.toContain("data-region");
   });
 
-  it("derives the connector claim from the guarded implemented-source list", () => {
-    // Seven sources now, and the list changing with them is the POINT of this test rather than an
-    // inconvenience. It used to prove the sentence could NOT say "Google Ads" or "Search Console",
-    // because neither existed and saying so would have been the abandoned-roadmap claim of issue
-    // #16. They exist, so the sentence names them.
+  it("derives the connector claim from what can actually be READ, not what is built", () => {
+    // THIS TEST PINNED A FALSE SENTENCE, AND IT WAS DOING ITS JOB.
     //
-    // `shopify` is the sharpest case this list has had. `/connectors/shopify` was a full landing
-    // page with a connect button for a platform that had no module, no source, no provider and no
-    // redaction policy -- the abandoned-roadmap claim of issue #16, shipped, ending in a button.
-    // It is on this list now because the connector exists, and that is the only thing that may ever
-    // put a name here.
+    // It asserted, exactly: "Reads GA4, Google Ads, Loyverse, Meta Ads, Search Console, Shopify and
+    // WooCommerce on your own credentials." Every one of those seven has a client and a normaliser,
+    // `check-capabilities.mjs` proved it against the source tree, and the sentence was still not
+    // true: `runIngest` refuses every provider but `woocommerce`, so a customer could connect their
+    // Loyverse till, watch the connection go healthy, and never receive a row.
+    //
+    // The pin was against `IMPLEMENTED_SOURCE_IDS` -- a list of connectors that EXIST. What a
+    // customer buys is data arriving. A guard checking a proxy for the thing claimed eventually
+    // licenses a falsehood, and this is what that looks like from inside: everything green.
     expect(IMPLEMENTED_SOURCE_IDS).toEqual([
       "ga4",
       "google_ads",
@@ -158,18 +163,36 @@ describe("the claims gate", () => {
       "shopify",
       "woocommerce",
     ]);
+    expect(INGESTABLE_SOURCE_IDS).toEqual(["loyverse", "search_console", "woocommerce"]);
+
     const connectors = allowedClaims().find((claim) => claim.id === "connectors");
+    // WIDENED BY WIRING THE DISPATCH, WHICH IS THE MECHANISM WORKING. It read "Reads WooCommerce"
+    // an hour ago. `runIngest` gained a Loyverse branch, `INGESTABLE_SOURCE_IDS` gained the id, and
+    // the sentence grew a platform -- and this assertion is what made the copy change arrive in the
+    // same commit as the feature rather than whenever somebody remembered.
     expect(connectors?.text).toBe(
-      "Reads GA4, Google Ads, Loyverse, Meta Ads, Search Console, Shopify and WooCommerce on your " +
-        "own credentials.",
+      "Reads Loyverse, Search Console and WooCommerce on your own credentials.",
     );
-    // `Shopify` CAME OFF THIS LIST THE DAY THE CONNECTOR SHIPPED, and it is worth recording why it
-    // was on it. This assertion existed to prove the sentence could not name a source with no
-    // module behind it -- issue #16's abandoned-roadmap claim -- and Shopify was the example. It
-    // was also, for that entire time, a full landing page at /connectors/shopify with a connect
-    // button. The guard held the one sentence it could see and the page said it anyway.
-    //
-    // The remaining names are still unsayable, and each for the same reason: no module.
+
+    // THE ASSERTION THAT MAKES IT DURABLE, and the one the old pin could not express: no source a
+    // customer cannot receive data from may be named in a sentence beginning "Reads". Pinning the
+    // string alone would go green again the moment somebody edited both it and the list.
+    for (const deferred of DEFERRED_SOURCE_IDS) {
+      const label = SOURCE_LABELS[deferred.id as ImplementedSourceId];
+      expect(
+        connectors?.text,
+        `the claim says it reads ${label}, and runIngest cannot: ${deferred.missing}`,
+      ).not.toContain(label);
+    }
+
+    // Every implemented source is ingestable or deferred, exactly once. `check-ingestable.mjs`
+    // holds the same invariant against the Worker's dispatch and the filesystem; this holds it
+    // inside the package that publishes the sentence.
+    const accounted = [...INGESTABLE_SOURCE_IDS, ...DEFERRED_SOURCE_IDS.map((d) => d.id)].sort();
+    expect(accounted).toEqual([...IMPLEMENTED_SOURCE_IDS].sort());
+
+    // The names that were never sayable are still never sayable, and for the original reason: no
+    // module. Issue #16's abandoned-roadmap claim.
     expect(connectors?.text).not.toMatch(/affiliate|TikTok|DataForSEO|Impact|Awin/i);
   });
 

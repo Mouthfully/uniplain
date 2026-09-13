@@ -53,15 +53,41 @@
 import { connectionHealth, openCredential } from "@repo/connections";
 import type { EnvelopeRow } from "@repo/contract";
 import {
+  EMPTY_RATE_BUDGET,
+  type SearchConsoleBackfillBatch,
+  type SearchConsoleCheckpoint,
+  parseSearchConsoleDate,
+  runSearchConsoleBackfill,
+  type LoyverseBackfillBatch,
+  type LoyverseCheckpoint,
+  type LoyverseCredential,
   type WooBackfillBatch,
   type WooCheckpoint,
+  assertReadOnlyCredential,
   parseRfc3339,
+  runLoyverseBackfill,
   runWooBackfill,
 } from "@repo/connectors";
 import type { ConnectionRecord, ConnectionStorePort, IngestStorePort } from "@repo/store";
 import { type CryptoLike as VaultCrypto, kekFromBase64 } from "@repo/vault";
 
-/** The only provider this runtime can drive. See `runIngest` for why it is a refusal and not a map. */
+/**
+ * Every provider this runtime can drive.
+ *
+ * IT IS A LIST NOW BECAUSE THERE ARE TWO. It was `INGEST_SOURCE = "woocommerce"`, a single string,
+ * under a comment explaining that a map would be "four entries pointing at nothing" because the
+ * other connectors had no `backfill.ts`. Four of them grew one and the comment kept saying it --
+ * and the home page kept claiming to read seven platforms while six could not produce a row.
+ *
+ * `INGESTABLE_SOURCE_IDS` in `@repo/brand` must equal this, and `scripts/check-ingestable.mjs`
+ * holds them against each other in both directions: the published claim cannot name a source this
+ * cannot drive, and this cannot drive one the claim withholds.
+ */
+export const INGEST_SOURCES = ["loyverse", "search_console", "woocommerce"] as const;
+
+export type IngestSource = (typeof INGEST_SOURCES)[number];
+
+/** @deprecated The WooCommerce id, kept for the call sites that still name it directly. */
 export const INGEST_SOURCE = "woocommerce";
 
 /**
@@ -76,7 +102,7 @@ export const SUGGESTED_FIRST_WINDOW_DAYS = 30;
 
 /** What a run reports. Numbers, a connection id, and text this repository wrote. Nothing else. */
 export interface IngestReport {
-  readonly source: typeof INGEST_SOURCE;
+  readonly source: IngestSource;
   readonly connectionId: string;
   /**
    * Pages of orders YIELDED by the backfill -- not every page fetched from the store.
@@ -99,8 +125,13 @@ export interface IngestReport {
    *
    * Reported because `pages` alone would tell an operator a busy store was cheap to read. A run
    * with `pages: 3, splits: 7` cost the merchant far more than three requests.
+   *
+   * **NULL WHERE THE SOURCE HAS NO BISECTOR, AND NOT ZERO.** Loyverse's walk is a cursor: there is
+   * no probe page to discard and nothing to split, so there is no number to report. Writing `0`
+   * would say "we measured this and it was none", which is the `?? 0` this repository refuses --
+   * an operator comparing two runs would read a Loyverse run as cheap when nothing measured it.
    */
-  readonly splits: number;
+  readonly splits: number | null;
   /**
    * The `since` the NEXT run must use. Present even on a failed run -- especially then.
    *
@@ -120,6 +151,21 @@ export interface IngestRequest {
   readonly since: string;
   /** RFC3339. Defaults to the run's start, pinned once. */
   readonly until?: string;
+  /**
+   * A DAY SPAN, INCLUSIVE AT BOTH ENDS, FOR THE SOURCES THAT REPORT IN DAYS RATHER THAN INSTANTS.
+   *
+   * Search Console reports in **the platform's Pacific reporting day**, not in UTC and not in the
+   * merchant's zone. Truncating `since` to its first ten characters would pick a reporting day by
+   * accident -- a run asked for from `2026-09-11T20:00:00Z` would read the 11th when Google's own
+   * day had not started, and every figure would be attributed to the wrong day with nothing marking
+   * it. That is the same class of error as reading a Bangkok receipt in UTC.
+   *
+   * So a day-based source is asked for in days, and refuses rather than converting. `since` stays
+   * required because the instant sources need it and a request carrying neither is a mistake
+   * whichever source it names.
+   */
+  readonly from?: string;
+  readonly to?: string;
 }
 
 /**
@@ -192,7 +238,24 @@ export function parseIngestRequest(body: unknown): IngestRequest {
   // refusal surfaces -- a 400 naming the field, rather than a 502 from inside the run -- and
   // borrowing its implementation is what stops the two answers diverging.
   const since = instant(b.since, "since");
-  if (b.until === undefined || b.until === null) return { workspaceId, connectionId, since };
+
+  // THE DAY SPAN, VALIDATED WITH THE CONNECTOR'S OWN PARSER. `parseSearchConsoleDate` owns what a
+  // real reporting date is; a second definition here would be a second opinion, which is the
+  // reasoning `instant()` above already follows for RFC3339.
+  const from = b.from === undefined || b.from === null ? undefined : day(b.from, "from");
+  const to = b.to === undefined || b.to === null ? undefined : day(b.to, "to");
+  if (from !== undefined && to !== undefined && from > to) {
+    throw new IngestError(
+      `\`to\` (${to}) is before \`from\` (${from}). Both ends are inclusive, so a span may be one ` +
+        "day, and one that ends before it starts is almost always two values swapped.",
+      "bad_request",
+    );
+  }
+  const span = from === undefined ? {} : to === undefined ? { from } : { from, to };
+
+  if (b.until === undefined || b.until === null) {
+    return { workspaceId, connectionId, since, ...span };
+  }
 
   const until = instant(b.until, "until");
   // ORDERING IS THE CALLER'S MISTAKE, SO IT IS A 400 HERE. `wooBackfillChunks` refuses the same
@@ -205,7 +268,7 @@ export function parseIngestRequest(body: unknown): IngestRequest {
       "bad_request",
     );
   }
-  return { workspaceId, connectionId, since, until };
+  return { workspaceId, connectionId, since, until, ...span };
 }
 
 /**
@@ -214,6 +277,21 @@ export function parseIngestRequest(body: unknown): IngestRequest {
  * The check is the connector's; only the error type differs, because at this boundary the caller is
  * a person holding a request body and the right answer is a 400 naming the field.
  */
+/** One `YYYY-MM-DD` field, refused at the boundary rather than inside the run. */
+function day(value: unknown, field: string): string {
+  const text = str(value, field);
+  try {
+    parseSearchConsoleDate(text);
+  } catch {
+    throw new IngestError(
+      `\`${field}\` is ${JSON.stringify(text)}, which is not a YYYY-MM-DD date. This source ` +
+        "reports in whole days, and the span is inclusive at both ends.",
+      "bad_request",
+    );
+  }
+  return text;
+}
+
 function instant(value: unknown, field: string): string {
   const text = str(value, field);
   try {
@@ -354,13 +432,22 @@ export async function runIngest(request: IngestRequest, deps: IngestDeps): Promi
       "bad_kek",
     );
   }
-  if (credential.kind !== "key_secret") {
-    // Unreachable through `credential_lane`, which `openCredential` already checks against the
-    // sealed blob. Asserted anyway because the alternative is `credential.key` being `undefined`
-    // and travelling into an `Authorization` header as the string "undefined".
+  // THE LANE EACH SOURCE NEEDS, CHECKED PER SOURCE.
+  //
+  // Unreachable through `credential_lane`, which `openCredential` already checks against the sealed
+  // blob. Asserted anyway because the alternative is a field being `undefined` and travelling into
+  // an `Authorization` header as the string "undefined".
+  //
+  // `PROVIDER_LANES.loyverse` is `["oauth"]` and the single-element array is a refusal rather than
+  // an omission: Loyverse issues a pasteable personal access token that "gives unlimited access to
+  // the targeted account" -- no scopes, and unlimited includes RECEIPTS_WRITE. So a Loyverse pull
+  // requires an OAuth grant, and `assertReadOnlyCredential` below says so a second time at the
+  // client boundary.
+  const needed = connection.provider === "woocommerce" ? "key_secret" : "oauth";
+  if (credential.kind !== needed) {
     throw new IngestError(
-      `connection ${connection.id} seals a ${credential.kind} credential; a WooCommerce pull needs ` +
-        "a key and a secret.",
+      `connection ${connection.id} seals a ${credential.kind} credential; a ${connection.provider} ` +
+        `pull needs a ${needed} one.`,
       "wrong_credential_lane",
     );
   }
@@ -383,6 +470,229 @@ export async function runIngest(request: IngestRequest, deps: IngestDeps): Promi
         "orders that had not been modified yet, and nothing ever re-reads a window behind the " +
         "watermark. Omit `until` to pin it to the run's start.",
       "bad_request",
+    );
+  }
+
+  const context = { workspaceId: connection.workspaceId, connectionId: connection.id };
+
+  // ============================================================================================
+  // THE SEARCH CONSOLE BRANCH, and the reason it needs a different request shape.
+  // ============================================================================================
+  //
+  // Search Console reports in WHOLE DAYS, in the platform's own Pacific reporting day. The other two
+  // sources report in instants. Truncating `since` to ten characters would pick a reporting day by
+  // accident and attribute every figure to it, which is the Bangkok-receipt error with a different
+  // timezone -- so the span is asked for and refused rather than derived.
+  //
+  // THE REPORT SET IS THE CONNECTOR'S OWN, not one invented here. `SEARCH_CONSOLE_DEFAULT_REPORTS`
+  // is `["totals", "byQuery"]` and the pair is not optional: Google's anonymity threshold withholds
+  // low-volume queries, so a query-grain response is a SUBSET whose sum is quietly lower than the
+  // truth. The backfill refuses a thresholded grain with no date-only report before spending a
+  // request, and passing nothing here is what lets that decision stay the connector's.
+  if (connection.provider === "search_console") {
+    if (request.from === undefined || request.to === undefined) {
+      throw new IngestError(
+        "a search_console run needs `from` and `to` as YYYY-MM-DD dates, inclusive at both ends. " +
+          "This source reports in the platform's Pacific reporting day, and deriving one from " +
+          "`since` would pick a day by accident: a window opened at 20:00 UTC is not the same " +
+          "reporting day Google would answer for. There is no default lookback either -- how long " +
+          "a Search Console figure keeps moving is unmeasured, so a number here would silently " +
+          "decide how much of the customer's history is re-read.",
+        "bad_request",
+      );
+    }
+    if (credential.kind !== "oauth") {
+      throw new IngestError(
+        `connection ${connection.id} seals a ${credential.kind} credential; a search_console pull ` +
+          "needs an oauth one.",
+        "wrong_credential_lane",
+      );
+    }
+
+    // Bound after the refusal above so the closure below sees a `string`. TypeScript cannot carry
+    // the narrowing into `scReport`, and the alternative is a non-null assertion on the value that
+    // decides which days a customer's figures are attributed to.
+    const spanFrom: string = request.from;
+    const spanTo: string = request.to;
+
+    let scCheckpoint: SearchConsoleCheckpoint = { readThrough: null, chunks: 0, rows: 0 };
+    let scPages = 0;
+    let scRead = 0;
+    let scWritten = 0;
+    let scComplete = false;
+
+    const scRun = runSearchConsoleBackfill({
+      client: {
+        fetchImpl: deps.fetchImpl,
+        accessToken: credential.accessToken,
+        siteUrl: connection.externalAccountId,
+        retry: {
+          now: deps.now ?? (() => new Date()),
+          random: deps.random ?? Math.random,
+          sleep: deps.sleep ?? ((ms) => new Promise((resolve) => setTimeout(resolve, ms))),
+        },
+      },
+      span: { from: spanFrom, to: spanTo },
+      fetchedAt,
+      onChunk: (c: SearchConsoleCheckpoint) => {
+        scCheckpoint = c;
+      },
+    });
+
+    const scReport = (): IngestReport => ({
+      source: "search_console",
+      connectionId: connection === null ? request.connectionId : connection.id,
+      pages: scPages,
+      rowsRead: scRead,
+      rowsWritten: scWritten,
+      chunks: scCheckpoint.chunks,
+      // No bisector here either: the chunk width is one day and is an admission rather than a
+      // tuning, so no window is ever probed and split.
+      splits: null,
+      // `readThrough` IS NULL UNTIL A CHUNK COMPLETES, and that null travels rather than being
+      // replaced by the span's start. The checkpoint says READ, not final -- `restates_until` is
+      // null for this source because nobody has measured how long a figure keeps moving -- and a
+      // run that read nothing has no watermark to report.
+      checkpoint: scCheckpoint.readThrough ?? spanFrom,
+      complete: scComplete,
+    });
+
+    try {
+      let next = await scRun.next();
+      while (!next.done) {
+        const batch: SearchConsoleBackfillBatch = next.value;
+        scPages += 1;
+        scRead += batch.rows.length;
+        scWritten += await writeBatch(deps.ingest, batch.rows, context);
+        next = await scRun.next();
+      }
+      scCheckpoint = next.value;
+      scComplete = true;
+    } catch (cause) {
+      throw new IngestRunFailure(scReport(), cause);
+    }
+
+    return scReport();
+  }
+
+  // ============================================================================================
+  // THE LOYVERSE BRANCH, and the shape of the dispatch that was missing.
+  // ============================================================================================
+  //
+  // `runLoyverseBackfill` has been written, tested and exported since it was built; nothing called
+  // it. The work below is not the walking -- that exists -- it is resolving what the walk needs
+  // from a connection row and threading the checkpoint back out, and it is the whole difference
+  // between a merchant who connects a till and one who receives their takings.
+  //
+  // IT RETURNS EARLY RATHER THAN JOINING A SHARED LOOP. The two sources agree on almost everything
+  // and disagree on the three things that matter: the window's field names, what a checkpoint is,
+  // and what a run costs the merchant (WooCommerce meters splits, Loyverse meters an account-wide
+  // rate budget). A shared loop would have to erase those differences to a common shape, and the
+  // common shape is where a number stops meaning what its source meant by it.
+  if (connection.provider === "loyverse") {
+    if (credential.kind !== "oauth") {
+      // Unreachable: the lane check above already required `oauth` for this provider. Narrowed
+      // again because TypeScript cannot see through that comparison, and a cast here would be a
+      // cast on the object that carries the merchant's access token.
+      throw new IngestError(
+        `connection ${connection.id} seals a ${credential.kind} credential; a loyverse pull needs ` +
+          "an oauth one.",
+        "wrong_credential_lane",
+      );
+    }
+
+    const loyverseCredential: LoyverseCredential = {
+      kind: "oauth",
+      accessToken: credential.accessToken,
+      // EMPTY MEANS "NOT REPORTED", NOT "NOTHING GRANTED" -- `client.ts` takes that reading and
+      // skips the scope check rather than failing every pull on a connection that predates the
+      // column. Passing the row's value rather than `[]` is what lets it check when it can.
+      grantedScopes: connection.grantedScopes,
+    };
+
+    // DEFENCE IN DEPTH, AND NO TEST HERE DISTINGUISHES IT -- said plainly because a mutation
+    // proved it. Deleting this line leaves the whole suite green: `fetchMerchant` calls the same
+    // assertion at its own top, before its first request, so the guarantee is `client.ts`'s and
+    // this is an earlier restatement of it. That module's note is the reason to keep it anyway --
+    // "calling it three times costs nothing; missing it once costs the guarantee" -- and what it
+    // guarantees is that a token carrying RECEIPTS_WRITE never reaches a till this product only
+    // ever reads. Kept, and not credited with more than it does.
+    assertReadOnlyCredential(loyverseCredential);
+
+    let loyverseCheckpoint: LoyverseCheckpoint = {
+      updatedAfter: request.since,
+      chunks: 0,
+      rows: 0,
+      budget: EMPTY_RATE_BUDGET,
+    };
+    let loyversePages = 0;
+    let loyverseRead = 0;
+    let loyverseWritten = 0;
+    let loyverseComplete = false;
+
+    const loyverseRun = runLoyverseBackfill({
+      client: {
+        fetchImpl: deps.fetchImpl,
+        credential: loyverseCredential,
+        now: deps.now ?? (() => new Date()),
+        random: deps.random ?? Math.random,
+        sleep: deps.sleep ?? ((ms) => new Promise((resolve) => setTimeout(resolve, ms))),
+      },
+      window: { updatedAfter: request.since, updatedBefore: until },
+      // Not null by this point -- `assertRunnable` refused a connection without one. It matters
+      // more here than the column's name suggests: `dimensions.date` is COMPUTED in this zone, so a
+      // guess moves receipts onto the wrong calendar day rather than mislabelling the right one.
+      timezone: connection.timezone as string,
+      fetchedAt,
+      onChunk: (c: LoyverseCheckpoint) => {
+        loyverseCheckpoint = c;
+      },
+    });
+
+    const loyverseReport = (): IngestReport => ({
+      source: "loyverse",
+      connectionId: connection === null ? request.connectionId : connection.id,
+      pages: loyversePages,
+      rowsRead: loyverseRead,
+      rowsWritten: loyverseWritten,
+      chunks: loyverseCheckpoint.chunks,
+      // NULL, NOT ZERO. There is no bisector on a cursor walk, so no probe page is ever discarded
+      // and there is nothing to count. See the field's own note.
+      splits: null,
+      checkpoint: loyverseCheckpoint.updatedAfter,
+      complete: loyverseComplete,
+    });
+
+    try {
+      let next = await loyverseRun.next();
+      while (!next.done) {
+        const batch: LoyverseBackfillBatch = next.value;
+        loyversePages += 1;
+        loyverseRead += batch.rows.length;
+        loyverseWritten += await writeBatch(deps.ingest, batch.rows, context);
+        next = await loyverseRun.next();
+      }
+      loyverseCheckpoint = next.value;
+      loyverseComplete = true;
+    } catch (cause) {
+      // Identical posture to the WooCommerce path: everything written stays written, the upsert is
+      // idempotent, and the checkpoint names the last chunk read IN FULL.
+      throw new IngestRunFailure(loyverseReport(), cause);
+    }
+
+    return loyverseReport();
+  }
+
+  if (credential.kind !== "key_secret") {
+    // The mirror of the Loyverse narrowing above, and unreachable for the same reason: the lane
+    // check already required `key_secret` for this provider. TypeScript cannot see through that
+    // comparison, and the alternative to narrowing again is a cast on the object holding the
+    // merchant's store key -- which would make `credential.key` `undefined` reach an
+    // `Authorization` header as the string "undefined" the day the lane check is ever loosened.
+    throw new IngestError(
+      `connection ${connection.id} seals a ${credential.kind} credential; a ${connection.provider} ` +
+        "pull needs a key and a secret.",
+      "wrong_credential_lane",
     );
   }
 
@@ -418,7 +728,6 @@ export async function runIngest(request: IngestRequest, deps: IngestDeps): Promi
     },
   });
 
-  const context = { workspaceId: connection.workspaceId, connectionId: connection.id };
   let complete = false;
   try {
     let next = await run.next();
@@ -480,10 +789,25 @@ export class IngestRunFailure extends Error {
  * a missing timezone is an operator's, and an unusable connection is the merchant's.
  */
 function assertRunnable(connection: ConnectionRecord, now: Date): void {
-  if (connection.provider !== INGEST_SOURCE) {
-    // A refusal and not a lookup table. Four of the five connectors have no `backfill.ts` yet, so a
-    // map would be four entries pointing at nothing; naming the one that works is the honest shape
-    // until there is a second.
+  if (!(INGEST_SOURCES as readonly string[]).includes(connection.provider)) {
+    // A refusal and not a lookup table, and THE REASON GIVEN HERE WAS TRUE AND IS NOT ANY MORE.
+    //
+    // It read: "four of the five connectors have no `backfill.ts` yet, so a map would be four
+    // entries pointing at nothing". Four of them now have exactly that -- `ga4`, `loyverse`,
+    // `meta_ads` and `search_console` each ship a `backfill.ts`, tested and exported from
+    // `@repo/connectors` -- and this comment went on explaining an absence that had been filled.
+    // The same shape as the sub-processor comment that said OpenRouter had no caller: correct when
+    // written, falsified by a later commit, attached to nothing that could notice.
+    //
+    // WHAT IS ACTUALLY MISSING IS THE DISPATCH, not the backfills. Each takes source-specific
+    // options -- a store URL and consumer key, a till token, a GA4 property and report definition,
+    // a Meta ad account and report definition -- and resolving those from a connection row is the
+    // work. It is a feature, and it is the one that decides whether this product delivers anything
+    // to a customer who is not on WooCommerce.
+    //
+    // The gap is now declared in `DEFERRED_SOURCE_IDS` rather than described here, the published
+    // claim is derived from what CAN be read, and `check-ingestable.mjs` holds the three against
+    // each other and against the filesystem. Wiring the fifth connector widens the claim by itself.
     throw new IngestError(
       `connection ${connection.id} is a ${connection.provider} connection. This runtime drives ` +
         `${INGEST_SOURCE} only -- the other sources have a client and a normaliser but no backfill.`,

@@ -43,6 +43,10 @@ So: **refuse rather than repair or default.**
 | `check-claim-sources` | a claim citing a superseded specification section |
 | `check-providers`, `check-registry` | provider and field-registry drift |
 | `check-erasure` | a payload write shipping without anything able to delete it when a customer closes their account |
+| `check-ingestable` | a source the site claims to **read** that `runIngest` cannot dispatch — and a deferred connector whose `backfill` flag disagrees with the filesystem |
+| `check-mailbox` | a published contact address whose deliverability fact disagrees with the zone's MX records — in **both** directions |
+| `check-recipients` | an `https://` host in shipped source that nobody has classified — and a host classified as a sub-processor that no disclosure names |
+| `check-advisories` | a dependency carrying a **high or critical** published advisory — and an audit that could not reach the registry, which fails rather than reporting clean |
 | `check-design-notes` | two design notes sharing a number, or a note whose heading and filename disagree |
 
 Plus two test-shaped guards that behave the same way: `withheld-claims.test.tsx` refuses a claim the

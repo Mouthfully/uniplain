@@ -1,4 +1,5 @@
 import { InsightPipeline } from "../_art/InsightPipeline";
+import { implementedSources, sourceMark } from "./_source-marks";
 import { SAMPLE_FIGURES, TOP_ACTION_IS_RANGE } from "./_sample-brief";
 
 /**
@@ -102,6 +103,9 @@ const ACTION_LABEL = "See the source";
 /** Names the list for assistive tech, which otherwise hears three bare numbers. */
 const TASKS_LABEL = "Figures behind this week's list";
 
+/** Names each row's provenance row, which otherwise reads as a run of bare platform names. */
+const SOURCES_LABEL = "Connectors this figure was computed from";
+
 /**
  * The third row's caption, in the two shapes the engine can return. Which one renders is the
  * engine's answer and not an editorial choice: `buildFigureSet` gives a range only where some
@@ -134,15 +138,18 @@ const POINT_DETAIL = "A single figure, because every row behind it is settled.";
 const TASKS = [
   {
     title: `${SAMPLE_FIGURES[0].label} ${SAMPLE_FIGURES[0].value}, ${SAMPLE_FIGURES[0].change} on the week before`,
-    detail: "Both totals summed from the rows; the difference computed in code, not written.",
+    detail: SAMPLE_FIGURES[0].detail,
+    sources: SAMPLE_FIGURES[0].sources,
   },
   {
-    title: `${SAMPLE_FIGURES[1].label} ${SAMPLE_FIGURES[1].value}`,
-    detail: "A share of a total taken from the same rows, so the parts add up.",
+    title: `${SAMPLE_FIGURES[1].label} ${SAMPLE_FIGURES[1].value}, ${SAMPLE_FIGURES[1].change}`,
+    detail: SAMPLE_FIGURES[1].detail,
+    sources: SAMPLE_FIGURES[1].sources,
   },
   {
     title: `${SAMPLE_FIGURES[2].label} ${SAMPLE_FIGURES[2].value}`,
     detail: TOP_ACTION_IS_RANGE ? RANGE_DETAIL : POINT_DETAIL,
+    sources: SAMPLE_FIGURES[2].sources,
   },
 ] as const;
 
@@ -219,6 +226,38 @@ export function AssistantPanel() {
                   <span className="text-ink-subtle mt-1 block text-[10px] leading-[1.4]">
                     {task.detail}
                   </span>
+
+                  {/* WHICH CONNECTORS THE FIGURE WAS COMPUTED FROM, read off the figure rather than
+                      attached by hand: `Figure.sources` is what the engine recorded while summing
+                      the rows. Narrowed through `implementedSources` because `Source` is a wider
+                      union than the built connectors -- a figure computed from `dataforseo_serp`
+                      must not put an unbuilt platform's name on this page. Marks are decorative,
+                      the label beside each is live text, as in `IntegrationsStrip`. */}
+                  <ul
+                    aria-label={SOURCES_LABEL}
+                    className="mt-1.5 flex list-none flex-wrap gap-1 p-0"
+                  >
+                    {implementedSources(task.sources).map((id) => {
+                      const mark = sourceMark(id);
+                      return (
+                        <li
+                          key={mark.id}
+                          className="border-line bg-surface text-ink-subtle inline-flex items-center gap-1 rounded-sm border px-1.5 py-0.5 text-[9px] leading-[1.4]"
+                        >
+                          {mark.slug === null ? null : (
+                            <img
+                              src={`/platforms/${mark.slug}.svg`}
+                              alt=""
+                              width={10}
+                              height={10}
+                              className="h-2.5 w-2.5 shrink-0 object-contain"
+                            />
+                          )}
+                          {mark.label}
+                        </li>
+                      );
+                    })}
+                  </ul>
                 </div>
 
                 <a
