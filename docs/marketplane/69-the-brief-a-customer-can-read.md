@@ -150,6 +150,25 @@ builder.
 
 All reverted. Web suite **343 tests**, up from 335.
 
+## 9a. A page nothing links to
+
+The first draft of this unit shipped `/brief` reachable **only by typing the address**. No nav
+entry, and not in the middleware's `PROTECTED` list either.
+
+Neither gap is the kind anything already in this repository would have caught: typecheck, lint and
+345 unit tests all passed on a page no customer could find. It is the same defect as
+`13_scheduler_entry_point.sql` sitting in the test directory unwired — a thing that exists, works,
+and is never reached.
+
+So `/brief` is now in `NAV` beside the dashboard, and in `PROTECTED` beside it too. Being protected
+matters twice over here: the surface reads one workspace's own rows **and spends a provider call we
+pay for on every press**, so it must not be reachable without a session. The page checks the
+session itself as well, and that is not redundant — a matcher edit can silently unprotect a route,
+and a surface that costs money per request must not rest on a routing rule alone.
+
+Both are asserted, and both mutations fire: removing the nav entry fails *is in the site
+navigation*, and removing `"/brief"` from `PROTECTED` fails *requires a session at the middleware*.
+
 ## 10. What was left out
 
 **`surface:answer` is NOT flipped, and that is deliberate.** The claim it gates says we sell *the

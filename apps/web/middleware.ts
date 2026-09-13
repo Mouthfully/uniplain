@@ -22,7 +22,11 @@ import { GATE_COOKIE, gateToken, isGated, tokensMatch } from "./app/_gate/token"
 // `/connections` IS ON THIS LIST BECAUSE IT WAS NOT COVERED BY ANY PREFIX ALREADY HERE, checked
 // rather than assumed. It is the screen that attaches a source, so an unauthenticated request must
 // land on sign-in rather than on a credential form that then fails at the server action.
-const PROTECTED = ["/connections", "/dashboard", "/billing", "/welcome"];
+// `/brief` READS ONE WORKSPACE'S OWN ROWS AND SPENDS A PROVIDER CALL, so it belongs here beside
+// the dashboard. The page checks the session itself too, and that is not redundant: a matcher edit
+// can silently unprotect a route, and a surface that costs money per request must not depend on a
+// routing rule alone for its access decision.
+const PROTECTED = ["/brief", "/connections", "/dashboard", "/billing", "/welcome"];
 
 /**
  * Reachable WITHOUT the pre-launch password.

@@ -84,3 +84,32 @@ describe("the business types the owner chooses from", () => {
     expect(new Set(labels).size).toBe(labels.length);
   });
 });
+
+/* ================================================================================================
+ * REACHABILITY
+ * ============================================================================================== */
+
+describe("the brief is reachable and protected", () => {
+  /**
+   * A PAGE NOTHING LINKS TO IS A PAGE NOBODY USES. `/brief` shipped in its first draft reachable
+   * only by typing the address -- the same defect as a test nothing runs, and one that no
+   * typecheck, lint or unit test would ever have caught.
+   */
+  it("is in the site navigation", async () => {
+    const { NAV } = await import("../_content");
+    expect(NAV.map((item) => item.href)).toContain("/brief");
+  });
+
+  /**
+   * It reads one workspace's own rows and spends a provider call per press, so it must sit behind
+   * a session like the dashboard does. The page checks the session itself as well; this asserts
+   * the routing half, which is the one a matcher edit can silently remove.
+   */
+  it("requires a session at the middleware", async () => {
+    const source = await import("node:fs/promises").then((fs) =>
+      fs.readFile(new URL("../../middleware.ts", import.meta.url), "utf8"),
+    );
+    const protectedLine = /const PROTECTED = \[([^\]]*)\]/.exec(source);
+    expect(protectedLine?.[1]).toContain('"/brief"');
+  });
+});
