@@ -126,7 +126,7 @@ function naturalList(items: readonly string[]): string {
  * backfill is dispatched the claim widens by itself. `check-ingestable.mjs` holds this against the
  * Worker's actual dispatch in both directions, so it cannot be widened by editing this file.
  */
-export const INGESTABLE_SOURCE_IDS = ["loyverse", "woocommerce"] as const;
+export const INGESTABLE_SOURCE_IDS = ["loyverse", "search_console", "woocommerce"] as const;
 
 /**
  * The built connectors a customer cannot yet receive data from, each with what is missing.
@@ -154,7 +154,7 @@ export const DEFERRED_SOURCE_IDS: readonly DeferredSource[] = [
     id: "ga4",
     backfill: true,
     missing:
-      "backfill.ts is written, tested and exported; runIngest does not dispatch to it and refuses the provider.",
+      "backfill.ts is written, tested and exported, AND ITS DEFAULT REPORT IS ITS OWN -- GA4_DEFAULT_REPORT, so no dispatch has to invent one. The blocker is that runGa4Backfill returns void: it walks a plan of windows and reports no checkpoint, so a run that dies half way leaves no watermark and IngestReport has nothing honest to put in `checkpoint`. Inventing one from the last window's end is the exact failure that field's own comment names: correct-looking and wrong forever.",
   },
   {
     id: "google_ads",
@@ -165,13 +165,7 @@ export const DEFERRED_SOURCE_IDS: readonly DeferredSource[] = [
     id: "meta_ads",
     backfill: true,
     missing:
-      "backfill.ts is written, tested and exported; runIngest does not dispatch to it and refuses the provider.",
-  },
-  {
-    id: "search_console",
-    backfill: true,
-    missing:
-      "backfill.ts is written, tested and exported; runIngest does not dispatch to it and refuses the provider.",
+      "As GA4: the report default is META_DEFAULT_REPORT and is the connector's own, and runMetaBackfill returns void. No checkpoint, so no honest watermark on a partial run.",
   },
   {
     id: "shopify",

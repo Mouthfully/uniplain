@@ -329,6 +329,16 @@ platform credentials.
 
 What stops any of this being asserted before it is true.
 
+**SEARCH CONSOLE IS DISPATCHED TOO, AND A CLAIM MADE IN TWO NOTES WAS WRONG.** Notes 96 and 97 said
+the blocker for GA4, Meta Ads and Search Console was "a report definition a `connections` row does
+not carry". Each connector carries its own default — `GA4_DEFAULT_REPORT`, `META_DEFAULT_REPORT`,
+`SEARCH_CONSOLE_DEFAULT_REPORTS` — and the dispatch invents nothing. The real blockers: Search
+Console needed a **day span**, because it reports in the platform's Pacific reporting day and
+truncating an instant picks a day by accident; **GA4 and Meta return `void` and report no
+checkpoint**, so a partial run has no honest watermark and `IngestReport.checkpoint` cannot be
+filled without the failure its own comment names. **Three of seven connectors now deliver rows.** See
+`docs/marketplane/99-a-day-based-source-asked-for-in-days.md`.
+
 **LOYVERSE IS NOW DISPATCHED, AND THE CLAIM WIDENED BY ITSELF.** `runIngest` gained a Loyverse
 branch — `runLoyverseBackfill` had been written, tested and exported and was called by nothing — so
 `INGESTABLE_SOURCE_IDS` gained the id and the published sentence became *"Reads Loyverse and

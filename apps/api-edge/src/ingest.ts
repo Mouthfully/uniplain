@@ -54,6 +54,10 @@ import { connectionHealth, openCredential } from "@repo/connections";
 import type { EnvelopeRow } from "@repo/contract";
 import {
   EMPTY_RATE_BUDGET,
+  type SearchConsoleBackfillBatch,
+  type SearchConsoleCheckpoint,
+  parseSearchConsoleDate,
+  runSearchConsoleBackfill,
   type LoyverseBackfillBatch,
   type LoyverseCheckpoint,
   type LoyverseCredential,
@@ -79,7 +83,7 @@ import { type CryptoLike as VaultCrypto, kekFromBase64 } from "@repo/vault";
  * holds them against each other in both directions: the published claim cannot name a source this
  * cannot drive, and this cannot drive one the claim withholds.
  */
-export const INGEST_SOURCES = ["loyverse", "woocommerce"] as const;
+export const INGEST_SOURCES = ["loyverse", "search_console", "woocommerce"] as const;
 
 export type IngestSource = (typeof INGEST_SOURCES)[number];
 
@@ -147,6 +151,21 @@ export interface IngestRequest {
   readonly since: string;
   /** RFC3339. Defaults to the run's start, pinned once. */
   readonly until?: string;
+  /**
+   * A DAY SPAN, INCLUSIVE AT BOTH ENDS, FOR THE SOURCES THAT REPORT IN DAYS RATHER THAN INSTANTS.
+   *
+   * Search Console reports in **the platform's Pacific reporting day**, not in UTC and not in the
+   * merchant's zone. Truncating `since` to its first ten characters would pick a reporting day by
+   * accident -- a run asked for from `2026-09-11T20:00:00Z` would read the 11th when Google's own
+   * day had not started, and every figure would be attributed to the wrong day with nothing marking
+   * it. That is the same class of error as reading a Bangkok receipt in UTC.
+   *
+   * So a day-based source is asked for in days, and refuses rather than converting. `since` stays
+   * required because the instant sources need it and a request carrying neither is a mistake
+   * whichever source it names.
+   */
+  readonly from?: string;
+  readonly to?: string;
 }
 
 /**
@@ -219,7 +238,24 @@ export function parseIngestRequest(body: unknown): IngestRequest {
   // refusal surfaces -- a 400 naming the field, rather than a 502 from inside the run -- and
   // borrowing its implementation is what stops the two answers diverging.
   const since = instant(b.since, "since");
-  if (b.until === undefined || b.until === null) return { workspaceId, connectionId, since };
+
+  // THE DAY SPAN, VALIDATED WITH THE CONNECTOR'S OWN PARSER. `parseSearchConsoleDate` owns what a
+  // real reporting date is; a second definition here would be a second opinion, which is the
+  // reasoning `instant()` above already follows for RFC3339.
+  const from = b.from === undefined || b.from === null ? undefined : day(b.from, "from");
+  const to = b.to === undefined || b.to === null ? undefined : day(b.to, "to");
+  if (from !== undefined && to !== undefined && from > to) {
+    throw new IngestError(
+      `\`to\` (${to}) is before \`from\` (${from}). Both ends are inclusive, so a span may be one ` +
+        "day, and one that ends before it starts is almost always two values swapped.",
+      "bad_request",
+    );
+  }
+  const span = from === undefined ? {} : to === undefined ? { from } : { from, to };
+
+  if (b.until === undefined || b.until === null) {
+    return { workspaceId, connectionId, since, ...span };
+  }
 
   const until = instant(b.until, "until");
   // ORDERING IS THE CALLER'S MISTAKE, SO IT IS A 400 HERE. `wooBackfillChunks` refuses the same
@@ -232,7 +268,7 @@ export function parseIngestRequest(body: unknown): IngestRequest {
       "bad_request",
     );
   }
-  return { workspaceId, connectionId, since, until };
+  return { workspaceId, connectionId, since, until, ...span };
 }
 
 /**
@@ -241,6 +277,21 @@ export function parseIngestRequest(body: unknown): IngestRequest {
  * The check is the connector's; only the error type differs, because at this boundary the caller is
  * a person holding a request body and the right answer is a 400 naming the field.
  */
+/** One `YYYY-MM-DD` field, refused at the boundary rather than inside the run. */
+function day(value: unknown, field: string): string {
+  const text = str(value, field);
+  try {
+    parseSearchConsoleDate(text);
+  } catch {
+    throw new IngestError(
+      `\`${field}\` is ${JSON.stringify(text)}, which is not a YYYY-MM-DD date. This source ` +
+        "reports in whole days, and the span is inclusive at both ends.",
+      "bad_request",
+    );
+  }
+  return text;
+}
+
 function instant(value: unknown, field: string): string {
   const text = str(value, field);
   try {
@@ -423,6 +474,106 @@ export async function runIngest(request: IngestRequest, deps: IngestDeps): Promi
   }
 
   const context = { workspaceId: connection.workspaceId, connectionId: connection.id };
+
+  // ============================================================================================
+  // THE SEARCH CONSOLE BRANCH, and the reason it needs a different request shape.
+  // ============================================================================================
+  //
+  // Search Console reports in WHOLE DAYS, in the platform's own Pacific reporting day. The other two
+  // sources report in instants. Truncating `since` to ten characters would pick a reporting day by
+  // accident and attribute every figure to it, which is the Bangkok-receipt error with a different
+  // timezone -- so the span is asked for and refused rather than derived.
+  //
+  // THE REPORT SET IS THE CONNECTOR'S OWN, not one invented here. `SEARCH_CONSOLE_DEFAULT_REPORTS`
+  // is `["totals", "byQuery"]` and the pair is not optional: Google's anonymity threshold withholds
+  // low-volume queries, so a query-grain response is a SUBSET whose sum is quietly lower than the
+  // truth. The backfill refuses a thresholded grain with no date-only report before spending a
+  // request, and passing nothing here is what lets that decision stay the connector's.
+  if (connection.provider === "search_console") {
+    if (request.from === undefined || request.to === undefined) {
+      throw new IngestError(
+        "a search_console run needs `from` and `to` as YYYY-MM-DD dates, inclusive at both ends. " +
+          "This source reports in the platform's Pacific reporting day, and deriving one from " +
+          "`since` would pick a day by accident: a window opened at 20:00 UTC is not the same " +
+          "reporting day Google would answer for. There is no default lookback either -- how long " +
+          "a Search Console figure keeps moving is unmeasured, so a number here would silently " +
+          "decide how much of the customer's history is re-read.",
+        "bad_request",
+      );
+    }
+    if (credential.kind !== "oauth") {
+      throw new IngestError(
+        `connection ${connection.id} seals a ${credential.kind} credential; a search_console pull ` +
+          "needs an oauth one.",
+        "wrong_credential_lane",
+      );
+    }
+
+    // Bound after the refusal above so the closure below sees a `string`. TypeScript cannot carry
+    // the narrowing into `scReport`, and the alternative is a non-null assertion on the value that
+    // decides which days a customer's figures are attributed to.
+    const spanFrom: string = request.from;
+    const spanTo: string = request.to;
+
+    let scCheckpoint: SearchConsoleCheckpoint = { readThrough: null, chunks: 0, rows: 0 };
+    let scPages = 0;
+    let scRead = 0;
+    let scWritten = 0;
+    let scComplete = false;
+
+    const scRun = runSearchConsoleBackfill({
+      client: {
+        fetchImpl: deps.fetchImpl,
+        accessToken: credential.accessToken,
+        siteUrl: connection.externalAccountId,
+        retry: {
+          now: deps.now ?? (() => new Date()),
+          random: deps.random ?? Math.random,
+          sleep: deps.sleep ?? ((ms) => new Promise((resolve) => setTimeout(resolve, ms))),
+        },
+      },
+      span: { from: spanFrom, to: spanTo },
+      fetchedAt,
+      onChunk: (c: SearchConsoleCheckpoint) => {
+        scCheckpoint = c;
+      },
+    });
+
+    const scReport = (): IngestReport => ({
+      source: "search_console",
+      connectionId: connection === null ? request.connectionId : connection.id,
+      pages: scPages,
+      rowsRead: scRead,
+      rowsWritten: scWritten,
+      chunks: scCheckpoint.chunks,
+      // No bisector here either: the chunk width is one day and is an admission rather than a
+      // tuning, so no window is ever probed and split.
+      splits: null,
+      // `readThrough` IS NULL UNTIL A CHUNK COMPLETES, and that null travels rather than being
+      // replaced by the span's start. The checkpoint says READ, not final -- `restates_until` is
+      // null for this source because nobody has measured how long a figure keeps moving -- and a
+      // run that read nothing has no watermark to report.
+      checkpoint: scCheckpoint.readThrough ?? spanFrom,
+      complete: scComplete,
+    });
+
+    try {
+      let next = await scRun.next();
+      while (!next.done) {
+        const batch: SearchConsoleBackfillBatch = next.value;
+        scPages += 1;
+        scRead += batch.rows.length;
+        scWritten += await writeBatch(deps.ingest, batch.rows, context);
+        next = await scRun.next();
+      }
+      scCheckpoint = next.value;
+      scComplete = true;
+    } catch (cause) {
+      throw new IngestRunFailure(scReport(), cause);
+    }
+
+    return scReport();
+  }
 
   // ============================================================================================
   // THE LOYVERSE BRANCH, and the shape of the dispatch that was missing.
