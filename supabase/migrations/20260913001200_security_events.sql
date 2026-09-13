@@ -70,7 +70,7 @@ create table public.security_events (
 
 comment on table public.security_events is
   'Append-only security event trail. NOT a complete access log: reads are not captured, and the '
-  '`audit-log` claim stays withheld. See the header of 20260913000800_security_events.sql.';
+  '`audit-log` claim stays withheld. See the header of 20260913001200_security_events.sql.';
 
 create index security_events_org_idx on public.security_events (organisation_id, occurred_at desc);
 

@@ -20,10 +20,11 @@ import { DataRequestForm } from "./form";
  * machinery it will eventually drive.
  *
  * WHAT IT PROMISES, AND WHAT IT CAREFULLY DOES NOT. It records a request and shows its state. It
- * does not delete anything and must never grow a button that claims to: `20260908000700_rls.sql`
- * withholds DELETE from `organisations`, `workspaces`, `invitations` and `api_keys` deliberately,
- * nothing here can touch an `auth.users` row, and `deleteWorkspacePayloads` has no caller. A
- * "delete my account" button would be a promise every one of those facts denies.
+ * deletes nothing itself, and `/account` is where erasure lives -- that route closes an account
+ * outright, owner-only. The division is deliberate and is not a leftover: erasure is the act an
+ * OWNER takes on their own account, and this is the channel for everything erasure cannot answer --
+ * a correction, an objection, a question about what is held, or a request from somebody who is not
+ * the owner. A viewer cannot close an account and must still be able to ask.
  *
  * AND NO DEADLINE IS SHOWN, because `app.data_request_deadline()` returns NULL until a
  * Thai-qualified lawyer establishes the period. The screen says so in words. A date here would be

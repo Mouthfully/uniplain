@@ -252,8 +252,13 @@ export function Pricing() {
             {/* Four identical "Get started" labels in a row are ambiguous read on their own, so
                 each one names its plan to assistive tech while the visible label stays the
                 design's. */}
+            {/* `/signin`, for the reason given at the hero's button: `#start` was a placeholder
+                pointing at an id that does not exist, so every plan button on this section
+                scrolled nowhere. It does NOT carry the plan: nothing downstream reads one, and a
+                parameter no code consumes is a promise the next screen silently breaks. Choosing a
+                paid plan happens on `/billing` once there is an account to attach it to. */}
             <a
-              href="#start"
+              href="/signin"
               aria-label={`${CTA_LABEL} — ${plan.name}`}
               className={`flex min-h-[46px] w-full items-center justify-center rounded-md border px-[22px] text-xs font-bold transition-colors ${
                 plan.popular

@@ -31,21 +31,21 @@ truncate app_test.results;
 -- Two organisations. ALICE and BOB are in the first; MALLORY is in the second, which is how the
 -- cross-tenant assertions get a principal who is genuinely signed in rather than merely absent.
 insert into auth.users (id, email) values
-  ('19000000-0000-4000-8000-00000000000a', 'dr-alice@test.test'),
-  ('19000000-0000-4000-8000-00000000000b', 'dr-bob@test.test'),
-  ('19000000-0000-4000-8000-00000000000f', 'dr-mallory@test.test');
+  ('20000000-0000-4000-8000-00000000000a', 'dr-alice@test.test'),
+  ('20000000-0000-4000-8000-00000000000b', 'dr-bob@test.test'),
+  ('20000000-0000-4000-8000-00000000000f', 'dr-mallory@test.test');
 
 insert into public.organisations (id, name, slug) values
-  ('19100000-0000-4000-8000-00000000000a', 'Requests Org A', 'data-requests-org-a'),
-  ('19100000-0000-4000-8000-00000000000b', 'Requests Org B', 'data-requests-org-b');
+  ('20100000-0000-4000-8000-00000000000a', 'Requests Org A', 'data-requests-org-a'),
+  ('20100000-0000-4000-8000-00000000000b', 'Requests Org B', 'data-requests-org-b');
 
 insert into public.members (id, organisation_id, user_id, role) values
-  ('19200000-0000-4000-8000-00000000000a', '19100000-0000-4000-8000-00000000000a',
-   '19000000-0000-4000-8000-00000000000a', 'owner'),
-  ('19200000-0000-4000-8000-00000000000b', '19100000-0000-4000-8000-00000000000a',
-   '19000000-0000-4000-8000-00000000000b', 'viewer'),
-  ('19200000-0000-4000-8000-00000000000f', '19100000-0000-4000-8000-00000000000b',
-   '19000000-0000-4000-8000-00000000000f', 'owner');
+  ('20200000-0000-4000-8000-00000000000a', '20100000-0000-4000-8000-00000000000a',
+   '20000000-0000-4000-8000-00000000000a', 'owner'),
+  ('20200000-0000-4000-8000-00000000000b', '20100000-0000-4000-8000-00000000000a',
+   '20000000-0000-4000-8000-00000000000b', 'viewer'),
+  ('20200000-0000-4000-8000-00000000000f', '20100000-0000-4000-8000-00000000000b',
+   '20000000-0000-4000-8000-00000000000f', 'owner');
 
 -- ---------------------------------------------------------------------------------------------
 -- 1. FILING, AND THE FACT THAT A VIEWER MAY DO IT.
@@ -56,16 +56,16 @@ insert into public.members (id, organisation_id, user_id, role) values
 -- ---------------------------------------------------------------------------------------------
 begin;
   set local role authenticated;
-  select set_config('request.jwt.claim.sub', '19000000-0000-4000-8000-00000000000b', true);
+  select set_config('request.jwt.claim.sub', '20000000-0000-4000-8000-00000000000b', true);
 
   do $$
   declare v public.data_requests;
   begin
-    v := public.file_data_request('19100000-0000-4000-8000-00000000000a', 'erasure', 'Please delete my account.');
+    v := public.file_data_request('20100000-0000-4000-8000-00000000000a', 'erasure', 'Please delete my account.');
     perform app_test.check('a viewer can file a request', v.id is not null);
     perform app_test.check('the request opens in the open state', v.state = 'open', v.state::text);
     perform app_test.check('the subject is taken from the session, not the caller',
-      v.requested_by = '19000000-0000-4000-8000-00000000000b', coalesce(v.requested_by::text, 'null'));
+      v.requested_by = '20000000-0000-4000-8000-00000000000b', coalesce(v.requested_by::text, 'null'));
     perform app_test.check('nothing is resolved on arrival', v.resolution_note is null);
   exception when others then
     perform app_test.check('a viewer can file a request', false, format('%s / %s', sqlstate, sqlerrm));
@@ -73,7 +73,7 @@ begin;
 
   do $$
   begin
-    perform public.file_data_request('19100000-0000-4000-8000-00000000000a', 'access', '   ');
+    perform public.file_data_request('20100000-0000-4000-8000-00000000000a', 'access', '   ');
     perform app_test.check('a blank note is refused rather than stored as empty', false, 'it was accepted');
   exception when others then
     perform app_test.check('a blank note is refused rather than stored as empty', sqlstate = '22023',
@@ -86,11 +86,11 @@ commit;
 -- ---------------------------------------------------------------------------------------------
 begin;
   set local role authenticated;
-  select set_config('request.jwt.claim.sub', '19000000-0000-4000-8000-00000000000f', true);
+  select set_config('request.jwt.claim.sub', '20000000-0000-4000-8000-00000000000f', true);
 
   do $$
   begin
-    perform public.file_data_request('19100000-0000-4000-8000-00000000000a', 'erasure', 'not mine');
+    perform public.file_data_request('20100000-0000-4000-8000-00000000000a', 'erasure', 'not mine');
     perform app_test.check('a member of another organisation cannot file against this one', false,
       'the insert succeeded');
   exception when insufficient_privilege then
@@ -104,7 +104,7 @@ begin;
   select app_test.check(
     'a member of another organisation reads none of its requests',
     (select count(*) from public.data_requests
-      where organisation_id = '19100000-0000-4000-8000-00000000000a') = 0);
+      where organisation_id = '20100000-0000-4000-8000-00000000000a') = 0);
 commit;
 
 -- ---------------------------------------------------------------------------------------------
@@ -117,12 +117,12 @@ commit;
 -- ---------------------------------------------------------------------------------------------
 begin;
   set local role authenticated;
-  select set_config('request.jwt.claim.sub', '19000000-0000-4000-8000-00000000000a', true);
+  select set_config('request.jwt.claim.sub', '20000000-0000-4000-8000-00000000000a', true);
 
   do $$
   begin
     update public.data_requests set state = 'fulfilled'
-     where organisation_id = '19100000-0000-4000-8000-00000000000a';
+     where organisation_id = '20100000-0000-4000-8000-00000000000a';
     perform app_test.check('an owner cannot resolve their own request', false, 'the update succeeded');
   exception when insufficient_privilege then
     perform app_test.check('an owner cannot resolve their own request', true, 'refused with 42501');
@@ -134,7 +134,7 @@ begin;
   do $$
   begin
     update public.data_requests set resolution_note = 'done, honest'
-     where organisation_id = '19100000-0000-4000-8000-00000000000a';
+     where organisation_id = '20100000-0000-4000-8000-00000000000a';
     perform app_test.check('an owner cannot write a resolution note', false, 'the update succeeded');
   exception when insufficient_privilege then
     perform app_test.check('an owner cannot write a resolution note', true, 'refused with 42501');
@@ -145,7 +145,7 @@ begin;
 
   do $$
   begin
-    delete from public.data_requests where organisation_id = '19100000-0000-4000-8000-00000000000a';
+    delete from public.data_requests where organisation_id = '20100000-0000-4000-8000-00000000000a';
     perform app_test.check('an owner cannot delete the record of a request', false, 'the delete succeeded');
   exception when insufficient_privilege then
     perform app_test.check('an owner cannot delete the record of a request', true, 'refused with 42501');
@@ -158,7 +158,7 @@ begin;
   -- above and would make the screen it exists for render nothing.
   select app_test.check('a member reads their own organisation''s requests',
     (select count(*) from public.data_requests
-      where organisation_id = '19100000-0000-4000-8000-00000000000a') >= 1);
+      where organisation_id = '20100000-0000-4000-8000-00000000000a') >= 1);
 commit;
 
 -- ---------------------------------------------------------------------------------------------
@@ -167,14 +167,14 @@ commit;
 begin;
   set local role authenticated;
   -- ALICE is an OWNER of the organisation; the request is BOB's. Seniority is not standing.
-  select set_config('request.jwt.claim.sub', '19000000-0000-4000-8000-00000000000a', true);
+  select set_config('request.jwt.claim.sub', '20000000-0000-4000-8000-00000000000a', true);
 
   do $$
   declare v_id uuid;
   begin
     select id into v_id from public.data_requests
-     where organisation_id = '19100000-0000-4000-8000-00000000000a'
-       and requested_by = '19000000-0000-4000-8000-00000000000b'
+     where organisation_id = '20100000-0000-4000-8000-00000000000a'
+       and requested_by = '20000000-0000-4000-8000-00000000000b'
      limit 1;
     perform public.withdraw_data_request(v_id);
     perform app_test.check('an owner cannot withdraw somebody else''s request', false, 'it was withdrawn');
@@ -186,13 +186,13 @@ commit;
 
 begin;
   set local role authenticated;
-  select set_config('request.jwt.claim.sub', '19000000-0000-4000-8000-00000000000b', true);
+  select set_config('request.jwt.claim.sub', '20000000-0000-4000-8000-00000000000b', true);
 
   do $$
   declare v_id uuid; v public.data_requests;
   begin
     select id into v_id from public.data_requests
-     where requested_by = '19000000-0000-4000-8000-00000000000b' and state = 'open' limit 1;
+     where requested_by = '20000000-0000-4000-8000-00000000000b' and state = 'open' limit 1;
     v := public.withdraw_data_request(v_id);
     perform app_test.check('the subject can withdraw their own request', v.state = 'withdrawn', v.state::text);
   exception when others then
@@ -204,7 +204,7 @@ begin;
   declare v_id uuid;
   begin
     select id into v_id from public.data_requests
-     where requested_by = '19000000-0000-4000-8000-00000000000b' and state = 'withdrawn' limit 1;
+     where requested_by = '20000000-0000-4000-8000-00000000000b' and state = 'withdrawn' limit 1;
     perform public.withdraw_data_request(v_id);
     perform app_test.check('a withdrawn request cannot be withdrawn twice', false, 'it succeeded again');
   exception when others then
@@ -278,7 +278,7 @@ end $$;
 select app_test.check('filing a request records a security event',
   (select count(*) from public.security_events
     where event = 'data_request_filed'
-      and organisation_id = '19100000-0000-4000-8000-00000000000a') >= 1);
+      and organisation_id = '20100000-0000-4000-8000-00000000000a') >= 1);
 
 select app_test.check('the trail records the kind, not the subject''s words',
   not exists (select 1 from public.security_events

@@ -190,6 +190,11 @@ export const AGENT_PAGES: readonly AgentPage[] = [
  */
 export const PRIVATE_PATHS: readonly string[] = [
   "/access",
+  // Added by #69 and caught here rather than in review: /account exports everything an
+  // organisation holds and can ERASE it. It was noindex from the moment it landed and refused to
+  // no crawler, at a point when this file had just named eight AI crawlers and granted them the
+  // public site. The third route this guard has caught on arrival.
+  "/account",
   "/billing",
   "/brief",
   "/connections",

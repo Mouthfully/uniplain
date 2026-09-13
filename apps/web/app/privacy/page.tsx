@@ -397,14 +397,14 @@ const CLAUSES: readonly Clause[] = [
     open: true,
     body: [
       "Data is held for as long as the account it belongs to is open. No fixed schedule is published for what happens after that -- for account records once an account closes, for archived platform responses, or for operational logs -- and no period is stated here.",
-      "A period written for the look of the page would read as a commitment and would not be one: nothing in this system deletes on a timer today, so a stated schedule would be a description of code that does not exist. A customer who wants data removed should ask at the contact address, and it is dealt with individually and by hand.",
+      "A period written for the look of the page would read as a commitment and would not be one: nothing in this system deletes on a timer today, so a stated schedule would be a description of code that does not exist. What an owner can do without asking anybody is close the account, from the account page, which removes the organisation and everything belonging to it at once. Two things outlive it and the page says so before the button: the sign-in record, which belongs to the service that signs you in, and anything the payment provider holds. Either can be removed by asking at the contact address.",
     ],
   },
   {
     id: "rights",
     title: "Your rights over your own data",
     body: [
-      "Anyone whose personal data is held in an account can ask what is held about them, ask for it to be corrected, ask for a copy, or ask for it to be deleted. A signed-in account files a request on its own Your data screen, which records it against the organisation and shows what has become of it. The contact address at the top of this page reaches the same people.",
+      "Anyone whose personal data is held in an account can ask what is held about them, ask for it to be corrected, ask for a copy, or ask for it to be deleted. Two of those no longer need asking: a member of an account can download everything it holds as one file, and an owner can close the account outright, both from the account page. For the rest — a correction, an objection, or a question about what is held — a signed-in account files a request on its own Your data screen, which records it against the organisation and shows what has become of it. The contact address at the top of this page reaches the same people.",
       "No statutory framework is claimed here, because which one applies depends on where a person is and on arrangements this company has not yet made. The practical position is simpler than a list of articles: ask, and it will be answered.",
       "For data read out of a connected platform, the customer that connected it is the one to ask. We hold it on that customer's behalf and pass a request of that kind to them rather than acting on it ourselves.",
       "A connection can be disconnected from the product at any time, and the underlying access can be revoked at the platform independently of anything done here.",

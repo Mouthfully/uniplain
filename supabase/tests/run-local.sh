@@ -74,7 +74,7 @@ done
 # has already happened twice. `13_scheduler_entry_point.sql` shipped beside its migration and was
 # never wired in -- it sat in the directory proving nothing, which is indistinguishable from a
 # suite that passes. It was fixed by adding one more hand-written line, which fixed that instance
-# and left the mechanism intact; `19_data_requests.sql` then hit it again immediately.
+# and left the mechanism intact; `20_data_requests.sql` then hit it again immediately.
 #
 # A suite that cannot run is worse than a missing one, because it reports as coverage. So the list
 # is now the filesystem. `00_supabase_shim.sql` is excluded because it is applied above, before the

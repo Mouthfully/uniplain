@@ -1,4 +1,4 @@
-# 75. The record that cannot go stale
+# 79. The record that cannot go stale
 
 **PR:** #57 &nbsp;·&nbsp; **Date:** 2026-09-13 &nbsp;·&nbsp; **Status:** proposed
 

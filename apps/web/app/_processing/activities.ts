@@ -69,8 +69,10 @@ export const PROCESSING_ACTIVITIES: readonly ProcessingActivity[] = [
     basis:
       "Necessary to provide the service the account holder asked for. The invitation address is processed to deliver the invitation and for no other purpose.",
     recipients: ["Supabase"],
-    retention: null,
-    evidence: "supabase/migrations/20260908000200_tenancy.sql, 20260908000400_invitations.sql",
+    retention:
+      "No period is set. An account can be erased ON REQUEST by its owner at /account, which removes the organisation and everything that cascades from it -- that is erasure on request and not a retention schedule, and the two are not interchangeable.",
+    evidence:
+      "supabase/migrations/20260908000200_tenancy.sql, 20260908000400_invitations.sql, 20260913000700_erasure.sql",
   },
   {
     id: "connections",
@@ -148,7 +150,7 @@ export const PROCESSING_ACTIVITIES: readonly ProcessingActivity[] = [
       "Necessary to comply with a legal obligation. The record is kept because the obligation is to answer, and an unanswerable claim of having answered is worth nothing.",
     recipients: ["Supabase"],
     retention: null,
-    evidence: "supabase/migrations/20260913000700_data_requests.sql",
+    evidence: "supabase/migrations/20260913001100_data_requests.sql",
   },
   {
     id: "security-trail",
@@ -163,7 +165,7 @@ export const PROCESSING_ACTIVITIES: readonly ProcessingActivity[] = [
       "Necessary for the security of the service, and to make a breach assessment possible at all. The trail is append-only: no role holds UPDATE or DELETE on it, so it cannot be edited by the party it is evidence about.",
     recipients: ["Supabase"],
     retention: null,
-    evidence: "supabase/migrations/20260913000800_security_events.sql",
+    evidence: "supabase/migrations/20260913001200_security_events.sql",
   },
   {
     id: "ambient",

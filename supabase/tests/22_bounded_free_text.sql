@@ -17,12 +17,12 @@ $$;
 truncate app_test.results;
 
 insert into public.organisations (id, name, slug) values
-  ('21100000-0000-4000-8000-00000000000a', 'Bounds Org', 'bounded-free-text-org');
+  ('22100000-0000-4000-8000-00000000000a', 'Bounds Org', 'bounded-free-text-org');
 
 do $$
 begin
   insert into public.workspaces (id, organisation_id, name, slug, client_contact)
-  values ('21300000-0000-4000-8000-00000000000a', '21100000-0000-4000-8000-00000000000a',
+  values ('22300000-0000-4000-8000-00000000000a', '22100000-0000-4000-8000-00000000000a',
           'Bounds WS', 'bounded-ws', repeat('x', 201));
   perform app_test.check('a pasted document cannot land in client_contact', false, 'it was accepted');
 exception when check_violation then
@@ -35,7 +35,7 @@ end $$;
 do $$
 begin
   insert into public.workspaces (id, organisation_id, name, slug, client_name)
-  values ('21300000-0000-4000-8000-00000000000b', '21100000-0000-4000-8000-00000000000a',
+  values ('22300000-0000-4000-8000-00000000000b', '22100000-0000-4000-8000-00000000000a',
           'Bounds WS2', 'bounded-ws-2', repeat('y', 201));
   perform app_test.check('a pasted document cannot land in client_name', false, 'it was accepted');
 exception when check_violation then
@@ -50,7 +50,7 @@ end $$;
 do $$
 begin
   insert into public.workspaces (id, organisation_id, name, slug, client_name, client_contact)
-  values ('21300000-0000-4000-8000-00000000000c', '21100000-0000-4000-8000-00000000000a',
+  values ('22300000-0000-4000-8000-00000000000c', '22100000-0000-4000-8000-00000000000a',
           'Bounds WS3', 'bounded-ws-3', 'Somchai Retail Co., Ltd.', 'somchai@example.test');
   perform app_test.check('an ordinary client name and contact are still accepted', true);
 exception when others then

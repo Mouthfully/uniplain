@@ -49,14 +49,23 @@
  * Section copy. `scripts/check-copy.mjs` refuses a sentence typed into the JSX, so every line
  * arrives from here. The eyebrow is stored in sentence case because the capitals are CSS.
  */
-const EYEBROW = "What arrives, and when";
+// "WHAT ARRIVES, AND WHEN" ANSWERS A QUESTION THE PRODUCT CANNOT ANSWER. Nothing arrives: a brief
+// is written when somebody asks for one. The eyebrow now describes what the section is actually
+// about, which is what each of the four things ends in.
+const EYEBROW = "What you get, and what it is for";
 
 /** The heading's line break is the design's, so its two lines are two values. */
 const HEADING_TOP = "Four things that end";
 const HEADING_BOTTOM = "in a decision.";
 
+// THE FIFTH PLACE THE UNBUILT CADENCE WAS WRITTEN DOWN, and the one a scan found rather than a
+// reader: "Yesterday in three lines at breakfast, a ranked list on Monday ... the report your
+// accountant wants on the first." Three separate schedules in one sentence, none of which exists.
+// Nothing runs on a clock, and note 65 already recorded that two of the four things named here --
+// the ranked sheet and the accountant's report -- are not expressible in the current dictionary at
+// all. What survives is the shape of each, which is what the four cards below actually show.
 const LEAD =
-  "None of them hands you a chart to interpret. Yesterday in three lines at breakfast, a ranked list on Monday, a plain answer whenever you ask, and the report your accountant wants on the first.";
+  "None of them hands you a chart to interpret. The week in three lines, a ranked list of what to do, a plain answer whenever you ask, and the numbers your accountant wants in the form they want them.";
 
 /**
  * The four capabilities, in the order the founder's plan lists them and the order an owner meets

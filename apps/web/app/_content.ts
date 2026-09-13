@@ -197,9 +197,19 @@ export function connectionAllowance(plan: Plan): string {
 export const SITE = {
   eyebrow: "Business intelligence for small business",
   heroLine1: "Your whole business on one page.",
-  heroLine2: "Every morning.",
+  // "EVERY MORNING." WAS THE HEADLINE AND IT WAS NOT TRUE, which made it the most expensive
+  // sentence on the site. Nothing schedules a brief -- `generateBrief` is a form action with no
+  // other caller -- and nothing can deliver one, because the domain has neither an MX nor a TXT
+  // record (note 70). The same page's FAQ now says so outright, so leaving this would have the
+  // site contradict itself above and below the fold.
+  //
+  // WHAT SURVIVES IS THE PROMISE THAT IS ACTUALLY KEPT: it is one page and it takes a moment, as
+  // against the afternoon an owner currently spends in four tabs. When a cron writes briefs and a
+  // channel delivers them, this line changes in that commit and not before -- which is the same
+  // rule `packages/email/src/templates.ts` already holds itself to.
+  heroLine2: "In one minute.",
   heroLead:
-    "Connect the tools your business already runs on. Wake up to yesterday in three lines, anything unusual, and one thing worth doing today.",
+    "Connect the tools your business already runs on. Ask for a brief and get the week in three lines, anything unusual, and one thing worth doing.",
   ctaPrimary: "Start free",
   ctaSecondary: "Explore dashboard",
   ctaNav: "Explore dashboard",
@@ -243,6 +253,10 @@ export const NAV = [
   // page cannot remove a colleague who left, which is not a missing feature -- it is a former
   // employee still reading the takings.
   { href: "/members", label: "People" },
+  // TAKING YOUR DATA OUT AND CLOSING THE ACCOUNT ARE RIGHTS, NOT SETTINGS. A right nobody can find
+  // is a right nobody has, and "write to us and we will do it by hand" is the answer a page like
+  // this exists to stop being necessary.
+  { href: "/account", label: "Account" },
   { href: "/signin", label: "Sign in" },
 ] as const;
 

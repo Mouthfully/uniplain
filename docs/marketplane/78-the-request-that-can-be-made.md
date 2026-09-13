@@ -1,4 +1,4 @@
-# 74. The request that can be made, and the erasure that cannot
+# 78. The request that can be made, and the erasure that cannot
 
 **PR:** #57 &nbsp;·&nbsp; **Date:** 2026-09-13 &nbsp;·&nbsp; **Status:** proposed
 
@@ -11,6 +11,19 @@ portability, objection or erasure — and watches what becomes of it. A table, t
 functions, one route.
 
 **It performs no deletion, and that is the decision rather than the shortfall.**
+
+> **Corrected after the merge.** `20260913000700_erasure.sql` (#69) landed in parallel from another
+> session and *does* erase — one `delete from public.organisations`, owner-only, refused while a
+> subscription is live. The reasoning below, which argued that the grants made erasure impossible,
+> was true of the schema as it stood and is no longer. #69 changed the grants and gave its reasons:
+> two thirds of the retention argument in `rls.sql` rested on an audit log and a Meta client-list
+> record that **do not exist**. That is a better answer than the one this note reached, and it is
+> recorded here rather than quietly edited out, because the interesting part is that two sessions
+> read the same comment and only one of them checked whether its premises were true.
+>
+> What survives unchanged: this surface is still the channel for everything erasure cannot answer —
+> a correction, an objection, a question about what is held, or a request from somebody who is not
+> the owner. A viewer cannot close an account and must still be able to ask.
 
 The finding that decided the shape came out of reading the grants rather than the plan:
 
@@ -62,7 +75,7 @@ record; a record their employer can close is worse.
 PDPA s.30–36 govern these rights and the period that applies is a question for a Thai-qualified
 lawyer. A plausible interval typed into that function would be rendered next to a customer's own
 request as a commitment the company is then measured against **by the one person entitled to enforce
-it** — which is `coalesce(timezone, 'UTC')`'s failure with higher stakes. `19_data_requests.sql`
+it** — which is `coalesce(timezone, 'UTC')`'s failure with higher stakes. `20_data_requests.sql`
 asserts the NULL, so establishing the period means deleting that assertion in the same change.
 
 ### 1.4 The erasure, when it is built, is nearly one statement
@@ -92,7 +105,7 @@ pass-through `N/A` no MCP surface. 4 credential hygiene **`PASS`** — the table
 database's own code, never a row.
 
 **Tenancy** — 5 RLS **`PASS`** — `organisation_id`, `FORCE` RLS, one `SELECT` policy keyed on
-`app.is_org_member`, proved against a hostile `authenticated` session in `19_data_requests.sql`.
+`app.is_org_member`, proved against a hostile `authenticated` session in `20_data_requests.sql`.
 6 service-role `N/A` — no service-role key is used; both writes are definer functions called as the
 signed-in user. 7 cross-workspace `N/A` — no query spans organisations. 8 cross-customer
 aggregation `N/A`. 9 API key scope `N/A`.
@@ -141,13 +154,13 @@ statute as satisfied, and states no period. `FORBIDDEN_CLAIMS` scans it with eve
 
 ## 6. Verification
 
-SQL suite green against a live PostgreSQL 16: **25 assertions in `19_data_requests.sql`, 0 failed.**
+SQL suite green against a live PostgreSQL 16: **25 assertions in `20_data_requests.sql`, 0 failed.**
 Full gate green by exit code, including `pnpm -r build` for both apps.
 
 **`run-local.sh` now enumerates the suites instead of listing them.** Its own comment recorded that
 `13_scheduler_entry_point.sql` had shipped beside its migration and never been wired in — "a test
 nothing runs is indistinguishable from a test that passes" — and was fixed by adding one more
-hand-written line, which fixed that instance and left the mechanism. `19_data_requests.sql` hit it
+hand-written line, which fixed that instance and left the mechanism. `20_data_requests.sql` hit it
 immediately: written, present, and silently not run. The list is now the filesystem, ordered by
 `sort -V`.
 

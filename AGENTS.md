@@ -45,9 +45,17 @@ becomes available.
 
 ### The eight blocking gaps, worst first
 
-1. **s.37(3) — no deletion system operates.** No retention period is set for `envelope_rows`,
-   `connections`, `invitations`, `waitlist`, `members`, `billing_customers` or the R2 payload
-   archive, and **nothing deletes any of them.**
+1. **s.37(3) — erasure on request now exists; no retention period still does.** `/account` closes an
+   organisation outright (`20260913000700_erasure.sql`, #69): one `delete from public.organisations`,
+   owner-only, refused while a subscription is live, with `19_erasure.sql` reading `pg_class` for
+   every table carrying an `organisation_id` or `workspace_id` so a table added later is covered the
+   day it lands.
+
+   **What that does NOT do is set a retention period.** Erasure is an act a customer takes; s.37(3)
+   is about data nobody has asked about. No period is set for `envelope_rows`, `connections`,
+   `invitations`, `waitlist`, `members`, `billing_customers` or the R2 payload archive, and nothing
+   removes any of them on a clock. The distinction matters because shipping erasure makes it very
+   easy to believe this gap closed, and it did not.
 
    `restatement_events` is the one apparent exception and it is not one, which is worth stating
    precisely because the code reads as if it were. `app.prune_restatement_events` is real, has a
@@ -90,7 +98,7 @@ becomes available.
    `public.security_events` records security-relevant ACTS — a credential sealed, a connection
    attached or revoked, a role changed, a key minted — append-only and enforced as such: no role
    holds UPDATE, DELETE or INSERT on it, the only writer is a `SECURITY DEFINER` function, and
-   `20_security_events.sql` proves all three from a hostile `authenticated` session. That makes an
+   `21_security_events.sql` proves all three from a hostile `authenticated` session. That makes an
    s.37(4) breach assessment possible where it previously was not.
 
    **Reads are still not captured**, and cannot be by anything in this schema: a tenant's reads go

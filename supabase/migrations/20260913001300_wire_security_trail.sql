@@ -1,7 +1,7 @@
 -- ================================================================================================
 -- GIVING THE TRAIL A CALLER, IN THE SAME STATEMENT AS THE ACT IT RECORDS.
 --
--- `20260913000800` added `record_security_event` and NOTHING CALLED IT. That is the failure this
+-- `20260913001200` added `record_security_event` and NOTHING CALLED IT. That is the failure this
 -- repository keeps finding and has now shipped twice -- `deleteWorkspacePayloads`, exported for the
 -- R2 half of an erasure and never wired; `app.prune_restatement_events`, written, granted,
 -- scheduled and unreachable because the Worker passes a null store. Both read as covered from every

@@ -9,7 +9,13 @@
 -- is the first channel that works at all, and that is the whole argument for building it before
 -- the erasure machinery it will eventually drive.
 --
--- WHAT IT REFUSES TO BE. It does not delete anything, and it must not grow a button that claims to.
+-- WHAT IT REFUSES TO BE. It does not delete anything, and that is now a narrower statement than it
+-- was when this was written: `20260913000700_erasure.sql` landed in parallel and DOES erase -- one
+-- `delete from public.organisations`, owner-only, refused while a subscription is live. The two are
+-- complementary rather than redundant. Erasure is the act a customer takes on their OWN account.
+-- This is the channel for everything erasure cannot answer: a correction, an objection, a question
+-- about what is held, and a request from somebody who is not the owner. Neither replaces the other,
+-- and this one must still not grow a button that claims to delete.
 -- That is not timidity, it is what the grants say: `20260908000700_rls.sql` withholds DELETE from
 -- `organisations`, `workspaces`, `invitations` and `api_keys` on purpose -- "a hard delete of an
 -- organisation destroys the audit log and the Meta client-list record along with it" -- and no code
@@ -88,7 +94,7 @@ create table public.data_requests (
 
 comment on table public.data_requests is
   'Data-subject requests. Recorded and tracked; NOT fulfilled by any code here. The product holds '
-  'no privilege that could perform an erasure -- see the header of 20260913000700_data_requests.sql.';
+  'no privilege that could perform an erasure -- see the header of 20260913001100_data_requests.sql.';
 
 create index data_requests_org_idx on public.data_requests (organisation_id, requested_at desc);
 

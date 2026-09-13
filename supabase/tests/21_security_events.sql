@@ -22,31 +22,31 @@ $$;
 truncate app_test.results;
 
 insert into auth.users (id, email) values
-  ('20000000-0000-4000-8000-00000000000a', 'sec-alice@test.test'),
-  ('20000000-0000-4000-8000-00000000000f', 'sec-mallory@test.test');
+  ('21000000-0000-4000-8000-00000000000a', 'sec-alice@test.test'),
+  ('21000000-0000-4000-8000-00000000000f', 'sec-mallory@test.test');
 
 insert into public.organisations (id, name, slug) values
-  ('20100000-0000-4000-8000-00000000000a', 'Sec Org A', 'security-events-org-a'),
-  ('20100000-0000-4000-8000-00000000000b', 'Sec Org B', 'security-events-org-b');
+  ('21100000-0000-4000-8000-00000000000a', 'Sec Org A', 'security-events-org-a'),
+  ('21100000-0000-4000-8000-00000000000b', 'Sec Org B', 'security-events-org-b');
 
 insert into public.members (id, organisation_id, user_id, role) values
-  ('20200000-0000-4000-8000-00000000000a', '20100000-0000-4000-8000-00000000000a',
-   '20000000-0000-4000-8000-00000000000a', 'owner'),
-  ('20200000-0000-4000-8000-00000000000f', '20100000-0000-4000-8000-00000000000b',
-   '20000000-0000-4000-8000-00000000000f', 'owner');
+  ('21200000-0000-4000-8000-00000000000a', '21100000-0000-4000-8000-00000000000a',
+   '21000000-0000-4000-8000-00000000000a', 'owner'),
+  ('21200000-0000-4000-8000-00000000000f', '21100000-0000-4000-8000-00000000000b',
+   '21000000-0000-4000-8000-00000000000f', 'owner');
 
 -- ---------------------------------------------------------------------------------------------
 -- 1. RECORDING, AND THE ACTOR COMING FROM THE SESSION.
 -- ---------------------------------------------------------------------------------------------
 begin;
   set local role authenticated;
-  select set_config('request.jwt.claim.sub', '20000000-0000-4000-8000-00000000000a', true);
+  select set_config('request.jwt.claim.sub', '21000000-0000-4000-8000-00000000000a', true);
 
   do $$
   declare v_id bigint;
   begin
     v_id := public.record_security_event(
-      '20100000-0000-4000-8000-00000000000a', 'credential_sealed', null, 'conn-1', 'woocommerce');
+      '21100000-0000-4000-8000-00000000000a', 'credential_sealed', null, 'conn-1', 'woocommerce');
     perform app_test.check('an event can be recorded', v_id is not null);
   exception when others then
     perform app_test.check('an event can be recorded', false, format('%s / %s', sqlstate, sqlerrm));
@@ -54,7 +54,7 @@ begin;
 
   select app_test.check('the actor is the session, not the caller',
     (select count(*) from public.security_events
-      where actor = '20000000-0000-4000-8000-00000000000a') = 1);
+      where actor = '21000000-0000-4000-8000-00000000000a') = 1);
 
   select app_test.check('a blank detail is stored as null rather than an empty string',
     (select count(*) from public.security_events where detail = '') = 0);
@@ -65,12 +65,12 @@ commit;
 -- ---------------------------------------------------------------------------------------------
 begin;
   set local role authenticated;
-  select set_config('request.jwt.claim.sub', '20000000-0000-4000-8000-00000000000a', true);
+  select set_config('request.jwt.claim.sub', '21000000-0000-4000-8000-00000000000a', true);
 
   do $$
   begin
     update public.security_events set detail = 'nothing to see here'
-     where organisation_id = '20100000-0000-4000-8000-00000000000a';
+     where organisation_id = '21100000-0000-4000-8000-00000000000a';
     perform app_test.check('an owner cannot edit the trail', false, 'the update succeeded');
   exception when insufficient_privilege then
     perform app_test.check('an owner cannot edit the trail', true, 'refused with 42501');
@@ -82,7 +82,7 @@ begin;
   do $$
   begin
     delete from public.security_events
-     where organisation_id = '20100000-0000-4000-8000-00000000000a';
+     where organisation_id = '21100000-0000-4000-8000-00000000000a';
     perform app_test.check('an owner cannot delete from the trail', false, 'the delete succeeded');
   exception when insufficient_privilege then
     perform app_test.check('an owner cannot delete from the trail', true, 'refused with 42501');
@@ -94,7 +94,7 @@ begin;
   do $$
   begin
     insert into public.security_events (organisation_id, event)
-    values ('20100000-0000-4000-8000-00000000000a', 'api_key_created');
+    values ('21100000-0000-4000-8000-00000000000a', 'api_key_created');
     perform app_test.check('an owner cannot forge an entry directly', false, 'the insert succeeded');
   exception when insufficient_privilege then
     perform app_test.check('an owner cannot forge an entry directly', true, 'refused with 42501');
@@ -107,7 +107,7 @@ begin;
   -- fails every security review it was built for.
   select app_test.check('a member reads their own organisation''s trail',
     (select count(*) from public.security_events
-      where organisation_id = '20100000-0000-4000-8000-00000000000a') >= 1);
+      where organisation_id = '21100000-0000-4000-8000-00000000000a') >= 1);
 commit;
 
 -- ---------------------------------------------------------------------------------------------
@@ -115,16 +115,16 @@ commit;
 -- ---------------------------------------------------------------------------------------------
 begin;
   set local role authenticated;
-  select set_config('request.jwt.claim.sub', '20000000-0000-4000-8000-00000000000f', true);
+  select set_config('request.jwt.claim.sub', '21000000-0000-4000-8000-00000000000f', true);
 
   select app_test.check('another organisation reads none of this trail',
     (select count(*) from public.security_events
-      where organisation_id = '20100000-0000-4000-8000-00000000000a') = 0);
+      where organisation_id = '21100000-0000-4000-8000-00000000000a') = 0);
 
   do $$
   begin
     perform public.record_security_event(
-      '20100000-0000-4000-8000-00000000000a', 'member_removed', null, 'x', 'y');
+      '21100000-0000-4000-8000-00000000000a', 'member_removed', null, 'x', 'y');
     perform app_test.check('another organisation cannot write into this trail', false,
       'the insert succeeded');
   exception when insufficient_privilege then

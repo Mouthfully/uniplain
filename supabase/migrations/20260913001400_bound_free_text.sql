@@ -44,7 +44,7 @@ comment on column public.envelope_rows.entity_name is
   'Display name of the platform entity, as the CUSTOMER typed it at the platform. Business '
   'metadata, not a person -- but nothing inspects the value, so a merchant who names a campaign '
   'after a buyer has put personal data here and no module will notice. Bounded, never redacted. '
-  'See issue #53 and docs/marketplane/74.';
+  'See issue #53 and docs/marketplane/78.';
 
 comment on column public.workspaces.client_name is
   'An agency customer''s own client, for the Meta Platform Terms 5.b.ii.2 client-list record. '

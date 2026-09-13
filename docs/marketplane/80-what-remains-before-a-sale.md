@@ -1,4 +1,4 @@
-# 76. What remains before this can be sold to a business
+# 80. What remains before this can be sold to a business
 
 **PR:** #57 &nbsp;·&nbsp; **Date:** 2026-09-13 &nbsp;·&nbsp; **Status:** assessment, not a change
 
@@ -17,9 +17,9 @@ mapping and `FORBIDDEN_CLAIMS` bans the assertion on every route. This is a list
 
 | Obligation | State before | State now | Evidence |
 |---|---|---|---|
-| **s.30–36** data-subject rights | No intake at all. `/privacy` routed requests to an address with **no MX record** — the published channel did not receive mail | An in-account request surface: file, track, withdraw. Append-only; no tenant can resolve their own request; an owner cannot withdraw a viewer's | `20260913000700_data_requests.sql`, note 74 |
-| **s.39** record of processing | Absent, exemption forfeited by the nightly cron | Generated from the schema, accounts for all 18 tables, published at `/processing`, build fails if a table lands without an entry | `_processing/activities.ts`, note 75 |
-| **s.37(1)** security measures | No log table anywhere; s.37(4) breach assessment impossible | Append-only security trail, enforced by grant not intent, wired into the definer in the same transaction as the act | `20260913000800`, `20260913000900`, note 75 |
+| **s.30–36** data-subject rights | No intake at all. `/privacy` routed requests to an address with **no MX record** — the published channel did not receive mail | An in-account request surface: file, track, withdraw. Append-only; no tenant can resolve their own request; an owner cannot withdraw a viewer's | `20260913001100_data_requests.sql`, note 78 |
+| **s.39** record of processing | Absent, exemption forfeited by the nightly cron | Generated from the schema, accounts for all 18 tables, published at `/processing`, build fails if a table lands without an entry | `_processing/activities.ts`, note 79 |
+| **s.37(1)** security measures | No log table anywhere; s.37(4) breach assessment impossible | Append-only security trail, enforced by grant not intent, wired into the definer in the same transaction as the act | `20260913001200`, `20260913001300`, note 79 |
 
 ## What remains, and who has to do it
 
@@ -77,7 +77,12 @@ generating a document that looks like a DPA would move one of them backwards.
 
 **Would, in order of value to a sale:**
 
-1. **Erasure.** The request surface records; nothing deletes. `delete from public.organisations`
+1. ~~**Erasure.**~~ **Shipped in #69** while this note was being written — `/account`, owner-only,
+   one `delete from public.organisations`, with a suite that reads `pg_class` for every table
+   carrying an `organisation_id` or `workspace_id` and asserts nothing still names the erased
+   tenant. So a table added tomorrow is covered the day it lands. The paragraph below described the
+   position before that merge and is kept because its reasoning about *what must survive* an
+   erasure is unchanged: `delete from public.organisations`
    reaches 13 of 18 tables by cascade, so the engineering is not the delete — it is what must
    survive it (the audit log and the Meta client-list record, per `rls.sql`), and wiring
    `deleteWorkspacePayloads`, which is still exported with no caller. **Blocked on item 3.**

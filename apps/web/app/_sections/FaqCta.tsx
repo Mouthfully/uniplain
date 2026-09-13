@@ -1,5 +1,5 @@
 import { brand } from "@repo/brand";
-import { connectionAllowance } from "../_content";
+import { claim, connectionAllowance } from "../_content";
 
 /**
  * THE FAQ AND THE CLOSING PANEL -- the reference's `<section id="faq" class="section container
@@ -67,6 +67,41 @@ import { connectionAllowance } from "../_content";
  *     Grab, foodpanda and StoreHub one token covers read and write, so the promise there is our
  *     code and not their scope.
  *
+ * THEN THE BUYER CHANGED AGAIN, AND THE QUESTIONS DID NOT. The six above are the questions of one
+ * person deciding whether to bother. A business asks four others before it signs anything, and
+ * until now every one of them was answered only on `/privacy` and `/terms` -- which is to say, only
+ * to a reader who had already decided. Four are added here, and each is answerable TODAY from
+ * something in this repository rather than from something on a roadmap:
+ *
+ *   * DELEGATED ACCESS, because for a Thai SMB the bookkeeping is somebody else's job. `/members`
+ *     ships (`docs/marketplane/72-people-in-an-account.md`): its roles, the one-owner floor and the
+ *     hand-delivered invitation are all real, and the answer says so in the account holder's words.
+ *   * WHO HERE CAN SEE IT, answered with the mechanism and no compliance verdict. Row access is
+ *     decided by `20260908000700_rls.sql` per workspace, and the scheduler is a second identity
+ *     that holds execute on `due_connections` and no table grant at all -- scheduling metadata,
+ *     never a figure. What the answer does NOT say is "nobody here can see your data": a
+ *     service-role key exists for the billing webhook (`_billing/stripe.ts`), and a sentence that
+ *     forgets it would be the comfortable half of a true statement.
+ *   * TRAINING, which is the one genuine differentiator on the page. It goes through `claim()`
+ *     rather than being written here, because `no-training` is already an allowed claim with a
+ *     citation; the second sentence is the enforcement, phrased as what `request.ts` and
+ *     `client.ts` actually do. `request.ts` warns in its own module note that `data_collection:
+ *     "deny"` still leaves retention at some providers, so the answer promises OUR conduct and not
+ *     the provider's.
+ *   * LEAVING, which is the one that had to be written down rather than sold. There is no export
+ *     path, no erasure path and no retention timer anywhere -- `AGENTS.md` gaps 1 and 6 -- so the
+ *     answer states the limit instead of the wish: revoking at the platform is the part a customer
+ *     can do unilaterally, and everything else is a request handled by hand, which is exactly what
+ *     `/privacy` already commits to. Promising a button here would be the worst sentence on the
+ *     site, because it is the one a customer only tests on the day they are already unhappy.
+ *
+ * AND ONE QUESTION WAS DELETED RATHER THAN REWRITTEN. "Can I change plans later?" was answered
+ * with "the pricing model is designed to let you upgrade as your data and team grow", which
+ * asserts nothing and cannot be checked. What the code does is narrower than the sentence implies:
+ * `_billing/actions.ts` opens a checkout for a chosen plan and the provider's own portal for cards,
+ * invoices and cancellation, and there is no swap, proration or downgrade path anywhere. So the
+ * true half of it moved into the plan answer, where the allowance already is.
+ *
  * The eyebrow is stored in sentence case because the capitals are CSS, not content.
  */
 const EYEBROW = "Frequently asked questions";
@@ -86,17 +121,28 @@ const HELP_LINK_LABEL = "Visit the help center";
  */
 const PRODUCT = brand.productName;
 
-const QUESTIONS = [
+// EXPORTED SO A TEST CAN READ THE ANSWER IT IS GUARDING, rather than scrape it back out of the
+// rendered markup. `ActionSheet.tsx` learned the same lesson: a DOM scrape finds whichever sentence
+// happens to match first, and a test that guards the wrong sentence is worth less than no test.
+export const QUESTIONS = [
   {
-    question: `What does ${PRODUCT} send me each morning?`,
-    // The second sentence was "You can reply to ask a follow-up, in Thai or English." It is gone
-    // for the reason given at `FeatureGrid`'s brief card: no channel adapter exists, so there is
-    // nothing to reply to, and -- the half that is not merely unbuilt -- NOTHING IN THIS REPOSITORY
-    // IS LOCALISED TO THAI. Not a string table, not a locale, not a model instruction. Naming a
-    // language is a specific promise a customer tests on their first attempt.
+    // THIS QUESTION USED TO SAY "send me each morning" AND BOTH HALVES WERE FALSE.
+    //
+    // Nothing sends. `packages/email` cannot deliver until the domain has SPF and DKIM, which note
+    // 70 verified it does not. And nothing happens each morning: `generateBrief` in
+    // `apps/web/app/brief/actions.ts` is a form action with no other caller anywhere, and the only
+    // scheduled work in the product ingests rows -- no cron writes a brief. A reader who connected
+    // a source and waited for breakfast would get nothing, twice over.
+    //
+    // The second sentence was also once "You can reply to ask a follow-up, in Thai or English",
+    // removed because no channel adapter exists to reply to and -- the half that is not merely
+    // unbuilt -- NOTHING IN THIS REPOSITORY IS LOCALISED TO THAI. Naming a language is a specific
+    // promise a customer tests on their first attempt.
+    question: "What do I get when I ask for a brief?",
     answer:
-      "Yesterday in three lines, anything that looks unusual, and one thing worth doing today. " +
-      "Every figure in it names the source it came from and the time it was read.",
+      "The last seven days in three lines, anything that looks unusual, and one thing worth doing. " +
+      "You ask for it and it is written then; nothing is sent to you and nothing runs on a " +
+      "schedule yet. Every figure it prints names the source it came from and the time it was read.",
   },
   {
     question: "Where do the numbers come from?",
@@ -107,16 +153,99 @@ const QUESTIONS = [
   },
   {
     question: "Will it change anything in my accounts?",
+    // THE OLD LAST CLAUSE DESCRIBED A MECHANISM THAT DOES NOT EXIST: "where a platform will not
+    // issue a token limited to reading, our own code is what refuses to write." Nothing in this
+    // repository inspects a credential's scope and refuses a call on the strength of it. There is
+    // no such guard, so the sentence was a promise about code nobody had written.
+    //
+    // What IS true and checkable: no connector calls an endpoint that changes anything. The three
+    // POST requests in `packages/connectors/src/sources` are reporting queries -- GA4's runReport,
+    // Search Console's and Google Ads' -- which is why this does not claim "we only ever send GET".
+    // That would be the same kind of tidy falsehood in the other direction.
     answer:
       "No. Nothing is done for you: you stay in control of prices, ads and staff. We ask each " +
-      "platform for read access only, and where a platform will not issue a token limited to " +
-      "reading, our own code is what refuses to write.",
+      "platform for the narrowest access it offers, and some issue only one kind of token that " +
+      "covers reading and writing alike. Either way, nothing here calls an endpoint that changes " +
+      "anything in your account: every request it makes is asking for figures.",
   },
   {
-    question: "Do I need to understand any of the charts?",
+    question: "Do I need to read a chart to use this?",
+    // "A chart is there if you want to look" PROMISED A CHART OF THE CUSTOMER'S OWN DATA, and
+    // there is not one. The only chart in the product is `RevenueChart` in `dashboard/page.tsx`:
+    // a hard-coded SVG path with fixed tick labels, on a page whose own module comment says EVERY
+    // NUMBER ON THIS PAGE IS ILLUSTRATIVE and which is `robots: noindex` for that reason. An owner
+    // who came for the chart would find a drawing of somebody else's month.
     answer:
-      "The brief is sentences. A chart is there if you want to look, and nothing asks you to " +
-      "read one to find out what to do.",
+      "No, and there is nothing to read one in. The brief is sentences: what changed, what looks " +
+      "unusual, and the one thing worth doing. Underneath each figure is the source it came from " +
+      "and the moment it was read, so you can check it rather than take it on trust.",
+  },
+  {
+    question: "Can I give my accountant access without giving them my login?",
+    // A SHARED LOGIN IS THE DEFAULT ANSWER WHEN THE PRODUCT HAS NO SECOND ONE, and it is the one
+    // thing a bookkeeping firm should never be handed. Every clause here is a real behaviour of
+    // `/members`: `ROLE_DESCRIPTIONS` is what "read the figures" and "connect a source" come from,
+    // the one-owner floor is a trigger rather than a screen rule (note 72 section 2), and an
+    // invitation can be withdrawn because the row records the withdrawal instead of vanishing.
+    //
+    // THE LAST SENTENCE IS THE HONEST ONE AND IT IS NOT AN APOLOGY. Nothing here sends mail --
+    // `docs/marketplane/70-the-mail-nobody-can-send-yet.md` -- so a buyer who reads "invite" and
+    // expects an email to arrive would find out on their first attempt. Saying which way the link
+    // travels costs one clause; discovering it costs the trust the rest of the page is asking for.
+    // AND THE CLAUSE THIS ANSWER LOST. It read "read the figures in the workspaces you give them",
+    // which is the sentence an accountant's engagement turns on -- and it is false today.
+    // `createInvitation` inserts organisation_id, email, role, token_hash and expires_at and no
+    // workspace_ids, so the array is always empty; `app.can_read_workspace` admits an analyst or a
+    // viewer only through a `workspace_members` row, and nothing creates one. The least-privileged
+    // option -- the one a buyer would pick for a bookkeeper -- currently grants access to NOTHING.
+    // That is issue #66. Until it is closed this answer describes the roles that do work, and the
+    // FAQ does not sell the one that does not.
+    answer:
+      "Yes. Add them with their own sign-in, and choose what they may do: read the figures, or " +
+      "that plus connecting a source and inviting other people. You can change what somebody may " +
+      "do later, take an invitation back before it is used, or remove them, and an account always " +
+      "keeps at least one owner so nobody can shut everybody out. Nothing is sent for you: the " +
+      "invitation is a link you pass on yourself.",
+  },
+  {
+    question: "Who at your company can see my numbers?",
+    // NO JARGON AND NO VERDICT. "Row-level security", "tenant isolation" and any of the four
+    // acronyms would each be a word the reader has to take on trust; the mechanism said plainly is
+    // checkable by the person asking. The sentence that is deliberately absent is "nobody here can
+    // see it" -- see the module note, which names the key that makes it false.
+    answer:
+      "Which figures a signed-in person may read is decided by the database, one workspace at a " +
+      "time, rather than by the screen doing the asking. Somebody who was never added to your " +
+      "account cannot reach it by opening the right page. The nightly job that works out whose " +
+      "data is due to be fetched is a separate identity that can read the schedule and no figures " +
+      "at all.",
+  },
+  {
+    question: "Is my data used to train AI models?",
+    // THE FIRST SENTENCE IS `claim()` AND NOT PROSE. `no-training` is an allowed claim with a
+    // specification citation, so writing the same promise by hand would be a sentence that reads
+    // identically and is reviewed by nothing -- the exact failure `65-the-deletion-pass.md`
+    // records. The rest is the enforcement, and it stops where the enforcement stops: `request.ts`
+    // notes that `data_collection: "deny"` still leaves retention at some providers, so this says
+    // what we send and what we refuse to send, never what a provider guarantees.
+    answer: `${claim("no-training")} Every request that leaves for a model carries the instruction that the provider may not collect or keep it, and our own code refuses to send one that does not. What it carries is figures and metric labels: not your business name, not your customers, not an account id.`,
+  },
+  {
+    // The second person stays singular here, as it is in every other question, even though this is
+    // the one a finance director asks. A page that switches between "my" and "our" halfway down
+    // reads as two people writing, which is the impression a buyer weighing a supplier notices.
+    question: "What happens to my data if I stop paying or leave?",
+    // WHAT THIS ANSWER CANNOT SAY, WHICH IS MOST OF WHAT A BUYER WANTS TO HEAR. There is no export
+    // route, no erasure route and no retention timer in any migration or module (`AGENTS.md` gaps
+    // 1 and 6). Revocation is the one lever that genuinely belongs to the customer, so it leads;
+    // the rest is stated as a limit. `/privacy` already says requests are dealt with individually
+    // and by hand, and this answer points at that rather than inventing a better-sounding version
+    // of it. Rewrite this the day a deletion path ships, and not one commit earlier.
+    answer:
+      "Revoking our access at the platform stops any further reading, and that is yours to do " +
+      "without asking us first. What was read before then stays where it is: no schedule clears " +
+      "it out and no button on this site does either. The privacy notice says what is held and " +
+      "how to ask about it, and a request of that kind is dealt with by hand.",
   },
   {
     question: "Can I try it for free?",
@@ -127,11 +256,16 @@ const QUESTIONS = [
     //
     // The allowance is the one part that survives, because `PLAN_ENTITLEMENTS` backs it, and it is
     // read from there rather than spelled out so the answer cannot drift from the card above it.
-    answer: `The Free plan includes ${connectionAllowance("free")}.`,
-  },
-  {
-    question: "Can I change plans later?",
-    answer: "The pricing model is designed to let you upgrade as your data and team grow.",
+    //
+    // THE SECOND SENTENCE IS WHAT IS LEFT OF "CAN I CHANGE PLANS LATER?". It names where the
+    // decision is made and who holds the card, both of which are true of `_billing/actions.ts`
+    // today. It does not say the change is instant, prorated or reversible, because no code in
+    // this repository swaps a subscription's price -- see the module note.
+    answer:
+      `The Free plan includes ${connectionAllowance("free")}. ` +
+      "Choosing a plan happens on your billing page, and the card, the invoices and cancelling " +
+      "are handled by our payment provider rather than by us, so nothing here holds your card " +
+      "details.",
   },
 ] as const;
 
@@ -184,7 +318,15 @@ function FaqStructuredData() {
  * subscriptions -- four plans and six live Stripe prices -- and the lead says only what the Free
  * tier really is.
  */
-const CTA_HEADING = "Connect tonight. Decide at breakfast.";
+// "CONNECT TONIGHT. DECIDE AT BREAKFAST." WAS WRONG TWICE, AND THE SECOND WAY IS THE FUNNIER ONE.
+//
+// Nothing produces a decision overnight -- a brief is written when somebody asks for one. And the
+// only ingest sweep is `INGEST_CRON = "23 2 * * *"`, which Cloudflare evaluates in UTC: 09:23 in
+// Asia/Bangkok. For the customer this product is built for, the rows are not in by breakfast.
+//
+// A heading is the last place to put a promise about timing, because it is the first thing read and
+// the last thing anybody thinks to check against a cron expression.
+export const CTA_HEADING = "Connect once. Ask whenever you need to know.";
 const CTA_LEAD = "Free to start. We ask each platform for read access and nothing more.";
 const CTA_LABEL = "Start free";
 
@@ -209,13 +351,15 @@ export function Faq() {
         </h2>
         <p className="text-ink-muted mt-5 max-w-[475px] leading-[1.65]">{LEAD}</p>
 
-        {/* The reference points this at a documentation page that is not part of the built app, so
-            it lands on an in-page anchor that does not exist yet -- the same placeholder the
-            pricing section's plan buttons use. It scrolls nowhere rather than 404ing, and it
-            becomes a real href the moment the help centre has a route. */}
+        {/* THE HELP CENTRE HAS A ROUTE NOW, and this comment used to say it did not. `/docs`
+            shipped and this link was never updated, so the closing section of the home page sent
+            readers to an anchor no element carries. That is the failure mode of a placeholder that
+            reads like a decision: it survives the thing it was waiting for. */}
         <a
-          href="#docs"
-          /* 171x20 measured: under the 24x24 WCAG 2.5.8 floor. See the note in UseCases. */
+          href="/docs"
+          /* Both halves of this line were fixed independently and both are kept: #67 pointed it at
+             the real route (it was `#docs`, an anchor no element carried), and the mobile pass
+             raised the box to 44px -- it measured 171x20, under even the 24x24 WCAG 2.5.8 floor. */
           className="text-accent mt-4 inline-flex min-h-[44px] items-center gap-3 text-sm font-bold hover:underline"
         >
           {HELP_LINK_LABEL}

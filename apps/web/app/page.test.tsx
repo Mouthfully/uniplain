@@ -2,6 +2,7 @@ import { FORBIDDEN_CLAIMS, brand } from "@repo/brand";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
+import { CTA_HEADING } from "./_sections/FaqCta";
 import { SITE } from "./_content";
 import Page from "./page";
 
@@ -115,7 +116,12 @@ describe("the page renders every section of the supplied design", () => {
       "Simple, transparent pricing",
       "Built for owner-run businesses",
       "We're here to help",
-      "Connect tonight. Decide at breakfast",
+      // IMPORTED RATHER THAN RETYPED. This landmark used to be the literal "Connect tonight.
+      // Decide at breakfast" -- a heading that promised a cadence the product does not keep, and
+      // this test was one of the two places it was written down. Correcting the copy turned this
+      // red, which is right; but a second hand-typed copy of a sentence is also a second place it
+      // can be wrong, so the landmark now comes from the section that renders it.
+      CTA_HEADING,
     ];
     let cursor = -1;
     for (const landmark of landmarks) {
