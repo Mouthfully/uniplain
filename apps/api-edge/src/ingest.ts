@@ -481,9 +481,24 @@ export class IngestRunFailure extends Error {
  */
 function assertRunnable(connection: ConnectionRecord, now: Date): void {
   if (connection.provider !== INGEST_SOURCE) {
-    // A refusal and not a lookup table. Four of the five connectors have no `backfill.ts` yet, so a
-    // map would be four entries pointing at nothing; naming the one that works is the honest shape
-    // until there is a second.
+    // A refusal and not a lookup table, and THE REASON GIVEN HERE WAS TRUE AND IS NOT ANY MORE.
+    //
+    // It read: "four of the five connectors have no `backfill.ts` yet, so a map would be four
+    // entries pointing at nothing". Four of them now have exactly that -- `ga4`, `loyverse`,
+    // `meta_ads` and `search_console` each ship a `backfill.ts`, tested and exported from
+    // `@repo/connectors` -- and this comment went on explaining an absence that had been filled.
+    // The same shape as the sub-processor comment that said OpenRouter had no caller: correct when
+    // written, falsified by a later commit, attached to nothing that could notice.
+    //
+    // WHAT IS ACTUALLY MISSING IS THE DISPATCH, not the backfills. Each takes source-specific
+    // options -- a store URL and consumer key, a till token, a GA4 property and report definition,
+    // a Meta ad account and report definition -- and resolving those from a connection row is the
+    // work. It is a feature, and it is the one that decides whether this product delivers anything
+    // to a customer who is not on WooCommerce.
+    //
+    // The gap is now declared in `DEFERRED_SOURCE_IDS` rather than described here, the published
+    // claim is derived from what CAN be read, and `check-ingestable.mjs` holds the three against
+    // each other and against the filesystem. Wiring the fifth connector widens the claim by itself.
     throw new IngestError(
       `connection ${connection.id} is a ${connection.provider} connection. This runtime drives ` +
         `${INGEST_SOURCE} only -- the other sources have a client and a normaliser but no backfill.`,

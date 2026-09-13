@@ -86,9 +86,6 @@ export type Capability = (typeof CAPABILITY_IDS)[number];
  * is derived from the guarded source list; all other surfaces remain absent until deliberately
  * launched.
  */
-export const AVAILABLE_CAPABILITIES: ReadonlySet<Capability> = new Set<Capability>(
-  IMPLEMENTED_SOURCE_IDS.length > 0 ? ["source:any"] : [],
-);
 
 function naturalList(items: readonly string[]): string {
   if (items.length === 0) return "";
@@ -96,9 +93,109 @@ function naturalList(items: readonly string[]): string {
   return `${items.slice(0, -1).join(", ")} and ${items.at(-1)}`;
 }
 
+/**
+ * THE SOURCES A CUSTOMER'S DATA CAN ACTUALLY ARRIVE FROM.
+ *
+ * ================================================================================================
+ * THE CLAIM NAMED SEVEN PLATFORMS AND ONE OF THEM COULD PRODUCE A ROW
+ * ================================================================================================
+ *
+ * Published, verbatim, on the home page: **"Reads GA4, Google Ads, Loyverse, Meta Ads, Search
+ * Console, Shopify and WooCommerce on your own credentials."**
+ *
+ * `apps/api-edge/src/ingest.ts` refuses every provider but `woocommerce` with
+ * `unsupported_provider`, and `scheduled-ingest.ts` filters the rest out before they are ever
+ * leased. `public.ingest_envelope_rows` is the only write path to `envelope_rows` and `runIngest`
+ * is the only caller. So a customer could connect their Loyverse till -- the till this product is
+ * built around -- watch the connection go healthy, and never receive a single row, from the nightly
+ * sweep or from a manual run.
+ *
+ * ================================================================================================
+ * AND THE CAPABILITY GATE PASSED, BECAUSE IT WAS CHECKING THE WRONG PROPERTY
+ * ================================================================================================
+ *
+ * `AVAILABLE_CAPABILITIES` read `IMPLEMENTED_SOURCE_IDS.length > 0`. That is a test that SOMETHING
+ * is implemented, and it licensed a claim that names SEVEN things. `check-capabilities.mjs` was
+ * green throughout, correctly: it asserts each id has a client and a normaliser exported, which is
+ * true of all seven and is a strictly weaker property than "a row can arrive".
+ *
+ * **A gate that verifies a proxy for the thing claimed is a gate that eventually licenses a
+ * falsehood**, and the proxy here had drifted away from the claim without anybody choosing it.
+ *
+ * So the claim now names this list, the capability is derived from this list, and the day a
+ * backfill is dispatched the claim widens by itself. `check-ingestable.mjs` holds this against the
+ * Worker's actual dispatch in both directions, so it cannot be widened by editing this file.
+ */
+export const INGESTABLE_SOURCE_IDS = ["woocommerce"] as const;
+
+/**
+ * The built connectors a customer cannot yet receive data from, each with what is missing.
+ *
+ * NOT A SHAMEFUL LIST AND NOT A HIDDEN ONE. Four of these have a `backfill.ts` that is written,
+ * tested and exported from `@repo/connectors` -- the work is done and the dispatch is not wired, a
+ * gap `ingest.ts` described in a comment reading "four of the five connectors have no backfill.ts
+ * yet" that was true when written and is not now. Recording it here is what makes wiring the fifth
+ * connector impossible to forget, and what stops the claim quietly outrunning the product again.
+ */
+export interface DeferredSource {
+  readonly id: string;
+  /**
+   * Whether a `backfill.ts` exists for it. VERIFIED AGAINST THE FILESYSTEM by
+   * `check-ingestable.mjs` rather than believed, because this is the exact field that went stale
+   * last time: `ingest.ts` carried a comment saying four connectors had no backfill, four of them
+   * grew one, and the comment kept saying it. A boolean a guard checks cannot do that.
+   */
+  readonly backfill: boolean;
+  readonly missing: string;
+}
+
+export const DEFERRED_SOURCE_IDS: readonly DeferredSource[] = [
+  {
+    id: "ga4",
+    backfill: true,
+    missing:
+      "backfill.ts is written, tested and exported; runIngest does not dispatch to it and refuses the provider.",
+  },
+  {
+    id: "google_ads",
+    backfill: false,
+    missing: "No backfill.ts. A client and a normaliser exist; nothing walks a window.",
+  },
+  {
+    id: "loyverse",
+    backfill: true,
+    missing:
+      "backfill.ts is written, tested and exported; runIngest does not dispatch to it. THE MOST COSTLY OF THE SIX: this is the till the product is designed around.",
+  },
+  {
+    id: "meta_ads",
+    backfill: true,
+    missing:
+      "backfill.ts is written, tested and exported; runIngest does not dispatch to it and refuses the provider.",
+  },
+  {
+    id: "search_console",
+    backfill: true,
+    missing:
+      "backfill.ts is written, tested and exported; runIngest does not dispatch to it and refuses the provider.",
+  },
+  {
+    id: "shopify",
+    backfill: false,
+    missing: "No backfill.ts. A client and a normaliser exist; nothing walks a window.",
+  },
+];
+
 const connectorClaim = `Reads ${naturalList(
-  IMPLEMENTED_SOURCE_IDS.map((id) => SOURCE_LABELS[id]),
+  INGESTABLE_SOURCE_IDS.map((id) => SOURCE_LABELS[id as ImplementedSourceId]),
 )} on your own credentials.`;
+
+export const AVAILABLE_CAPABILITIES: ReadonlySet<Capability> = new Set<Capability>(
+  // DERIVED FROM WHAT CAN BE READ, NOT FROM WHAT IS BUILT. This was
+  // `IMPLEMENTED_SOURCE_IDS.length > 0`, which is a test that something exists, licensing a claim
+  // that named seven things. See `INGESTABLE_SOURCE_IDS` below.
+  INGESTABLE_SOURCE_IDS.length > 0 ? ["source:any"] : [],
+);
 
 export interface Claim {
   readonly id: string;

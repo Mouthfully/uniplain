@@ -141,6 +141,13 @@ jobs:
       # two-way test between the disclosure and the "record" compared it against a hand-typed
       # constant. Two lists omitting the same thing agree perfectly. This reads the SOURCE, which is
       # the one input the lists cannot be a copy of.
+      # The home page claimed to read seven platforms and the Worker could read one. The capability
+      # gate passed because it checked `IMPLEMENTED_SOURCE_IDS.length > 0` -- that SOMETHING is
+      # implemented -- while licensing a claim that named all seven. This checks the thing itself.
+      - name: Ingestable guard
+        if: ${{ !cancelled() }}
+        run: node scripts/check-ingestable.mjs
+
       - name: Recipient guard
         if: ${{ !cancelled() }}
         run: node scripts/check-recipients.mjs

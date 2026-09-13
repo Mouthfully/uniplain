@@ -329,9 +329,23 @@ platform credentials.
 
 What stops any of this being asserted before it is true.
 
+**THE GATE VERIFIED A PROXY, AND THE PROXY DRIFTED.** The home page published *"Reads GA4, Google
+Ads, Loyverse, Meta Ads, Search Console, Shopify and WooCommerce on your own credentials"* while
+`runIngest` refused every provider but `woocommerce` — so a customer could connect their Loyverse
+till, watch it go healthy and never receive a row. Every guard passed: `check-capabilities.mjs`
+asserts each id exports a client and a normaliser (true of all seven), `AVAILABLE_CAPABILITIES` read
+`IMPLEMENTED_SOURCE_IDS.length > 0` (a test that *something* is implemented, licensing a sentence
+naming seven things), and `brand.test.ts` pinned the false sentence exactly. The claim is now derived
+from `INGESTABLE_SOURCE_IDS` and reads *"Reads WooCommerce on your own credentials"*;
+`check-ingestable.mjs` holds that against the Worker's dispatch in both directions. **Four backfills
+— GA4, Loyverse, Meta Ads, Search Console — are written, tested and exported and are dispatched by
+nothing**, under a comment saying four connectors had no backfill that was true when written. See
+`docs/marketplane/96-the-claim-named-seven-and-one-worked.md`.
+
 | Control | Evidence |
 |---|---|
 | A machine-readable ban list, each entry carrying the decision that killed it | `packages/brand/src/claims.ts` → `FORBIDDEN_CLAIMS` |
+| The source claim names only sources a row can actually arrive from | `INGESTABLE_SOURCE_IDS` drives both `connectorClaim` and `source:any`; `scripts/check-ingestable.mjs` compares it to `runIngest`'s dispatch both ways, and checks each deferred connector's `backfill` flag against the filesystem |
 | SOC 2 and ISO 27001 declared as claims withheld by a brand fact only a third party can set | `claims.ts` `soc2`/`iso27001`; `brand.ts` both `false` |
 | Flipping a certification fact cannot silently publish copy — the ban and the claim are interlocked | `brand.test.ts` "does not fire on the claims that are allowed" goes red until the ban is deleted in the same change |
 | The governing law and supervisory authority stated once, as facts about the entity | `brand.governingPrivacyLaw`, `brand.supervisoryAuthority`, rendered on `/privacy` |
