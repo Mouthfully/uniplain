@@ -157,7 +157,22 @@ describe("the legal identity is the brand file's, not a copy", () => {
     // A page that prints its own absolute address pins that address into the markup, and Google's
     // OAuth verification restarts if the domain changes later. The support address is the one
     // legitimate occurrence, so the assertion is a COUNT rather than an absence.
-    expect(html).not.toMatch(/\bhttps?:\/\/(?!localhost)/);
+    //
+    // THE ONE ALLOWED ABSOLUTE URL IS A VOCABULARY, NOT AN ADDRESS. `https://schema.org` is the
+    // JSON-LD @context: it is required for structured data to parse at all, it identifies a
+    // standard rather than this company, and it cannot become wrong when the domain changes --
+    // which is the entire hazard the paragraph above describes. `layout.tsx` has emitted it since
+    // the graph was written; this test never saw it only because it renders the page without the
+    // layout, so the FAQPage block on this page is the first time the two met.
+    //
+    // It is exempted BY NAME rather than by loosening the pattern, and the assertion below is
+    // strictly stronger than what it replaced: every absolute URL must now be that exact context,
+    // and the site's own origin is separately banned outright.
+    const absolute = [...html.matchAll(/\bhttps?:\/\/[^"'\s<>]+/g)].map((m) => m[0]);
+    const notLocal = absolute.filter((url) => !url.startsWith("http://localhost"));
+    for (const url of notLocal) {
+      expect(url, `an absolute URL reached the home page: ${url}`).toBe("https://schema.org");
+    }
     expect(brand.domain).not.toBeNull();
     const occurrences = (haystack: string, needle: string) => haystack.split(needle).length - 1;
     const addresses = occurrences(html, brand.supportEmail);

@@ -136,6 +136,40 @@ const QUESTIONS = [
 ] as const;
 
 /**
+ * THE SAME SIX QUESTIONS, DECLARED AS A FAQPage.
+ *
+ * The answers were already on this page in `<details>` elements, which is the correct HTML and is
+ * invisible as a question-and-answer pair to anything that is not rendering the page. The JSON-LD
+ * says what the markup means, and it is built from the SAME `QUESTIONS` constant the section
+ * renders -- so the two cannot answer differently, which is the whole failure mode of hand-written
+ * structured data and the reason Google treats a mismatch as a manual action rather than a warning.
+ *
+ * NOTHING IS ADDED HERE THAT IS NOT ON THE PAGE. No extra question, no expanded answer, no
+ * `aggregateRating`. Structured data is the easiest place in a codebase to state something untrue
+ * at scale, which is the argument `layout.tsx` already makes for its own graph; this inherits it.
+ */
+function FaqStructuredData() {
+  const graph = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: QUESTIONS.map((item) => ({
+      "@type": "Question",
+      name: item.question,
+      acceptedAnswer: { "@type": "Answer", text: item.answer },
+    })),
+  };
+
+  return (
+    <script
+      type="application/ld+json"
+      // JSON produced by JSON.stringify from a module constant. No user input reaches it, and Next
+      // has no other way to emit a JSON-LD block.
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(graph) }}
+    />
+  );
+}
+
+/**
  * The closing panel.
  *
  * "READY TO UNIFY YOUR DATA?" IS NAMED IN SECTION 5.1 AS COPY THAT MUST STOP, alongside its lead,
@@ -190,6 +224,7 @@ export function Faq() {
       </div>
 
       <div className="min-w-0">
+        <FaqStructuredData />
         {QUESTIONS.map((item) => (
           <details key={item.question} className="group border-line border-b py-[18px]">
             {/* The six questions are the only interactive thing in this section and they
