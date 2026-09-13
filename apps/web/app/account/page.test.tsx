@@ -38,6 +38,7 @@ vi.mock("../_auth/server", () => ({ currentUser: async () => F.user }));
 vi.mock("../members/_members", () => ({ readMembership: async () => F.membership }));
 vi.mock("./actions", () => ({ eraseAccount: async () => ({}) }));
 vi.mock("./email-actions", () => ({ changeSignInEmail: async () => ({}) }));
+vi.mock("./session-actions", () => ({ signOutOtherSessions: async () => ({}) }));
 vi.mock("next/navigation", () => ({
   redirect: (to: string) => {
     throw new Error(`redirected to ${to}`);
@@ -71,7 +72,7 @@ beforeEach(() => {
 });
 
 describe("the account page", () => {
-  it("offers all three, in the order take, move, close", async () => {
+  it("offers all four, with the one that cannot be undone last", async () => {
     const markup = say(await render());
 
     // Each anchored on copy the SECTION's own form prints, not on its heading: a heading is
@@ -79,13 +80,35 @@ describe("the account page", () => {
     // an absent one.
     const take = markup.indexOf(ACCOUNT_COPY.exportButton);
     const move = markup.indexOf(ACCOUNT_COPY.emailSubmit);
+    const devices = markup.indexOf(ACCOUNT_COPY.sessionsButton);
     const close = markup.indexOf(ACCOUNT_COPY.eraseConfirmLabel);
 
     expect(take, ACCOUNT_COPY.exportButton).toBeGreaterThan(-1);
     expect(move, ACCOUNT_COPY.emailSubmit).toBeGreaterThan(-1);
+    expect(devices, ACCOUNT_COPY.sessionsButton).toBeGreaterThan(-1);
     expect(close, ACCOUNT_COPY.eraseConfirmLabel).toBeGreaterThan(-1);
+
     expect(take).toBeLessThan(move);
-    expect(move).toBeLessThan(close);
+    expect(move).toBeLessThan(devices);
+    // The one that matters most: nobody scrolling for the export or the address should pass the
+    // button that permanently ends the account on the way to it.
+    expect(devices).toBeLessThan(close);
+  });
+
+  it("admits, above the button, what signing out everywhere cannot do", async () => {
+    const markup = say(await render());
+
+    // Both admissions are rendered, and rendered BEFORE the control. A person who has pressed it
+    // believes the other devices are out; a footnote read afterwards is a sentence nobody reads at
+    // the moment it counts.
+    const noList = markup.indexOf(ACCOUNT_COPY.sessionsNoList);
+    const notInstant = markup.indexOf(ACCOUNT_COPY.sessionsNotInstant);
+    const button = markup.indexOf(ACCOUNT_COPY.sessionsButton);
+
+    expect(noList, ACCOUNT_COPY.sessionsNoList).toBeGreaterThan(-1);
+    expect(notInstant, ACCOUNT_COPY.sessionsNotInstant).toBeGreaterThan(-1);
+    expect(noList).toBeLessThan(button);
+    expect(notInstant).toBeLessThan(button);
   });
 
   it("names the address currently signed in with, and says both mailboxes must confirm", async () => {
@@ -128,6 +151,9 @@ describe("the account page", () => {
     ).toContain(ACCOUNT_COPY.emailBothConfirm);
     expect(markup).toContain(ACCOUNT_COPY.emailSubmit);
     expect(markup).toContain(ACCOUNT_COPY.emailHeading);
+    // The other remedy on this page belongs to the sign-in record too, and survives for the same
+    // reason: a device somebody else is holding is not the organisation's question.
+    expect(markup).toContain(ACCOUNT_COPY.sessionsButton);
     // The two that DO depend on the organisation are correctly absent.
     expect(markup).not.toContain(ACCOUNT_COPY.exportButton);
     expect(markup).not.toContain(ACCOUNT_COPY.eraseConfirmLabel);
