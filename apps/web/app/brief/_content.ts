@@ -11,8 +11,15 @@ import { BUSINESS_TYPES } from "@repo/insights";
  */
 
 export const BRIEF_COPY = {
-  eyebrow: "Morning brief",
-  heading: "Yesterday, in three lines.",
+  // "MORNING BRIEF" / "YESTERDAY, IN THREE LINES." DESCRIBED A WINDOW THIS PAGE DOES NOT COMPUTE.
+  // `BRIEF_PERIOD` is seven days against the seven before them, and has been since it landed. A
+  // signed-in customer reading "yesterday" above a week's takings has been handed the wrong number
+  // by the heading rather than by the arithmetic -- which is the same failure this page exists to
+  // refuse, arriving through the one part of it nothing checked.
+  //
+  // There is also no morning: nothing schedules a brief and nothing delivers one.
+  eyebrow: "Brief",
+  heading: "The last seven days, in three lines.",
   lead: "Every figure below was computed from your own rows before the writing started, and checked again afterwards. A number that cannot be traced back to them is refused rather than corrected.",
 
   businessLabel: "What kind of business is this?",

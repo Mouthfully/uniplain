@@ -2,6 +2,7 @@ import { BUSINESS_TYPES } from "@repo/insights";
 import { describe, expect, it } from "vitest";
 
 import { BRIEF_COPY, BUSINESS_LABELS } from "./_content";
+import { BRIEF_DAYS } from "./_period";
 
 /**
  * EVERY WAY THIS SURFACE CAN PRODUCE NOTHING HAS ITS OWN SENTENCE.
@@ -111,5 +112,43 @@ describe("the brief is reachable and protected", () => {
     );
     const protectedLine = /const PROTECTED = \[([^\]]*)\]/.exec(source);
     expect(protectedLine?.[1]).toContain('"/brief"');
+  });
+});
+
+/**
+ * THE HEADING DESCRIBES THE WINDOW THE PAGE ACTUALLY COMPUTES.
+ *
+ * It did not, for as long as this route has existed: the heading read "Yesterday, in three lines."
+ * over a period of seven days against the seven before them. Nobody typed a wrong number -- the
+ * arithmetic was right and checked twice -- and the page still told a customer it was about
+ * yesterday. Copy is an assertion about the code beside it, and this is the one part of this route
+ * that nothing was checking.
+ */
+describe("the heading and the period it describes", () => {
+  it("does not say yesterday, or any other window BRIEF_PERIOD does not compute", () => {
+    expect(BRIEF_COPY.heading).not.toMatch(/\byesterday\b|\btoday\b|\blast night\b/i);
+  });
+
+  it("names the number of days the period actually spans", () => {
+    // BRIEF_DAYS is 7 and the heading says "seven". If the window is ever changed, one of these
+    // two has to change with it, and this is what makes it be both.
+    const WORDS: Readonly<Record<number, string>> = {
+      1: "one",
+      7: "seven",
+      14: "fourteen",
+      28: "twenty-eight",
+      30: "thirty",
+    };
+    const word = WORDS[BRIEF_DAYS];
+    expect(
+      word,
+      `no word for a ${BRIEF_DAYS}-day period -- add one and fix the heading`,
+    ).toBeDefined();
+    expect(BRIEF_COPY.heading.toLowerCase()).toContain(word as string);
+  });
+
+  it("promises no schedule, because nothing schedules a brief", () => {
+    const copy = Object.values(BRIEF_COPY).join(" ");
+    expect(copy).not.toMatch(/\b(?:each|every)\s+(?:morning|day)\b|\barrives\b|\bwe.?ll send\b/i);
   });
 });
