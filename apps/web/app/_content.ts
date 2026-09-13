@@ -243,6 +243,19 @@ export const SITE = {
  * Labels are structural rather than sentences, which is why they are short and why `check-copy`
  * does not reach them.
  */
+/**
+ * THE IN-PRODUCT HALF OF AN ART. 28(2) NOTICE.
+ *
+ * Publishing a change to a page is informing somebody only if they look at the page. This is the
+ * half that reaches them where they already are, and between them they are what let the agreement
+ * stop saying "no notice period is promised".
+ */
+export const SUB_PROCESSOR_NOTICE = {
+  heading: "A change to the providers behind this service",
+  body: "A provider that handles data on your behalf has been added, replaced or removed. The change is published with the date it takes effect, and it does not take effect for thirty days. If you object to it you may end the agreement within that window instead of accepting it.",
+  link: "Read what changed",
+} as const;
+
 export const FOOTER_LEGAL_LINKS: readonly { readonly href: string; readonly label: string }[] = [
   { href: "/terms", label: "Terms" },
   { href: "/privacy", label: "Privacy" },

@@ -27,16 +27,22 @@ import { DPA_COPY } from "./dpa-content";
  * Five of eight. Those are now in the agreement, and this module reports each sub-paragraph against
  * the clause that answers it.
  *
- * (d) IS THE ONE THAT IS STILL NOT MET, AND IT IS NOT AN OVERSIGHT. Art. 28(2) requires the
- * controller's prior authorisation for a sub-processor and, where that authorisation is general,
- * that the processor inform the controller of intended changes AND GIVE IT THE CHANCE TO OBJECT.
- * The agreement says plainly that no notice period is promised, because no mechanism exists to give
- * one -- the domain answers NODATA for MX, so the company cannot send the notice that a right to
- * object depends on. Writing "we will notify you" into the agreement would be the exact failure
- * this repository refuses: a commitment nothing keeps, in the document a customer relies on most.
+ * (d) WAS THE EIGHTH, AND IT WAS CLOSED BY DROPPING AN ASSUMPTION RATHER THAN BY A DEPENDENCY.
+ * Art. 28(2) requires the controller's prior authorisation for a sub-processor and, where that
+ * authorisation is general, that the processor inform it of intended changes AND GIVE IT THE CHANCE
+ * TO OBJECT. The agreement said no notice period was promised because no mechanism existed to give
+ * one, and the note here said the same: the domain answers NODATA for MX, so the notice could not
+ * be sent, so the sub-paragraph waited on DNS.
  *
- * So it is reported `absent`, with the reason and the thing that would close it. A reviewer reading
- * this meets one honest gap rather than eight sentences of which one is false.
+ * THE ARTICLE SAYS INFORM, NOT SEND. The channel never had to be email. A dated change list on the
+ * page the agreement points at, published thirty days before a change takes effect, plus a notice
+ * on the screen a signed-in customer lands on, informs them -- and unlike a mailing list it cannot
+ * bounce, cannot go to spam, and cannot be sent to an address whose owner left the company.
+ *
+ * Worth recording as a mistake rather than a win: this was written down as a founder task, in a
+ * design note and in an issue, on the strength of an assumption about the medium that nobody
+ * checked against the Article's actual words. A blocker that turns out to be a reading is the
+ * cheapest kind to find and the easiest to leave sitting there for months.
  *
  * EVERY `met` ENTRY IS CHECKED AGAINST THE RENDERED CLAUSE, not against this file's opinion of it:
  * `article-28.test.ts` requires the quoted commitment to appear in `DPA_COPY`. A mapping that
@@ -84,14 +90,20 @@ export const ARTICLE_28_CLAUSES: readonly Article28Clause[] = [
   },
   {
     subParagraph: "d",
-    // THE UNMET ONE. See the module note: a right to object needs a notice, and a notice needs a
-    // channel the domain does not have.
+    // THE ONE THAT WAS ABSENT, AND THE ASSUMPTION THAT KEPT IT ABSENT. This read: a right to object
+    // needs a notice, a notice needs a channel, and the domain answers NODATA for MX -- so the
+    // sub-paragraph could not be met until somebody configured DNS.
+    //
+    // ART. 28(2) SAYS INFORM, NOT SEND. The channel did not have to be email. A dated change list
+    // on the page this agreement points at, plus a notice on the screen a signed-in customer lands
+    // on, informs them -- and unlike a mailing list it cannot bounce, cannot go to spam, and cannot
+    // be sent to an address whose owner left the company. The blocker was an assumption about the
+    // medium, not a missing dependency, and it had been written down as a founder task.
     requirement:
       "Respects the conditions in Art. 28(2) and 28(4) for engaging another processor -- in particular, where the controller's authorisation is general, informing it of intended changes and giving it the opportunity to object.",
-    state: "absent",
+    state: "met",
     clause: DPA_COPY.subProcessorHeading,
-    commitment:
-      "No notice period is promised here, because no mechanism exists to give one and a stated period would be a commitment nothing keeps.",
+    commitment: "it takes effect no sooner than thirty days after it is published",
   },
   {
     subParagraph: "e",

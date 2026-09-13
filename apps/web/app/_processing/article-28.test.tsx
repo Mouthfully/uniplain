@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 import Page from "../dpa/page";
 import { ARTICLE_28_CLAUSES, unmetClauses } from "./article-28";
 import { DPA_COPY } from "./dpa-content";
+import { lastChangedAt, SUB_PROCESSOR_CHANGES, SUB_PROCESSOR_NOTICE_DAYS } from "./sub-processors";
 
 /**
  * THE MAPPING, HELD TO THE AGREEMENT IT MAPS.
@@ -77,29 +78,42 @@ describe("the agreement answers Article 28(3), sub-paragraph by sub-paragraph", 
 });
 
 describe("what the mapping refuses to claim", () => {
-  it("reports the sub-processor sub-paragraph as unmet, because no notice channel exists", () => {
-    // ART. 28(2) MAKES A RIGHT TO OBJECT DEPEND ON A NOTICE, and the domain answers NODATA for MX,
-    // so the company cannot send one. Writing "we will notify you of any change" into the agreement
-    // would be a commitment nothing keeps, in the document a customer relies on most -- which is
-    // the failure this repository exists to refuse, in its most expensive location.
+  it("meets the sub-processor sub-paragraph only because a mechanism backs it", () => {
+    // THIS ASSERTION USED TO RUN THE OTHER WAY. It required (d) to be `absent`, on the reasoning
+    // that Art. 28(2) makes a right to object depend on a notice, that a notice needs a channel,
+    // and that the domain answers NODATA for MX -- so the sub-paragraph waited on DNS.
+    //
+    // THE ARTICLE SAYS INFORM, NOT SEND. The blocker was a reading, not a dependency. So the
+    // assertion is replaced by its inverse, and it is deliberately NOT a bare `expect met`: what
+    // has to hold is that the promise is backed, in three places that can each be broken
+    // separately.
     const d = ARTICLE_28_CLAUSES.find((c) => c.subParagraph === "d");
-    expect(d?.state).toBe("absent");
-    expect(unmetClauses().map((c) => c.subParagraph)).toEqual(["d"]);
+    expect(d?.state).toBe("met");
+    expect(unmetClauses(), "a sub-paragraph regressed").toEqual([]);
 
-    // And the agreement must still be the one saying so, in its own words, to the reader.
-    expect(rendered).toContain("No notice period is promised here");
+    // 1. The period the agreement states is the period the code enforces.
+    expect(SUB_PROCESSOR_NOTICE_DAYS).toBe(30);
+    expect(rendered).toContain("no sooner than thirty days after it is published");
+
+    // 2. The remedy exists, because informing without a remedy is not an opportunity to object.
+    expect(rendered).toContain("may end the agreement within that window");
+
+    // 3. There is something to publish into. A notice mechanism with no change list is a promise
+    //    about a page that would be blank the first time it mattered.
+    expect(SUB_PROCESSOR_CHANGES.length).toBeGreaterThan(0);
+    expect(lastChangedAt()).toMatch(/^\d{4}-\d{2}-\d{2}$/);
   });
 
-  it("promises no notice period anywhere on the page", () => {
-    // The same bans `dpa.test.tsx` already enforces, re-run here because this unit added four
-    // clauses to the agreement and an added clause is exactly where a promise slips in.
+  it("promises no notice it cannot give", () => {
+    // The mechanism covers sub-processor changes on surfaces this company controls. A promise to
+    // email, write or contact would be unbacked again -- the domain still answers NODATA for MX,
+    // and that has not stopped mattering, it has stopped being load-bearing for THIS clause.
     const lower = rendered.toLowerCase();
     for (const promise of [
-      "days' notice",
-      "days notice",
-      "advance notice",
-      "we will notify you of any new",
-      "thirty days before",
+      "we will email you",
+      "we will write to you",
+      "we will contact you",
+      "we will call you",
     ]) {
       expect(lower, `the agreement promises "${promise}"`).not.toContain(promise);
     }

@@ -84,7 +84,8 @@ export const DPA_COPY = {
   subProcessorHeading: "7. Sub-processors",
   subProcessorBody: [
     "The service is run with the help of the providers listed on the sub-processors page, which names each one and what it does. That page is generated from the same record the rest of this agreement is generated from.",
-    "If a provider is added or replaced, that page changes. No notice period is promised here, because no mechanism exists to give one and a stated period would be a commitment nothing keeps.",
+    "The customer authorises those providers, and authorises this company to engage others on the same terms. Before a provider is added or replaced, the change is published on that page with the date it takes effect, and it takes effect no sooner than thirty days after it is published. Anyone signed in to an account sees a notice of the change on the screen they land on, for as long as that window is open.",
+    "A customer who objects to a new provider may end the agreement within that window rather than accept it. This company imposes the same data protection obligations on every provider it engages as it owes the customer under this agreement, and remains answerable to the customer for what any of them does.",
   ],
 
   rightsHeading: "8. Helping with requests from data subjects",
