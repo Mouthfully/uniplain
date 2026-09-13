@@ -165,8 +165,12 @@ with §4 naming what keeps it true.
   is its own unit — issue, not scope creep.
 * **Sessions, and two-factor.** Both were on the same list and neither is here. Listing a person's
   sessions is not possible on any credential this repository can hold (the admin API is required and
-  there is no service-role key in this product, by rule); TOTP is blocked on three Supabase project
-  switches. Both stay open.
+  there is no service-role key in this product, by rule).
+
+  **The sentence that stood here about TOTP was false** and said it was "blocked on three Supabase
+  project switches". It is not blocked on anything: `@supabase/auth-js@2.116.0` exposes the whole
+  TOTP flow on the anon key. It was written from memory without reading the library. What actually
+  stops it is a decision nobody has taken, and note 90 sets it out.
 
 ## 5. Open or unverified spec items this builds on
 
