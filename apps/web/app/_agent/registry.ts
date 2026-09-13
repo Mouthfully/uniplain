@@ -154,6 +154,15 @@ export const AGENT_PAGES: readonly AgentPage[] = [
     priority: 0.5,
   },
   {
+    path: "/sub-processors",
+    title: "Sub-processors",
+    summary:
+      "Every provider that processes data on our behalf, what each does, and which parts of the service send data to it.",
+    claims: ["no-pooling", "no-training"],
+    changeFrequency: "monthly",
+    priority: 0.5,
+  },
+  {
     path: "/terms",
     title: "Terms of service",
     summary: "The contract between this company and a customer of the product.",

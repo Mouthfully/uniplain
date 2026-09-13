@@ -93,6 +93,7 @@ const nextConfig: NextConfig = {
       "/connectors/shopify",
       "/connectors/woocommerce",
       "/processing",
+      "/sub-processors",
       "/terms",
       "/privacy",
     ];
