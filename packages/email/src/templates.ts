@@ -126,6 +126,27 @@ export const EMAIL_COPY = {
   refusalTrust:
     "A brief you never see is the alternative to one you cannot trust. Nothing here is estimated to fill the gap.",
 
+  // --- THE INVITATION, WHICH IS ALSO A NOTICE UNDER A LAW. ---------------------------------------
+  //
+  // The person reading this did not sign up. Their address was typed into a form by somebody else,
+  // which is a collection of a third party's personal data -- and s.23 of the PDPA says they are
+  // entitled to be told who holds it, what for, and what they can do about it, at or before the
+  // moment of collection. That is not a paragraph to be trimmed for tone: it is the only notice
+  // this person ever receives, and the sentences below are the whole of it.
+  invitationSubject: "You have been invited to a business account",
+  invitationOpening:
+    "Somebody who runs a business added your address so that you can read its trading figures. You did not ask for this, so here is what it means before you decide.",
+  invitationWhoHasWhat:
+    "The account holds figures read from tools that business already uses, and your email address, which the person who invited you typed in. Nothing else about you is held.",
+  invitationWhatYouCanDo:
+    "You can accept, ignore this, or ask them to withdraw it. If you accept and change your mind later, any owner or admin of that account can remove you, and you can ask them to.",
+  invitationReadOnly:
+    "Accepting lets you read. It does not let you change prices, send anything, or write back to any tool the business uses, and it gives you nothing over your own account.",
+  invitationLinkHeading: "The link, which works once:",
+  invitationExpiry: "It stops working after seven days, or once it has been used.",
+  invitationNotForYou:
+    "If you do not know who sent this, ignore it. Nothing happens until somebody presses accept.",
+
   signOffHelp: "Reply to this message if something looks wrong.",
 } as const;
 
@@ -206,6 +227,37 @@ export function briefEmail(to: string, span: BriefSpan, content: BriefContent): 
         ? null
         : `${EMAIL_COPY.actionHeading}\n${content.action.title}\n${content.action.why}`,
       provenance === "" ? null : `${EMAIL_COPY.figuresHeading}\n${provenance}`,
+      EMAIL_COPY.signOffHelp,
+    ]),
+  };
+}
+
+/**
+ * The invitation, which is also the only privacy notice the person invited will ever get.
+ *
+ * NOTHING SENDS THIS YET, for the reason note 70 gives: until the domain's SPF and DKIM exist, a
+ * send returns success for mail nobody receives. The members page therefore shows the link to the
+ * admin and tells them to pass it on with the same notice in their own words. This template is what
+ * takes that job over the day the DNS lands, and it is written now so that the notice is reviewed
+ * once rather than improvised into a covering message.
+ *
+ * THE ONLY VALUE INTERPOLATED IS THE LINK. Not the inviter's name, not the business's name, not the
+ * role. Each of those is tenant-written or tenant-chosen text reaching a stranger's inbox on this
+ * product's behalf, and an invitation that names a business is also a disclosure that the business
+ * uses this product to whoever holds that address -- which may be a former employee, or a typo.
+ */
+export function invitationEmail(to: string, link: string): EmailMessage {
+  return {
+    to,
+    subject: EMAIL_COPY.invitationSubject,
+    text: body([
+      EMAIL_COPY.invitationOpening,
+      EMAIL_COPY.invitationWhoHasWhat,
+      EMAIL_COPY.invitationReadOnly,
+      EMAIL_COPY.invitationWhatYouCanDo,
+      `${EMAIL_COPY.invitationLinkHeading}\n${link}`,
+      EMAIL_COPY.invitationExpiry,
+      EMAIL_COPY.invitationNotForYou,
       EMAIL_COPY.signOffHelp,
     ]),
   };
