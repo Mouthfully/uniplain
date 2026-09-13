@@ -117,3 +117,6 @@ psql -d "$DB" -q -f "$HERE/14_ambient.sql"
 
 echo "==> force rls suite"
 psql -d "$DB" -q -f "$HERE/15_force_rls.sql"
+
+echo "==> oauth pending suite"
+psql -d "$DB" -q -f "$HERE/16_oauth_pending.sql"

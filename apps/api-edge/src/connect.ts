@@ -253,8 +253,13 @@ function credentialField(value: unknown, name: string): string {
  *
  * The provider test is a name and not a lookup because WooCommerce is the only self-hosted source
  * here. A second one makes this a table.
+ *
+ * EXPORTED SO THE OAUTH DOOR USES THIS ONE. `oauth-connect.ts` takes an `external_account_id` off
+ * its callback body and asks exactly the same question of it. A second opinion about what an
+ * account id is would agree with this one right up until somebody edited one of them, and the two
+ * live behind endpoints that write the same column.
  */
-function externalAccountId(provider: ConnectionProvider, value: unknown): string {
+export function externalAccountId(provider: ConnectionProvider, value: unknown): string {
   const raw = field(value, "external_account_id").trim();
   if (hasControlCharacter(raw)) {
     throw new ConnectError(
