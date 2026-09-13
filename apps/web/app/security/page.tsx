@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 
+import { TwoIdentities } from "../_art/TwoIdentities";
 import { Footer, SiteHeader } from "../_chrome";
 import {
   ASSURANCE_DOCUMENTS,
@@ -137,6 +138,18 @@ export default function SecurityPage() {
             <p className="text-ink-muted mt-3 text-sm leading-[1.7]">
               {SECURITY_COPY.controlsLead}
             </p>
+          </div>
+
+          {/* THE ACCESS MODEL, BEFORE THE NUMBERED CONTROLS RATHER THAN AMONG THEM. The list below
+              is a control at a time, each with its own check; the drawing is the shape they all sit
+              inside, and a reader who sees it first has somewhere to put every item that follows.
+
+              It gets 900px rather than the 760 the prose column takes: this is the one page where
+              the diagram is the evidence, and setting it to a measure tuned for sentences would put
+              the two lanes close enough that the gap between them -- which is the whole claim --
+              stops reading as a gap. */}
+          <div className="min-w-0 mt-8 max-w-[900px]">
+            <TwoIdentities />
           </div>
 
           <ol className="mt-6 max-w-[760px]">

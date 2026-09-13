@@ -48,6 +48,7 @@ So: **refuse rather than repair or default.**
 | `check-recipients` | an `https://` host in shipped source that nobody has classified — and a host classified as a sub-processor that no disclosure names |
 | `check-advisories` | a dependency carrying a **high or critical** published advisory — and an audit that could not reach the registry, which fails rather than reporting clean |
 | `check-design-notes` | two design notes sharing a number, or a note whose heading and filename disagree |
+| `check-workflow-cache` | a CI job asking `setup-node` for a package-manager cache it never installs into — green on a cache hit, red on every dependency bump |
 
 Plus two test-shaped guards that behave the same way: `withheld-claims.test.tsx` refuses a claim the
 capability gate withholds being rewritten as hand-typed section copy, and `forbidden-claims.test.ts`
