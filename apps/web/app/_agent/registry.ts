@@ -145,6 +145,15 @@ export const AGENT_PAGES: readonly AgentPage[] = [
     priority: 0.7,
   },
   {
+    path: "/processing",
+    title: "Record of processing",
+    summary:
+      "Every processing activity this service performs, what it holds, who receives it, and how long it is kept.",
+    claims: ["tenant-isolation", "no-pooling", "no-training"],
+    changeFrequency: "monthly",
+    priority: 0.5,
+  },
+  {
     path: "/terms",
     title: "Terms of service",
     summary: "The contract between this company and a customer of the product.",

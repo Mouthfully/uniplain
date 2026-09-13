@@ -92,6 +92,7 @@ const nextConfig: NextConfig = {
       "/connectors/search-console",
       "/connectors/shopify",
       "/connectors/woocommerce",
+      "/processing",
       "/terms",
       "/privacy",
     ];

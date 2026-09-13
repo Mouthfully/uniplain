@@ -72,8 +72,15 @@ becomes available.
 4. **s.23 — two mandatory disclosures are missing from the collection notice**: the retention period
    (s.23(3)) and the categories of recipient (s.23(4)). Both are `open: true` clauses on `/privacy`
    — the candour is right, the gap is still a gap.
-5. **s.39 — no record of processing activities**, and the small-business exemption is **forfeited**
-   because processing is not occasional: the ingest runs on a nightly cron (`INGEST_CRON`).
+5. **s.39 — a record of processing activities now exists, and is generated rather than written.**
+   The exemption remains **forfeited** — it turns on processing being occasional and the ingest runs
+   on a nightly cron (`INGEST_CRON`) — so the obligation is live and is now met in the only form
+   that stays met: `apps/web/app/_processing/activities.ts` accounts for every table in `public`,
+   and `activities.test.ts` reads the migrations and fails the build in **both** directions, so a
+   new table with no entry cannot ship. Published at `/processing`.
+
+   What the record itself reports as still missing is unchanged and is listed on that page: no
+   transfer instrument, no DPA, no retention schedule, no DPO.
 6. **s.30–s.36 — no data-subject rights path at all.** No intake, no identity check, no clock, no
    export, no rectification, no objection, no erasure.
 7. **s.19 / s.23 at the waiting list.** *Partly fixed:* the form now carries a purpose, a retention
