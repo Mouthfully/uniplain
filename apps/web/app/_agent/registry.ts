@@ -193,6 +193,28 @@ export const AGENT_PAGES: readonly AgentPage[] = [
     priority: 0.5,
   },
   {
+    path: "/sub-processors",
+    title: "Sub-processors",
+    summary:
+      "Every provider that processes data on our behalf, what each does, and which parts of the service send data to it.",
+    claims: ["no-pooling", "no-training"],
+    changeFrequency: "monthly",
+    priority: 0.5,
+  },
+  {
+    path: "/dpa",
+    title: "Data processing agreement",
+    summary:
+      "The agreement a customer's controller obligations require, with the scope and sub-processor clauses rendered from the record of processing.",
+    // The `dpa` claim is WITHHELD -- its text promises GDPR Article 28 terms and this is a PDPA
+    // s.40 instrument -- so `publishableClaims` drops it and this page publishes no capability at
+    // all today. Citing it anyway is the point: the day the missing requirement is met the claim
+    // appears here by the same mechanism it appears on the page, and nobody has to remember.
+    claims: ["dpa"],
+    changeFrequency: "yearly",
+    priority: 0.4,
+  },
+  {
     path: "/terms",
     title: "Terms of service",
     summary: "The contract between this company and a customer of the product.",

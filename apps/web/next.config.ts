@@ -92,7 +92,6 @@ const nextConfig: NextConfig = {
       "/connectors/search-console",
       "/connectors/shopify",
       "/connectors/woocommerce",
-      "/processing",
       // The three segment pages and the security page. Added here as well as in the registry
       // because a Next config cannot import from `app/` -- `headers.test.ts` is what holds the two
       // lists together, and it fails on exactly this drift.
@@ -100,6 +99,9 @@ const nextConfig: NextConfig = {
       "/for/online-shop",
       "/for/salon",
       "/security",
+      "/processing",
+      "/sub-processors",
+      "/dpa",
       "/terms",
       "/privacy",
     ];
