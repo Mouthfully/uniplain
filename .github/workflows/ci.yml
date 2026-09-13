@@ -152,6 +152,14 @@ jobs:
         if: ${{ !cancelled() }}
         run: node scripts/check-recipients.mjs
 
+      # The guard for THIS FILE. A job that asks setup-node for a package-manager cache and never
+      # installs has no store to save, and the save step errors rather than skipping -- so the job
+      # passes on a cache hit and fails on a miss, which makes it a failure that only ever appears
+      # on a dependency bump. See the script header for what it cost.
+      - name: Workflow cache guard
+        if: ${{ !cancelled() }}
+        run: node scripts/check-workflow-cache.mjs
+
       # `deleteWorkspacePayloads` is written, tested and called by nothing -- which is correct only
       # because `putPayload` is called by nothing either. The day the archive is wired into ingest,
       # closing an account would delete thirteen tables by cascade, report success, and leave the
@@ -241,11 +249,24 @@ jobs:
       - name: Install pnpm
         uses: pnpm/action-setup@v4
 
+      # NO `cache: pnpm` HERE, AND THE REASON IS THE DEFECT IT CAUSED.
+      #
+      # This job installs nothing -- see the note below -- so there is no pnpm store for the cache
+      # to save. On a cache HIT that is invisible: the restore creates the store directory, and the
+      # post-job save finds a path and no-ops. On a cache MISS nothing creates it, the save step
+      # reports `Path Validation Error: Path(s) specified in the action for caching do(es) not
+      # exist`, and THE JOB FAILS after both guards have already passed.
+      #
+      # A cache miss is not a rare event here: the key is the lockfile hash, so EVERY dependency
+      # bump is a miss by definition. All eight open Dependabot pull requests failed this way at
+      # once -- including two that only bump an action version and touch no application code --
+      # while `check-advisories` and `check-mailbox` printed their PASS lines in the same log.
+      #
+      # A cache asked for by a job that installs nothing is a cache that can only cost something.
       - name: Install Node
         uses: actions/setup-node@v4
         with:
           node-version: "22"
-          cache: pnpm
 
       # `pnpm audit` reads the lockfile and needs no node_modules, so nothing is installed here.
       # That also means this job cannot be broken by an install failure, which is the other half of
