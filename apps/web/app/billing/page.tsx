@@ -3,7 +3,12 @@ import { redirect } from "next/navigation";
 
 import { isAuthConfigured } from "../_auth/env";
 import { currentUser, supabaseServer } from "../_auth/server";
-import { openBillingPortal, startCheckout } from "../_billing/actions";
+import {
+  cancelSubscription,
+  openBillingPortal,
+  resumeSubscription,
+  startCheckout,
+} from "../_billing/actions";
 import {
   DEFAULT_CURRENCY,
   PLAN_DISPLAY,
@@ -23,6 +28,22 @@ const COPY = {
   renews: "Renews",
   ends: "Access ends",
   cancelling: "Cancels at the end of this period",
+  cancel: "Cancel at period end",
+  resume: "Keep the subscription",
+
+  // WHAT CAME BACK, IN ONE SENTENCE EACH. Every outcome of the two actions has its own, because
+  // "something went wrong" over a cancellation is how a customer ends up cancelling twice or,
+  // worse, believing they have when they have not.
+  cancelRequested:
+    "Stripe has been told to stop this subscription at the end of the period you have already paid for. The date above updates once the change comes back from them.",
+  cancelAlready: "This subscription is already set to stop at the end of the period.",
+  cancelNone: "There is no subscription to cancel.",
+  cancelFailed:
+    "Nothing was changed, and we could not tell you why. Try again, and tell us if it keeps happening.",
+  resumeRequested: "Stripe has been told to keep this subscription running.",
+  resumeNothing: "This subscription was not cancelling, so nothing changed.",
+  resumeFailed:
+    "Nothing was changed, and we could not tell you why. Try again, and tell us if it keeps happening.",
   managed: "Payment method, VAT details and cancellation are handled by our payment provider.",
   portal: "Manage billing",
   invoices: "Invoices",
@@ -56,7 +77,42 @@ export const metadata: Metadata = {
  * page load to decide what a tenant may do, and a gate that depends on a third party being
  * reachable either fails open or fails slow.
  */
-export default async function BillingPage() {
+/**
+ * THE OUTCOME OF THE LAST ACTION, MAPPED TO A SENTENCE.
+ *
+ * The two billing actions redirect with a query parameter rather than returning state, because both
+ * end in `redirect()` and a redirect carries no state. The parameter is NOT shown to anybody -- it
+ * is matched against this table, and an unrecognised one produces nothing rather than being echoed
+ * into the page, which is how a query string becomes a cross-site scripting hole.
+ */
+const NOTICES: Readonly<Record<string, string>> = {
+  "cancel=requested": COPY.cancelRequested,
+  "cancel=already": COPY.cancelAlready,
+  "cancel=none": COPY.cancelNone,
+  "cancel=failed": COPY.cancelFailed,
+  "resume=requested": COPY.resumeRequested,
+  "resume=nothing": COPY.resumeNothing,
+  "resume=failed": COPY.resumeFailed,
+};
+
+function noticeFor(params: Record<string, string | string[] | undefined>): string | null {
+  for (const key of ["cancel", "resume"]) {
+    const value = params[key];
+    // A repeated parameter arrives as an array, and picking one would be a guess about which the
+    // sender meant. Neither is shown.
+    if (typeof value !== "string") continue;
+    const found = NOTICES[`${key}=${value}`];
+    if (found !== undefined) return found;
+  }
+  return null;
+}
+
+export default async function BillingPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const notice = noticeFor(await searchParams);
   if (!isAuthConfigured()) redirect("/signin");
   const user = await currentUser();
   if (!user) redirect("/signin?next=%2Fbilling");
@@ -120,14 +176,51 @@ export default async function BillingPage() {
 
             <p className="text-ink-subtle mt-4 text-xs leading-relaxed">{COPY.managed}</p>
 
-            <form action={openBillingPortal} className="mt-4">
-              <button
-                type="submit"
-                className="border-line text-ink hover:bg-surface-inset min-h-[44px] rounded-md border px-5 text-sm font-bold transition-colors"
-              >
-                {COPY.portal}
-              </button>
-            </form>
+            <div className="mt-4 flex flex-wrap gap-3">
+              <form action={openBillingPortal}>
+                <button
+                  type="submit"
+                  className="border-line text-ink hover:bg-surface-inset min-h-[44px] rounded-md border px-5 text-sm font-bold transition-colors"
+                >
+                  {COPY.portal}
+                </button>
+              </form>
+
+              {/* CANCELLING DOES NOT GO THROUGH THE PORTAL, and the reason is in `actions.ts`:
+                  whether the portal offers a cancel button depends on a Stripe dashboard setting
+                  nobody in this repository can read. A customer who has decided to leave and finds
+                  no button has been given a runaround by a checkbox. This asks Stripe directly.
+
+                  Shown only when there is something to cancel, and swapped for the undo once it is
+                  cancelling -- so the control always describes the state it would move to. */}
+              {subscription && !subscription.cancel_at_period_end ? (
+                <form action={cancelSubscription}>
+                  <button
+                    type="submit"
+                    className="border-line text-ink hover:bg-surface-inset min-h-[44px] rounded-md border px-5 text-sm font-bold transition-colors"
+                  >
+                    {COPY.cancel}
+                  </button>
+                </form>
+              ) : null}
+
+              {subscription?.cancel_at_period_end ? (
+                <form action={resumeSubscription}>
+                  <button
+                    type="submit"
+                    className="border-line text-ink hover:bg-surface-inset min-h-[44px] rounded-md border px-5 text-sm font-bold transition-colors"
+                  >
+                    {COPY.resume}
+                  </button>
+                </form>
+              ) : null}
+            </div>
+
+            {notice === null ? null : (
+              <p role="status" className="text-ink mt-4 text-sm leading-[1.6]">
+                {notice}
+              </p>
+            )}
           </section>
 
           <section className="mt-8">
@@ -258,6 +351,25 @@ function formatMoney(minorUnits: number, currency: string): string {
   return formatter.format(minorUnits / 10 ** digits);
 }
 
+/**
+ * THE TIMEZONE IS NAMED, AND IT USED NOT TO BE.
+ *
+ * This read `new Intl.DateTimeFormat("en", { dateStyle: "medium" })` with no `timeZone`, which
+ * resolves to whatever the RUNTIME is set to -- UTC on the deploy target, and something else on a
+ * developer's machine. A subscription ending at 18:00 UTC is the following day in Asia/Bangkok, so
+ * the date a customer was shown for "when does this stop" could be a day early, and would differ
+ * between where it was tested and where it runs.
+ *
+ * CLAUDE.md names this exact defect: never default a unit, a window, a timezone or a currency,
+ * because `coalesce(timezone, 'UTC')` is "a guess wearing the costume of a fact". The fix is not to
+ * pick a better default -- there is no workspace timezone column to read, so any choice here would
+ * be another guess. It is to say WHICH zone the date is in, so the customer can do the arithmetic
+ * this code cannot do for them.
+ */
+const BILLING_ZONE = "UTC";
+
 function formatDate(iso: string): string {
-  return new Intl.DateTimeFormat("en", { dateStyle: "medium" }).format(new Date(iso));
+  return `${new Intl.DateTimeFormat("en", { dateStyle: "medium", timeZone: BILLING_ZONE }).format(
+    new Date(iso),
+  )} ${BILLING_ZONE}`;
 }

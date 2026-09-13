@@ -108,7 +108,13 @@ begin
      -- arguing for: both mean the processor is still trying to take money, so erasing under either
      -- leaves a customer being charged for an account they were told was gone. `canceled`,
      -- `incomplete`, `incomplete_expired` and `paused` are not attempts to collect.
-     and s.status in ('active', 'trialing', 'past_due', 'unpaid');
+     and s.status in ('active', 'trialing', 'past_due', 'unpaid')
+     -- ALREADY CANCELLING IS NOT STILL COLLECTING, and this clause is what makes the two features
+     -- fit together. `cancel_at_period_end` leaves `status` at 'active' until the period runs out,
+     -- so without this a customer who pressed cancel would be told to end the subscription first
+     -- -- having just done exactly that -- and would have to come back in a month. No further
+     -- charge is taken once Stripe holds that flag, which is the only thing this refusal is for.
+     and s.cancel_at_period_end is not true;
 
   if v_live_billing > 0 then
     raise exception 'delete_organisation: a subscription is still live'

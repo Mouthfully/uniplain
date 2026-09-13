@@ -64,10 +64,10 @@ export type ExportState =
  * the schema grows next, and nobody reviews a column they did not add to a list.
  */
 const TABLES: readonly { readonly table: string; readonly columns: string }[] = [
-  { table: "workspaces", columns: "id, name, slug, timezone, created_at" },
+  { table: "workspaces", columns: "id, name, slug, client_name, client_contact, created_at" },
   {
     table: "invitations",
-    columns: "id, email, role, created_at, expires_at, accepted_at, revoked_at",
+    columns: "id, email, role, workspace_ids, created_at, expires_at, accepted_at, revoked_at",
   },
   {
     table: "connections",
@@ -76,11 +76,20 @@ const TABLES: readonly { readonly table: string; readonly columns: string }[] = 
       "granted_scopes, status, expires_at, last_health_check_at, restatement_window_days, created_at",
   },
   {
+    // THE WHOLE ROW EXCEPT ITS PLUMBING. This is the customer's own trading data and the reason the
+    // export exists at all, so the metric columns are listed individually rather than reached for
+    // with a wildcard -- the same discipline as `connections`, for a different reason: here a
+    // wildcard would also drag in `raw_key`, an R2 object key that means nothing outside this
+    // system and looks like something when it lands in a spreadsheet.
     table: "envelope_rows",
     columns:
-      "id, workspace_id, source, entity_id, grain, period_start, period_end, metric, value, " +
-      "currency, timezone, fetched_at, source_updated_at, is_provisional, restates_until, " +
-      "attribution_window, fx_rate",
+      // NO `id`: `envelope_rows` has a composite primary key and no such column. The guard in
+      // `_columns.test.ts` found that, after finding five others in this same list.
+      "workspace_id, source, account_id, entity_id, entity_type, entity_name, date, " +
+      "currency, timezone, attribution_window, spend, impressions, clicks, sessions, " +
+      "conversions, conversions_value, revenue, orders, net_revenue, fees, commission, " +
+      "fetched_at, source_updated_at, restates_until, is_provisional, fx_source, fx_rate_date, " +
+      "fx_rate, fx_base",
   },
   {
     table: "subscriptions",
