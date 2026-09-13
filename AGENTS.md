@@ -45,9 +45,32 @@ becomes available.
 
 ### The eight blocking gaps, worst first
 
-1. **s.37(3) — no deletion system exists.** No retention period is set for `envelope_rows`,
-   `restatement_events`, `connections`, `invitations`, `waitlist`, `members`, `billing_customers` or
-   the R2 payload archive, and **nothing deletes any of them.**
+1. **s.37(3) — erasure on request now exists; no retention period still does.** `/account` closes an
+   organisation outright (`20260913000700_erasure.sql`, #69): one `delete from public.organisations`,
+   owner-only, refused while a subscription is live, with `19_erasure.sql` reading `pg_class` for
+   every table carrying an `organisation_id` or `workspace_id` so a table added later is covered the
+   day it lands.
+
+   **What that does NOT do is set a retention period.** Erasure is an act a customer takes; s.37(3)
+   is about data nobody has asked about. No period is set for `envelope_rows`, `connections`,
+   `invitations`, `waitlist`, `members`, `billing_customers` or the R2 payload archive, and nothing
+   removes any of them on a clock. The distinction matters because shipping erasure makes it very
+   easy to believe this gap closed, and it did not.
+
+   `restatement_events` is the one apparent exception and it is not one, which is worth stating
+   precisely because the code reads as if it were. `app.prune_restatement_events` is real, has a
+   30-day retention (`app.retention_delivered()`), is granted to `app_webhook`, and its cron
+   `17 3 * * *` is declared in `apps/api-edge/wrangler.jsonc` and dispatched by name in
+   `src/webhooks.ts`. **It never runs.** `src/index.ts` passes `store: null` into
+   `handleScheduled`, which returns `not_configured` before the prune branch is reached, and no
+   `WebhookStore` implementation exists outside a test fake. So the retention control is written,
+   tested, granted, scheduled — and unreachable. That is a worse state than absent, because every
+   artefact says it is covered.
+
+   `oauth_authorizations` is the only table in the schema from which rows are actually removed: a
+   one-hour TTL and a single-use `delete … returning`, both in `20260913000400_oauth_pending.sql`.
+   Across all migrations there are exactly three `delete from` statements, and none names a
+   tenancy table.
 2. **s.28 — every byte crosses a border with no mechanism.** Five transfers, each needing a s.28 or
    s.29 basis: Supabase (Singapore), Cloudflare R2, Vercel, Stripe, **and OpenRouter**, which
    receives prompts built from a tenant's figures.
@@ -57,15 +80,32 @@ becomes available.
 4. **s.23 — two mandatory disclosures are missing from the collection notice**: the retention period
    (s.23(3)) and the categories of recipient (s.23(4)). Both are `open: true` clauses on `/privacy`
    — the candour is right, the gap is still a gap.
-5. **s.39 — no record of processing activities**, and the small-business exemption is **forfeited**
-   because processing is not occasional: the ingest runs on a nightly cron (`INGEST_CRON`).
+5. **s.39 — a record of processing activities now exists, and is generated rather than written.**
+   The exemption remains **forfeited** — it turns on processing being occasional and the ingest runs
+   on a nightly cron (`INGEST_CRON`) — so the obligation is live and is now met in the only form
+   that stays met: `apps/web/app/_processing/activities.ts` accounts for every table in `public`,
+   and `activities.test.ts` reads the migrations and fails the build in **both** directions, so a
+   new table with no entry cannot ship. Published at `/processing`.
+
+   What the record itself reports as still missing is unchanged and is listed on that page: no
+   transfer instrument, no DPA, no retention schedule, no DPO.
 6. **s.30–s.36 — no data-subject rights path at all.** No intake, no identity check, no clock, no
    export, no rectification, no objection, no erasure.
 7. **s.19 / s.23 at the waiting list.** *Partly fixed:* the form now carries a purpose, a retention
    statement and a link to the notice. Still absent: a consent artefact recording what was agreed
    and when.
-8. **s.37(1) — no personal-data audit trail**, which also disables the s.37(4) breach assessment.
-   No access-log table exists in any migration; `claims.ts` correctly withholds `audit-log`.
+8. **s.37(1) — a security event trail now exists; a complete access log still does not.**
+   `public.security_events` records security-relevant ACTS — a credential sealed, a connection
+   attached or revoked, a role changed, a key minted — append-only and enforced as such: no role
+   holds UPDATE, DELETE or INSERT on it, the only writer is a `SECURITY DEFINER` function, and
+   `21_security_events.sql` proves all three from a hostile `authenticated` session. That makes an
+   s.37(4) breach assessment possible where it previously was not.
+
+   **Reads are still not captured**, and cannot be by anything in this schema: a tenant's reads go
+   through PostgREST as `authenticated` and would need database-level statement logging. So
+   `claims.ts` still correctly withholds `audit-log` — its text is "Every query, export and API key
+   is logged" — and `surface:audit-log` stays out of `AVAILABLE_CAPABILITIES`. A test in the SQL
+   suite carries the reasoning for whoever sees the new table and concludes the capability shipped.
 
 **VERIFIED, AND IT IS WORSE THAN "NO MX".** This entry previously read *"one agent reported no MX
 record; I could not verify that from this environment (no `dig`/`host`)"*. It is now verified, over

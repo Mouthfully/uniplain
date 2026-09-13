@@ -260,6 +260,29 @@ export const NAV = [
   { href: "/signin", label: "Sign in" },
 ] as const;
 
+/**
+ * THE WORDS THE PHONE NAVIGATION NEEDS, AND WHY THEY ARE HERE RATHER THAN IN THE MARKUP.
+ *
+ * `scripts/check-copy.mjs` treats `aria-label` as prose -- it is on the VISIBLE_ATTRIBUTES list --
+ * because a string only a screen reader hears is still a string a customer receives. So the
+ * disclosure's accessible name lives in this module beside every other word on the site, not in
+ * `_chrome.tsx`.
+ *
+ * `label` IS BOTH THE VISIBLE TEXT AND THE ACCESSIBLE NAME, deliberately the same string. WCAG
+ * 2.5.3 (Label in Name) is failed by the common arrangement -- a hamburger glyph labelled
+ * "Open navigation menu" -- because someone driving the page by voice says what they can see. One
+ * constant makes them impossible to drift apart. The text is hidden below 360px, where the bar has
+ * no room for it; the aria-label is on the control at every width, so the name never disappears.
+ *
+ * `navLabel` names the <nav> landmark. It is "Site" and not "Site navigation" because a screen
+ * reader already announces the role -- "Site navigation navigation" is what the longer string
+ * actually produces.
+ */
+export const NAV_MENU = {
+  label: "Menu",
+  navLabel: "Site",
+} as const;
+
 /* ---------------------------------------------------------------------------------------------
  * THE DASHBOARD, AND WHY ITS NUMBERS ARE HERE.
  *

@@ -212,7 +212,10 @@ export function UseCases() {
 
               <a
                 href="/dashboard"
-                className="text-accent mt-6 inline-flex items-center gap-3 self-start text-sm font-bold hover:underline"
+                /* min-h-[44px]: measured at 193x20, i.e. under even the 24x24 that WCAG 2.5.8
+                   (AA) requires of a target, let alone the 44 a thumb wants. The height comes from
+                   the link box, not from the text, so nothing about the type changes. */
+                className="text-accent mt-4 inline-flex min-h-[44px] items-center gap-3 self-start text-sm font-bold hover:underline"
               >
                 {CTA_LABEL}
                 <span aria-hidden="true">&rarr;</span>

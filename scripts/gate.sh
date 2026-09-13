@@ -81,6 +81,15 @@ if [ "$guards_only" -eq 0 ]; then
   run biome-format npx biome format .
   run typecheck pnpm -r typecheck
   run test pnpm -r test
+  # BOTH APPS, because CI runs `pnpm -r build` and this file exists to be the same set.
+  #
+  # It was missing, and the omission cost a red CI run: a gate that stops at `test` cannot see a
+  # Next build that fails on generated route types, and cannot see apps/api-edge at all -- whose
+  # build is `wrangler deploy --dry-run`, the only step that catches a broken wrangler.jsonc or an
+  # esbuild bundling failure. The vitest pool uses its own transform pipeline, so both pass the
+  # test step and surface at deploy. A local gate looser than CI teaches people to ignore it, which
+  # is the failure this script's header is entirely about.
+  run build pnpm -r build
 fi
 
 echo
