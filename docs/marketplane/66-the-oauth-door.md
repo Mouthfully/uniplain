@@ -22,8 +22,11 @@ out of the group where read-only is enforced **by the token** and into the group
 enforced **by our promise** (`58-plan-reconciliation.md` §1.5), while the product tells a cafe owner
 this is the connector whose permissions are narrow.
 
-This PR builds the Worker half of the door: `POST /v1/connections/oauth/start` and
-`POST /v1/connections/oauth/callback`, plus the store they need.
+This PR builds the door. **The Worker half** — `POST /v1/connections/oauth/start`,
+`POST /v1/connections/oauth/callback` and the store they need — and **the web half**: the screen a
+customer starts an authorisation from, and the redirect URI that finishes it. The two were written
+in that order and the Worker half's decisions are recorded first; §1.4 is the web half and nothing
+in it reopens them.
 
 **The decision, in one sentence: the pending authorisation is a row in Postgres behind two
 `SECURITY DEFINER` functions, not a signed cookie and not Workers KV — because redemption must be
@@ -61,6 +64,72 @@ carrying the Supabase session cookie, and "the workspace comes from the caller's
 unsatisfiable at a redirect that arrives with no session. The web app collects `code` and `state`
 off its own query string and POSTs them onward — the collect-and-post posture
 `apps/web/app/connections/actions.ts` already documents.
+
+### 1.4 The web half: one screen, two doors, and the one value that crosses the detour
+
+Three files carry it. `oauth-actions.ts` is a server action that POSTs `/oauth/start` and redirects
+the browser to the authorize URL the Worker built. `connections/callback/route.ts` is the redirect
+URI: it reads the session, POSTs `code` + `state` onward, and lands the customer back on
+`/connections`. `_oauth.ts` holds the judgement between them, out of the route, so it can be tested
+without a session or a cookie store — the shape `auth/callback-policy.ts` already established beside
+`auth/callback/route.ts` for the same reason.
+
+**THE SCREEN NOW SHOWS TWO KINDS OF CONNECTION AND MUST NOT BLUR THEM.** One asks a customer to
+paste a secret they already hold; the other sends them to the provider and brings them back with a
+permission they never see. Those are different promises about where a secret goes, so they are two
+sections with two sets of words — not one `<select>` with six options, which would put "paste your
+consumer secret" and "you will be taken to Google" behind the same button and let the customer learn
+which applies only after choosing. `_providers.test.ts` still asserts the typed list mirrors
+`PROVIDER_LANES` in both directions, unedited; `_oauth-providers.test.ts` adds the mirror in the
+other direction — a source offered on the authorisation door that has no `oauth` lane in the package
+would send a customer through a consent screen to collect an `unsupported_lane` on the way back.
+
+**`meta_ads` IS DELIBERATELY NOT ON THIS DOOR.** The package gives it both lanes and the Worker route
+would accept it. Offering it in both places makes a customer choose between two promises for one ad
+account, with nothing afterwards able to tell them which they picked. The typed lane already works;
+this is recorded as a decision, and asserted, so the day it changes it changes deliberately.
+
+**THE ACCOUNT ID IS ASKED FOR BEFORE THE CUSTOMER LEAVES, AND CROSSES IN A COOKIE.** The callback
+requires `external_account_id` and refuses to invent one (§4, account selection). It does not exist
+when the flow starts and the pending row has no column for it, so something has to carry it across
+the detour:
+
+| Considered | Why not |
+|---|---|
+| Ask for it **after** the consent screen | Puts a customer looking up a GA4 property or a Loyverse merchant id inside `PENDING_TTL_MS` and the provider's own code lifetime — a clock nobody sized for it. The failure is a granted authorisation that produces no connection. |
+| A column on `oauth_authorizations` | Widens the row this PR just argued down to scheduling values, and makes the web app POST an account id at the start leg that the Worker would have to hold and hand back. The store decision is not reopened for a value that is not a secret. |
+| A hidden form field on the return | There is no form on the return: the provider issues a top-level GET, and a page that renders one leaves the authorisation code in the address bar while the customer reads it. |
+
+So: an `httpOnly`, `SameSite=Lax`, `Secure` cookie on `/connections`, holding `{state, provider,
+account}` — **no session token, no code, no verifier**, asserted by name in `oauth-actions.test.ts`.
+`Lax` rather than `Strict` because the provider's redirect is exactly the navigation `Strict`
+withholds on. It **expires on the endpoint's own `expires_at`**, which is the database's recorded
+instant plus `PENDING_TTL_MS` computed in the Worker — this app writes no duration of its own,
+because a second TTL here is the same two-constants-that-disagree failure the migration refuses. An
+answer with no `expires_at`, no `state` in the URL, or a destination that is not `https` is refused
+and nobody is sent anywhere.
+
+**THE STATE COMPARISON IN THE WEB APP IS NOT THE SECURITY CHECK.** `verifyCallback` verifies state in
+constant time, in the Worker, against the row Postgres destroyed as it read it. What the web app's
+comparison decides is narrower: whether the account id in *this* browser's cookie belongs to *this*
+authorisation. If it does not, it refuses and posts nothing — because the alternative is filing a
+grant under an account the customer named for a different request, which is a connection that looks
+right and reads someone else's shop. A refusal there leaves the pending row to the sweep rather than
+redeeming it, which costs one unreadable row and avoids the wrong number.
+
+**THE CALLBACK IS A ROUTE HANDLER THAT COMPLETES AND REDIRECTS, NOT A PAGE WITH A FINISH BUTTON.**
+The authorisation code is live from the moment the provider issues the redirect, and the fastest way
+to stop it being live is to spend it. A page would hold it in the address bar, in the `Referer` of
+everything that page loads and in history for as long as the customer takes to press something. What
+travels onward to `/connections` is a **code** — never an upstream sentence, never the authorisation
+code, never the account id — and `_oauth-refusals.ts` turns it into a sentence this repository wrote.
+An `error` the screen has no sentence for is replaced with `unexpected` rather than put in the URL.
+
+**THE LAPSED SESSION IS NOW A NAMED REFUSAL**, which is the mitigation §5 filed against this half. A
+customer who was signed out during the detour has *granted access* and gets no connection; landing
+them on a sign-in page that says nothing about it is the failure. They land on `/connections` with a
+sentence that says the authorisation was not completed, that they were signed out, and that granting
+again is safe.
 
 ### What the sweep is, and what it is not
 
@@ -160,6 +229,12 @@ Three caveats repeated rather than assumed away: §8 marks the performance COGS 
 UNVERIFIED; §7's table has no disk-growth term by its own checker's admission; and §8's open
 question about 3x–5x redundant polling is untouched here and still open.
 
+**The web half adds no term to that table.** Its two server invocations per connect — the action
+that starts the flow and the route handler that finishes it — are the "web app's redirect route"
+line already counted above, and they run twice in the life of a connection rather than on any
+schedule. Its one store is a cookie in the customer's browser: no row, no object, no KV entry, and
+nothing to expire on our side of the network.
+
 ---
 
 ## 3. Platform-terms check
@@ -251,6 +326,13 @@ inspect values, so a personal datum inside a kept key is protected by nothing. T
 here holding one. `OPENID` is available on Loyverse and is deliberately not requested; the Google
 `id_token` is never read. `16_oauth_pending.sql` asserts the column set **exactly**, so the first
 person to add `external_account_id` or an email to this table fails the build.
+
+The web half adds one store and it is in the customer's own browser: a cookie holding `state`,
+`provider` and the account id they typed. Checked against the same **by-key** rule: none of the three
+is an identifier of a person. The account id is the same value `connections.external_account_id`
+holds in the clear, which `packages/connections` documents as not a secret because the scheduler
+needs it to build a URL. No email, no subject id, no token, and `oauth-actions.test.ts` asserts the
+session token is not in it.
 > `PASS`
 
 **14. Forbidden payloads rejected before egress.** Nothing is egressed.
@@ -281,8 +363,14 @@ makes the gap visible rather than theoretical:
 
 ### Claims
 
-**18. Claim provenance.** No user-visible copy is added. No route source gained a `FORBIDDEN_CLAIMS`
-string; `forbidden-claims.test.ts` scans every route and passes. No brand fact is flipped.
+**18. Claim provenance.** The Worker half adds no user-visible copy. The web half adds a screen's
+worth, and **every sentence of it is a named constant in `apps/web/app/_content.ts`** —
+`check-copy.mjs` refuses a JSX text node of five or more words ending in terminal punctuation, and
+was mutation-proven against this diff (§6). No route source gained a `FORBIDDEN_CLAIMS` string;
+`forbidden-claims.test.ts` scans every route source including the two new ones and passes. No brand
+fact is flipped. **Nothing in the new copy claims the credential was checked, that the connection
+works, or that anything was audited**: the success sentence says the permission is stored and that
+the first read is what settles whether it can read anything.
 > `PASS`
 
 **Result:** `11 PASS, 7 N/A, 0 FAIL`
@@ -291,11 +379,29 @@ string; `forbidden-claims.test.ts` scans every route and passes. No brand fact i
 
 ## 4. What was left out
 
-**THE WEB HALF.** The redirect-URI route in `apps/web` is not in this PR. This is the Worker half:
-the two endpoints, the store, the migration and the suites. The web app's job is narrow and
-documented in `oauth-connect.ts` — read `currentWorkspace()` and `getSession()`, POST `code` +
-`state` + `external_account_id` onward — and it is a separate change with its own copy constants and
-its own `check-copy` surface. **Open an issue; do not widen this PR.**
+**AN ACCOUNT PICKER.** The web half asks the customer to *type* the account id and labels the field
+in the platform's own vocabulary — `properties/123456`, a digits-only customer id, an
+`sc-domain:` or URL-prefix property, a Loyverse merchant id — each read off the connector client
+that will be handed the value rather than invented here. What it does **not** do is list what the
+grant actually reaches and let them choose, because that list needs a provider call this repository
+has not built for any source. **The Loyverse merchant id is the uncomfortable case**: it comes from
+`GET /merchant/` and a Back Office screen does not show it. The honest position is that the field is
+asked for and hinted, and the picker is the next issue. **Open an issue; do not widen this PR.**
+
+**ANY VALIDATION OF THE ACCOUNT ID'S SHAPE ON THIS SCREEN.** Presence and a paste-length bound, and
+nothing else — the same posture the typed lane takes with a key. A regex per provider written here
+would be a second opinion about somebody else's identifier format, and the first customer whose
+legitimate id does not match it is refused by a rule we invented. A wrong-but-well-formed id is
+refused by the provider on the first read, which is the honest failure.
+
+**A RESUME AFTER A LAPSED SESSION.** The cookie is deleted on every exit, refusals included, and
+there is no "finish what you started" path. The pending row is single-shot and either redeemed or
+swept; resuming would mean holding an account id in a browser against an authorisation that may no
+longer exist. The customer starts again, and the sentence says so.
+
+**A `display_name` ON THE NEW CONNECTION.** The callback accepts one and the web half sends none. A
+label the customer did not choose is a label nobody can correct from this screen, and the list
+already falls back to the account id.
 
 **ACCOUNT SELECTION, WHICH IS THE REAL GAP AND IS STATED RATHER THAN PAPERED OVER.** `connect()`
 needs the id of the account at the provider, and **one Google grant covers many Ads customer ids and
@@ -393,8 +499,17 @@ customer's Supabase session at the callback, because that is what makes the work
 session rather than from the redirect. A customer who takes long enough at Google's consent screen
 for their session to lapse lands on sign-in; the pending row is never redeemed; the authorisation
 they just granted produces no connection. **They see a sign-in page, not an error about the
-connection.** Accepted, and the mitigation belongs to the web half: a named refusal message rather
-than a bare redirect. Filed as such rather than discovered.
+connection.** Accepted, and the mitigation is now built: the return leg refuses by name
+(`sessionLapsed`) and lands them on `/connections` with a sentence that says the connection was not
+completed and that granting again is safe — never a bare redirect to sign-in.
+
+Two narrower versions of the same shape are accepted with it, because both end in the same honest
+refusal and neither can be repaired without guessing. **A customer who finishes in a different
+browser** — or who has cleared cookies, or blocks them — comes back with no context, and the account
+id is gone with it; `lostContext` says so and nothing is posted. **A customer who starts two
+authorisations in one browser** overwrites the first cookie with the second, so returning from the
+first gets `contextMismatch` rather than a connection filed under the second account. That is the
+refusal working: the alternative is posting an account id chosen for a different grant.
 
 **TWO MEMBERS OF THE SAME WORKSPACE ARE NOT SEPARATED.** `app.can_write_workspace` is the tenancy
 predicate, so an owner or admin of the same workspace can redeem a state started by a colleague.
@@ -468,6 +583,10 @@ sudo -u postgres env PGHOST=/var/run/postgresql PGPORT=5432 PGUSER=postgres \
   every other suite:   unchanged
 
 pnpm --filter web build   → exit 0
+  (/connections/callback appears in the route table as a dynamic route handler)
+
+pnpm --filter web test    → 26 files, 318 tests, 0 failed   (was 21 / 255 — five new files,
+                                                             63 new assertions, all web half)
 ```
 
 ### Mutation proofs
@@ -508,3 +627,28 @@ The **non-destructive store** mutation is applied to the test's own fake PostgRE
 the single-use property belongs to `delete … returning`, and this proves the Worker test detects a
 store that does not destroy. That the *real* store does destroy is proven separately, in SQL, by the
 fifth row of the first table.
+
+**The web half and `apps/web/app/connections/*`:**
+
+| Mutation | Test that went red |
+|---|---|
+| Removed `ga4` from `OAUTH_ONLY_PROVIDERS` | `names every provider the package knows, and invents none` and `offers a provider exactly when the package gives it a typed lane` — in `_providers.test.ts`, **unedited**, which is the test this change had to satisfy rather than touch |
+| Added `meta_ads` to the authorisation door as well as the typed one | `lists no source that is also offered for typing` and `labels the account field of each one` |
+| Deleted the `state_mismatch` sentence from the refusal table | `has a message for each code, and none of them is the generic one` — the code list is read off `oauth-connect.ts`' own source, so this also proves the scan finds the union's members and not just the `fail(…)` literals |
+| Gave a local refusal the same name as an endpoint code | `keeps the codes this app decides disjoint from the endpoint's` |
+| Stopped comparing the cookie's state to the returned state | `refuses when the cookie names a different authorisation, and posts nothing`, `still checks the cookie matches before forwarding a decline`, and the route's `refuses when the cookie names another authorisation, and posts nothing` |
+| Moved the session check after the state check | `refuses a lapsed session ahead of everything else, by name` |
+| Defaulted the cookie's expiry to "ten minutes from now" when the endpoint sent none | `refuses an expiry it cannot read as an instant` |
+| Put the session token in the cookie | `carries no session token and no secret`, plus the round-trip assertion |
+| Added a `workspace_id` to the callback body | `completes with the account the cookie carried, and no workspace of any kind` and the route's `posts the state, the code and the account from the cookie -- and no workspace` |
+| Stopped deleting the cookie on the way out | `deletes the cookie after a completed authorisation` and `deletes the cookie even when it refuses` |
+| Forwarded the endpoint's own `error` string into the redirect URL | `replaces an unrecognised code rather than putting it in the URL` |
+| Typed one sentence of the new copy straight into the JSX instead of reading `CONNECTIONS.oauthLeaveNote` | `check-copy.mjs` → `FAIL: 1 finding`, naming the file, the line and the ten-word sentence |
+
+One of those deserves the same note the Worker's echoed-state mutation got. **The cookie-state
+comparison is the only thing standing between a returning authorisation and an account id chosen for
+a different one**, and it is not a security check — the Worker and Postgres decide who may redeem
+what. It is the check that keeps a *correct* authorisation from being filed under the *wrong*
+account, which is this repository's own worst outcome rather than a breach: a connection that looks
+right and reads someone else's numbers. Three tests hold it, in two files, on both the decision and
+the route.
