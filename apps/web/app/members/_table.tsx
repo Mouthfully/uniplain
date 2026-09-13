@@ -3,7 +3,7 @@
 import { useActionState } from "react";
 
 import { ALL_ROLES, MEMBERS_COPY, ROLE_LABELS, type MemberRole } from "./_content";
-import type { InvitationRow, MemberRow } from "./_members";
+import type { InvitationRow, MemberRow, TrailRow } from "./_members";
 import { type ManageState, manageMembership } from "./actions";
 
 /**
@@ -26,14 +26,29 @@ function canManage(ownRole: MemberRole): boolean {
   return ownRole === "owner" || ownRole === "admin";
 }
 
+/**
+ * ONE ENTRY IN THE TRAIL, PHRASED FOR A PERSON RATHER THAN AN ENUM.
+ *
+ * `event` is `member_role_changed` or `member_removed`. Neither is a sentence, and printing the
+ * enum would be the same failure as printing a database error at somebody: technically complete and
+ * addressed to the wrong reader.
+ */
+function trailSentence(entry: TrailRow): string {
+  return entry.event === "member_removed"
+    ? MEMBERS_COPY.trailMemberRemoved
+    : MEMBERS_COPY.trailRoleChanged;
+}
+
 export function MemberTable({
   members,
   invitations,
   ownRole,
+  trail,
 }: {
   readonly members: readonly MemberRow[];
   readonly invitations: readonly InvitationRow[] | null;
   readonly ownRole: MemberRole;
+  readonly trail: readonly TrailRow[] | null;
 }) {
   const [state, submit, pending] = useActionState<ManageState, FormData>(manageMembership, {});
   const manage = canManage(ownRole);
@@ -121,6 +136,42 @@ export function MemberTable({
           </tbody>
         </table>
       </div>
+
+      <h2 className="text-ink mt-10 text-sm font-bold">{MEMBERS_COPY.trailHeading}</h2>
+      <p className="text-ink-subtle mt-2 text-xs leading-[1.5]">{MEMBERS_COPY.trailNote}</p>
+
+      {/* NULL IS NOT AN EMPTY LIST HERE EITHER, and the distinction matters more than usual: a page
+          that answers "what happened" must not answer "nothing" when it means "I could not tell". */}
+      {trail === null ? (
+        <p className="text-ink mt-3 text-sm leading-[1.6]">{MEMBERS_COPY.trailUnavailable}</p>
+      ) : trail.length === 0 ? (
+        <p className="text-ink-subtle mt-3 text-sm">{MEMBERS_COPY.trailEmpty}</p>
+      ) : (
+        <>
+          <ul className="border-line mt-3 grid gap-0 rounded-xl border">
+            {trail.map((entry) => (
+              <li
+                key={entry.id}
+                className="border-line flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b px-4 py-3 last:border-0"
+              >
+                <span className="text-ink text-sm font-bold">{trailSentence(entry)}</span>
+                <span className="text-ink-muted text-sm">
+                  {entry.subjectLabel ?? MEMBERS_COPY.trailRemovedSubject}
+                </span>
+                {entry.detail === null ? null : (
+                  <span className="text-ink-subtle text-xs">{entry.detail}</span>
+                )}
+                <time dateTime={entry.occurredAt} className="text-ink-faint ml-auto text-xs">
+                  {entry.occurredAt.slice(0, 10)}
+                </time>
+              </li>
+            ))}
+          </ul>
+          <p className="text-ink-subtle mt-2 text-xs leading-[1.5]">
+            {MEMBERS_COPY.trailAnonymousNote}
+          </p>
+        </>
+      )}
 
       {/* NULL IS NOT AN EMPTY LIST. A viewer cannot read `invitations` at all, so the section is
           absent rather than empty -- "nothing is waiting" is a claim this page cannot make to them. */}
