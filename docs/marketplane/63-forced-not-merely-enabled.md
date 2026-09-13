@@ -129,10 +129,15 @@ Confirming that Supabase's `postgres` role holds `BYPASSRLS` is one query agains
 and it is not something this environment can run. Until someone runs it, the schema's write path
 rests on a property that is demonstrated in principle and unverified in place.
 
-**`run-local.sh` is still not in CI.** Every guard in this note fails the run correctly and the run
-happens only when a person types the command. That is a separate unit and a bigger one — it needs a
-PostgreSQL service in the workflow — but it is the reason this class of defect keeps reaching `main`
-and it should not be rediscovered a third time.
+**~~`run-local.sh` is still not in CI.~~ IT IS, AS OF THIS BRANCH.** This note was written saying
+the SQL suite runs only when a person types the command, and that it needed a PostgreSQL service in
+the workflow. Another session on this branch added exactly that: `.github/workflows/ci.yml` now has
+a `database` job running `postgres:16` as a service and invoking `./supabase/tests/run-local.sh`.
+
+That changes what the two fixes in this note are worth. `12_billing.sql` gaining a raise is no
+longer a guard that fires for whoever happens to run the suite — **it fails the build**, which is
+the difference between a check and a note. And it makes the `15_force_rls.sql` catalogue sweep do
+its job on the day a table lands rather than whenever someone next looks.
 
 **The suites share one `app_test.results` table and each truncates it**, so a file that fails to
 reach its own floor reports on whatever ran last. Harmless today because the runner stops at the

@@ -186,5 +186,7 @@ take it.
 It never reaches a prompt (`InsightRow` carries no entity name), so it is not this unit's problem,
 but it is unfiled and keeps being rediscovered.
 
-**`run-local.sh` is still not in CI**, carried forward from note 63. Every guard here fails
-correctly and the SQL half of the gate runs only when a person types the command.
+**The `run-local.sh`-not-in-CI caveat carried forward from note 63 is retired.** It was true when
+63 was written and is not now: the `database` job in `.github/workflows/ci.yml` runs the SQL suite
+against a `postgres:16` service. Note 63's own section 7 is corrected in the same commit rather than
+left to be repeated a third time.
