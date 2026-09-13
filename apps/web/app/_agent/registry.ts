@@ -185,6 +185,13 @@ export const PRIVATE_PATHS: readonly string[] = [
   "/brief",
   "/connections",
   "/dashboard",
+  // Added by #62 after this list was written, and caught by robots.test.ts on its first CI run
+  // rather than by anybody reading the diff: /join accepts an invitation and /members administers
+  // who is in an organisation. Both were noindex from the moment they landed and neither was
+  // refused to a crawler, which mattered more than usual because the commit before this one
+  // invited every AI crawler in by name.
+  "/join",
+  "/members",
   "/signin",
   "/welcome",
 ];
