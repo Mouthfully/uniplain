@@ -64,16 +64,40 @@ const HERO_HEADING_BOTTOM = "The bigger picture.";
 const HERO_LEAD =
   "Bring your store performance together with your marketing data. Understand what sells, what brings customers in, and where to grow next.";
 
-const HERO_PRIMARY_CTA = "Connect Shopify";
-const HERO_SECONDARY_CTA = "Explore the data";
+// "CONNECT SHOPIFY" POINTED AT /dashboard AND THERE WAS NO SHOPIFY CONNECTOR AT ALL. This page
+// shipped with the site: a headline, a feature grid, a field table and a button, for a platform
+// that appeared in no source list, no provider list, no redaction policy and no module. Four
+// separate tests in this repository used the name `shopify` as their canonical example of a thing
+// that is not real -- while this page sold it.
+//
+// The connector exists now. The DOOR does not: `@repo/oauth` holds each provider's endpoints as
+// constants and Shopify's are per-shop, so no connection can be created yet. So the button says
+// what is true and goes where that is explained, rather than inviting a merchant into a flow that
+// cannot finish. It becomes "Connect Shopify" again in the commit that opens the door.
+const HERO_PRIMARY_CTA = "See what it reads";
+const HERO_SECONDARY_CTA = "The fields it takes";
 
 /** The two reassurances under the hero actions. Neither is a sentence; both are the design's. */
-const HERO_CHECKS = ["No code required", "Scheduled refresh"] as const;
+const HERO_CHECKS = ["Read access only", "Orders, not customers"] as const;
+
+/**
+ * THE STATUS LINE, WHICH IS THE MOST IMPORTANT SENTENCE ON THIS PAGE.
+ *
+ * A merchant reading a connector page assumes they can connect. Saying otherwise costs one line and
+ * is the difference between a product that is not finished and a product that misled them.
+ */
+const HERO_STATUS =
+  "The reader is built and tested against Shopify's own API. Connecting a store is not open yet, because the sign-in handshake is per-store and ours is not, and we would rather say so here than have you find out at the end of it.";
 
 /* The connection panel beside the hero. */
 const PANEL_LABEL = "Your store. Connected.";
 const PANEL_CHIP = "Example connection";
-const PANEL_FLOW_DATASETS = "Orders · Products · Customers";
+// ORDERS ONLY, AND `Customers` WAS THE WORST WORD ON THIS PAGE. The selection set in
+// `sources/shopify/client.ts` asks for no email, no customer, no shipping address and no line
+// items -- /privacy says the person behind an order "contributes nothing", and that constant is
+// where the sentence is true or false. Naming customers here advertised the one thing this
+// connector is built not to take.
+const PANEL_FLOW_DATASETS = "Orders";
 const PANEL_SYNC_STATUS = "Sync complete";
 const PANEL_SYNC_TIME = "Just now";
 
@@ -361,17 +385,21 @@ export default function ShopifyConnectorPage() {
               </p>
 
               <div className="mt-6 flex flex-wrap gap-3">
-                <a href="/dashboard" className={PRIMARY_BUTTON}>
+                <a href="#fields" className={PRIMARY_BUTTON}>
                   {HERO_PRIMARY_CTA}
                   <span aria-hidden="true">&rarr;</span>
                 </a>
                 <a
-                  href="#fields"
+                  href="/envelope"
                   className="bg-surface text-accent border-line hover:bg-surface-subtle inline-flex min-h-[46px] items-center justify-center rounded-md border px-[22px] text-sm font-bold transition-colors"
                 >
                   {HERO_SECONDARY_CTA}
                 </a>
               </div>
+
+              <p className="text-ink-subtle mt-5 max-w-[475px] text-sm leading-[1.6]">
+                {HERO_STATUS}
+              </p>
 
               <ul className="mt-6 flex flex-wrap gap-3 md:gap-5">
                 {HERO_CHECKS.map((check) => (

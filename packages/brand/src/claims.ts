@@ -34,6 +34,9 @@ export const IMPLEMENTED_SOURCE_IDS = [
   "loyverse",
   "meta_ads",
   "search_console",
+  // ALPHABETICAL, which puts it before woocommerce -- this list is a mirror of the source tree and
+  // check-capabilities.mjs compares it as a set, so the order is for a reader rather than a guard.
+  "shopify",
   "woocommerce",
 ] as const;
 
@@ -45,6 +48,7 @@ const SOURCE_LABELS: Readonly<Record<ImplementedSourceId, string>> = {
   loyverse: "Loyverse",
   meta_ads: "Meta Ads",
   search_console: "Search Console",
+  shopify: "Shopify",
   woocommerce: "WooCommerce",
 };
 

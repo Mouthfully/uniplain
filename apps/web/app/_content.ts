@@ -551,6 +551,15 @@ export const CONNECTIONS = {
       accountHint:
         "The merchant id of the account, which is what every receipt is filed under. It identifies the account rather than one shop, so a two-shop owner names it once.",
     },
+    shopify: {
+      accountLabel: "Store address",
+      // THE myshopify ADDRESS AND NOT THE CUSTOMER-FACING DOMAIN, and the hint says so because
+      // most merchants think of the second one as their address. `shopifyEndpoint` is built from
+      // this value and refuses anything that is not a myshopify domain, so a shop that pastes its
+      // own domain is refused at the form rather than reaching a host nobody authorised.
+      accountHint:
+        "The myshopify address of the store, the one ending in myshopify.com. It is in your browser's address bar when you are in the Shopify admin, and it is not the domain your customers visit.",
+    },
   } as Record<string, { readonly accountLabel: string; readonly accountHint: string }>,
 
   expiryLegend: "Does this token expire?",
@@ -591,6 +600,7 @@ export const CONNECTIONS = {
     google_ads: "Google Ads",
     search_console: "Search Console",
     loyverse: "Loyverse",
+    shopify: "Shopify",
   } as Record<string, string>,
 
   statusNames: {

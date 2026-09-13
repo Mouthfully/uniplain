@@ -196,12 +196,31 @@ describe("the redaction policy table", () => {
   // THE NAME HERE MUST BE A SOURCE THAT IS GENUINELY NOT IN THE DICTIONARY, and keeping that true
   // is a real maintenance obligation. This test read `woocommerce` until its connector shipped, at
   // which point it inverted: the source became declared and the refusal it asserts stopped
-  // happening. `shopify` is slot 3 of 11A.14's launch set and is next in line to do the same, so
-  // whoever ships it re-points this at the next undeclared name rather than deleting the test --
-  // the fail-closed path is the reason this module exists and must never go unexercised.
+  // happening. It then read `shopify` and inverted again the day that connector shipped, which is
+  // the second time this has happened and the reason the note now names the mechanism rather than
+  // the next victim.
+  //
+  // `omise` is a Thai payment gateway and slot 4 of 11A.14's launch set is "a payment gateway", so
+  // this will invert a third time. Whoever ships it RE-POINTS THIS AT THE NEXT UNDECLARED NAME
+  // rather than deleting the test: the fail-closed path is the reason this module exists, and a
+  // deleted test is how it goes unexercised for ever. The guard below is what will tell you.
   it("refuses a source nobody has decided about, and says where to decide it", () => {
-    expect(() => policyFor("shopify")).toThrow(PayloadPolicyError);
-    expect(() => policyFor("shopify")).toThrow(/redaction\.ts/);
+    expect(() => policyFor("omise")).toThrow(PayloadPolicyError);
+    expect(() => policyFor("omise")).toThrow(/redaction\.ts/);
+  });
+
+  /**
+   * AND THE NAME ABOVE IS STILL UNDECLARED.
+   *
+   * Without this, the test above becomes vacuous the moment its name is declared -- it would assert
+   * that a declared source throws, fail loudly once, and invite whoever is in a hurry to delete it.
+   * This says in one line what the right fix is, at the moment it stops being true.
+   */
+  it("is exercising a name the dictionary really does not have", () => {
+    expect(
+      (DECLARED_SOURCES as readonly string[]).includes("omise"),
+      "omise is a source now -- re-point the test above at the next undeclared name, do not delete it",
+    ).toBe(false);
   });
 
   it("refuses a redact policy with no keep-list, which would remove everything", () => {
