@@ -83,16 +83,32 @@ const LEAD =
  * THE VERSION DATE. Set by hand, and deliberately not derived from the build, the filesystem or
  * `new Date()`. `iso` feeds the machine-readable attribute; `display` is what a reader sees.
  */
-const LAST_UPDATED = { iso: "2026-09-12", display: "12 September 2026" } as const;
+const LAST_UPDATED = { iso: "2026-09-13", display: "13 September 2026" } as const;
 
 const LAST_UPDATED_LABEL = "Last updated";
 const STATUS_LABEL = "Status";
-const STATUS_VALUE = "Pre-launch draft";
-const OPEN_BADGE = "Not yet set";
+const STATUS_VALUE = "In force";
+const OPEN_BADGE = "Under review";
 
 /** The standing notice under the hero, which is the first thing a reviewer should read. */
+/**
+ * FOUR CLAUSES WERE CLOSED IN THE CHANGE THAT REWROTE THIS NOTE -- refunds, termination, changes,
+ * limitation of liability, and governing law -- and one was deliberately left open.
+ *
+ * They are CONVENTIONAL TERMS, not negotiated ones: a twelve-month fee cap, notice periods of
+ * thirty days, and the provider's own jurisdiction. Each is the ordinary position for a service of
+ * this kind and each is one a Thai-qualified lawyer should confirm before anyone relies on it. That
+ * is recorded here rather than in a commit message, because the next person to read this file is
+ * the one who needs to know which sentences have been through counsel and which have not: none of
+ * them have.
+ *
+ * WHAT STAYED OPEN AND WHY: retention on `/privacy`, and the data clause of `termination` here.
+ * Both would be claims about what the CODE does, and nothing in this system deletes on a timer. A
+ * deletion window written here would be a description of software that does not exist, which is a
+ * different kind of wrong from a term nobody has negotiated yet.
+ */
 const HEADLINE_NOTE =
-  "The service is not yet generally available, and several terms below are still undecided. Where that is the case the clause says so and states nothing in its place, rather than carrying a placeholder that would read like a settled term.";
+  "This page is the agreement covering use of the service. A small number of clauses are marked as under review: those say what the position is today rather than carrying a placeholder that would read like a settled term.";
 
 /* The parties panel. Every value is read from the brand package; none is typed here. */
 const PARTIES_LABEL = "The agreement is with";
@@ -161,7 +177,7 @@ const CLAUSES: readonly Clause[] = [
     title: "What the service is",
     body: [
       "The service connects to business platforms the customer already uses, reads the customer's own data from them using the customer's own credentials, normalises what it reads into a single shape, and reports what changed and what is still open to change.",
-      "The product is pre-launch and under active development. Features shown on this site may change, and parts of the service may be added, altered or withdrawn while it is being built. Nothing here is a commitment to a particular feature, a particular platform, or a particular date.",
+      "The service is under active development. Features shown on this site may change, and parts of the service may be added, altered or withdrawn. Nothing here is a commitment to a particular feature, a particular platform, or a particular date.",
     ],
   },
   {
@@ -234,9 +250,9 @@ const CLAUSES: readonly Clause[] = [
   {
     id: "refunds",
     title: "Refunds",
-    open: true,
     body: [
-      "No refund policy has been decided, and none is stated here. Nothing in this document promises a refund and nothing in it refuses one; a request is dealt with individually until a policy is written and published on this page.",
+      "Subscriptions are paid in advance for the period chosen. A subscription can be cancelled at any time and the service continues to the end of the period already paid for; the part of a period that is not used is not refunded.",
+      "Where the service was charged in error, charged twice, or charged after a cancellation, the amount is refunded in full. A request goes to the contact address above and is answered individually.",
     ],
   },
   {
@@ -244,16 +260,22 @@ const CLAUSES: readonly Clause[] = [
     title: "Suspension",
     body: [
       "We may suspend an account, or an individual connection, where payment has finally failed, where use breaches the acceptable-use clause above, or where continuing would put the service or another customer's data at risk.",
-      "How much notice is given before a suspension that is not urgent has not been decided, and no notice period is promised here. It is listed among the open terms below.",
+      "Where a suspension is not urgent, at least seven days' notice is given at the account email address, with the reason and what would resolve it. Where continuing would put the service or another customer's data at risk, a suspension takes effect immediately and the notice follows.",
     ],
   },
   {
     id: "termination",
+    // STILL OPEN, AND ONLY THE SECOND PARAGRAPH IS WHY. The termination right itself is settled
+    // below. What is not settled is what happens to the data afterwards, and that is not a term
+    // waiting on a negotiation -- it is waiting on code. Nothing in this system deletes on a timer,
+    // so a deletion window written here would describe software that does not exist. See the
+    // retention clause on the privacy notice, which is open for the same reason and must move in
+    // the same change.
     title: "Termination",
     open: true,
     body: [
-      "The customer may stop using the service and close its account at any time; the paid period runs out as described above. We may terminate this agreement for a serious or repeated breach of the acceptable-use clause.",
-      "What happens to stored data after an account closes, including how long it is kept and when it is deleted, has not been decided. No retention period and no deletion window is promised here, and a customer who needs one should ask before relying on the service.",
+      "The customer may stop using the service and close its account at any time; the paid period runs out as described above. We may terminate this agreement for a serious or repeated breach of the acceptable-use clause, on thirty days' notice, or immediately where the breach cannot be put right.",
+      "For thirty days after an account closes, its data remains available so that the customer can export it. What happens to it after that is not fixed by this agreement: no automatic deletion is promised here, because none happens automatically. A customer who wants its data deleted should ask at the contact address, and it is dealt with individually.",
     ],
   },
   {
@@ -261,23 +283,22 @@ const CLAUSES: readonly Clause[] = [
     title: "Changes to the service",
     body: [
       "The service will change while it is being built. Features may be added, altered or withdrawn, and connected platforms may change what they expose to us in ways we do not control and cannot always anticipate.",
-      "We will publish material changes on this site. How far in advance a material change is announced has not been settled, and is listed among the open terms below.",
+      "Material changes are published on this site. Where a feature a customer is using is withdrawn or materially reduced, notice is given at the account email address at least thirty days before it takes effect, except where a connected platform forces the change sooner.",
     ],
   },
   {
     id: "terms-changes",
     title: "Changes to these terms",
-    open: true,
     body: [
       "These terms may be updated. When they are, the revised text is published on this page with a new date at the top, and the version on this page is the one in force.",
-      "How much notice is given before a material change takes effect, and whether continued use after a change counts as acceptance of it, have not been decided and are not asserted here.",
+      "A change that materially reduces a customer's rights under this agreement is notified at the account email address at least thirty days before it takes effect. Continuing to use the service after that date is acceptance of the change; a customer that does not accept it may close its account before the date and is refunded the part of any period paid for beyond it.",
     ],
   },
   {
     id: "disclaimers",
     title: "Disclaimers",
     body: [
-      "The service is provided as it stands. No availability target, service level or uptime figure is offered, and none should be inferred: the product is pre-launch and has no operating history to promise from.",
+      "The service is provided as it stands. No availability target, service level or uptime figure is offered, and none should be inferred from this page or from anything else on this site.",
       "Figures presented by the service come from third-party platforms and are only ever as good as what those platforms report. Platforms restate numbers after the fact, sometimes weeks later. The product marks a row that may still change rather than presenting it as final, and it cannot make a platform's own data correct.",
       "Output is not accounting, tax, legal or investment advice, and is not a substitute for the customer's own records.",
     ],
@@ -285,19 +306,18 @@ const CLAUSES: readonly Clause[] = [
   {
     id: "liability",
     title: "Limitation of liability",
-    open: true,
     body: [
-      "No liability cap has been agreed, and no figure or formula is stated here. A number written for the look of the page would read as a negotiated term and would not be one.",
-      "Until a term is agreed and published, liability between the parties is whatever the law that turns out to apply provides. Nothing in this document limits liability that the applicable law does not permit to be limited.",
+      "Neither party is liable to the other for loss of profit, loss of revenue, loss of anticipated savings, loss of business, or for any indirect or consequential loss, however it arises.",
+      "Our total liability arising out of or in connection with this agreement is limited, for all claims taken together, to the total amount paid by the customer for the service in the twelve months before the event giving rise to the claim.",
+      "Nothing in this document limits liability that the applicable law does not permit to be limited, including liability for fraud or for death or personal injury caused by negligence.",
     ],
   },
   {
     id: "governing-law",
     title: "Governing law and disputes",
-    open: true,
     body: [
-      `No governing law has been chosen and no forum for disputes has been agreed, so neither is stated here. That the provider is registered in ${brand.postalAddress.country} is a fact about the entity and not a choice of law.`,
-      "This is one of the terms that will be settled and published in a later version of this document, before the service becomes generally available.",
+      `This agreement is governed by the law of ${brand.postalAddress.country}, and the courts of ${brand.postalAddress.country} have exclusive jurisdiction over any dispute arising out of or in connection with it.`,
+      "Before bringing a dispute, each party will raise it in writing at the other's contact address and allow thirty days for it to be resolved. Nothing in this clause prevents either party from seeking an urgent remedy from a court.",
     ],
   },
   {
