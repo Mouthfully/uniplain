@@ -45,9 +45,24 @@ becomes available.
 
 ### The eight blocking gaps, worst first
 
-1. **s.37(3) — no deletion system exists.** No retention period is set for `envelope_rows`,
-   `restatement_events`, `connections`, `invitations`, `waitlist`, `members`, `billing_customers` or
-   the R2 payload archive, and **nothing deletes any of them.**
+1. **s.37(3) — no deletion system operates.** No retention period is set for `envelope_rows`,
+   `connections`, `invitations`, `waitlist`, `members`, `billing_customers` or the R2 payload
+   archive, and **nothing deletes any of them.**
+
+   `restatement_events` is the one apparent exception and it is not one, which is worth stating
+   precisely because the code reads as if it were. `app.prune_restatement_events` is real, has a
+   30-day retention (`app.retention_delivered()`), is granted to `app_webhook`, and its cron
+   `17 3 * * *` is declared in `apps/api-edge/wrangler.jsonc` and dispatched by name in
+   `src/webhooks.ts`. **It never runs.** `src/index.ts` passes `store: null` into
+   `handleScheduled`, which returns `not_configured` before the prune branch is reached, and no
+   `WebhookStore` implementation exists outside a test fake. So the retention control is written,
+   tested, granted, scheduled — and unreachable. That is a worse state than absent, because every
+   artefact says it is covered.
+
+   `oauth_authorizations` is the only table in the schema from which rows are actually removed: a
+   one-hour TTL and a single-use `delete … returning`, both in `20260913000400_oauth_pending.sql`.
+   Across all migrations there are exactly three `delete from` statements, and none names a
+   tenancy table.
 2. **s.28 — every byte crosses a border with no mechanism.** Five transfers, each needing a s.28 or
    s.29 basis: Supabase (Singapore), Cloudflare R2, Vercel, Stripe, **and OpenRouter**, which
    receives prompts built from a tenant's figures.

@@ -185,6 +185,10 @@ export const PRIVATE_PATHS: readonly string[] = [
   "/brief",
   "/connections",
   "/dashboard",
+  // The statutory-request screen. It carries other people's requests about their own personal
+  // data, which is the last thing that should be crawlable -- and it is refused to the named AI
+  // crawlers by the same list, which is the reason PRIVATE_PATHS is one list and not two.
+  "/data-requests",
   // Added by #62 after this list was written, and caught by robots.test.ts on its first CI run
   // rather than by anybody reading the diff: /join accepts an invitation and /members administers
   // who is in an organisation. Both were noindex from the moment they landed and neither was

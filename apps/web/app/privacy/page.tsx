@@ -404,7 +404,7 @@ const CLAUSES: readonly Clause[] = [
     id: "rights",
     title: "Your rights over your own data",
     body: [
-      "Anyone whose personal data is held in an account can ask what is held about them, ask for it to be corrected, ask for a copy, or ask for it to be deleted. Requests go to the contact address in the panel at the top of this page and are answered individually.",
+      "Anyone whose personal data is held in an account can ask what is held about them, ask for it to be corrected, ask for a copy, or ask for it to be deleted. A signed-in account files a request on its own Your data screen, which records it against the organisation and shows what has become of it. The contact address at the top of this page reaches the same people.",
       "No statutory framework is claimed here, because which one applies depends on where a person is and on arrangements this company has not yet made. The practical position is simpler than a list of articles: ask, and it will be answered.",
       "For data read out of a connected platform, the customer that connected it is the one to ask. We hold it on that customer's behalf and pass a request of that kind to them rather than acting on it ourselves.",
       "A connection can be disconnected from the product at any time, and the underlying access can be revoked at the platform independently of anything done here.",
