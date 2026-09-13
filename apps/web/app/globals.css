@@ -174,7 +174,7 @@
  * These rules are UNLAYERED on purpose. `@import "tailwindcss"` puts every utility inside
  * `@layer utilities`, and unlayered CSS outranks every cascade layer no matter what the
  * specificity is. That is the mechanism that lets a one-line rule below re-bind a utility that
- * appears on 104 elements, and it is why moving any of this into a `@layer` would silently
+ * appears on 105 elements, and it is why moving any of this into a `@layer` would silently
  * disable it.
  * ============================================================================================== */
 
@@ -182,7 +182,7 @@
  * 1. THE PAGE GUTTER, IN ONE PLACE.
  *
  * `px-8` is not "32px of horizontal padding" in this codebase -- it is THE PAGE GUTTER. Of its
- * 104 occurrences in apps/web, 103 sit on an `mx-auto max-w-[...]` shell: the header, the footer,
+ * 105 occurrences in apps/web, 104 sit on an `mx-auto max-w-[...]` shell: the header, the footer,
  * every marketing section, every connector page, both auth screens. The 104th is the navigation
  * panel this same change added, which is `absolute inset-x-0` under the header rather than a
  * centred shell -- full-bleed, and wanting exactly the gutter the header above it has. So it is
@@ -191,7 +191,7 @@
  * what makes re-binding the utility honest rather than a hack.
  *
  * The alternative was a shared wrapper component or a new class, and both of them are the same
- * edit repeated 104 times -- with the thirteenth section anyone adds next year left out of it,
+ * edit repeated 105 times -- with the thirteenth section anyone adds next year left out of it,
  * which is exactly how this defect reached production in the first place.
  *
  * WHAT MOVED: the token is `clamp(16px, 5vw, 32px)`, so at 320px the gutter is 16px a side

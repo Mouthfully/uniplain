@@ -391,12 +391,12 @@
    * THE GUTTER apps/web ACTUALLY SHIPS, AND WHY IT IS A CLAMP AND NOT A NUMBER.
    *
    * --mp-gutter above is the ARTBOARD's gutter: 40px, one value, desktop only, and the
-   * artboard has no phone frame to contradict it. apps/web does not use it -- all 104 of its
-   * horizontal page paddings are the Tailwind utility `px-8` (32px): 103 on an `mx-auto
+   * artboard has no phone frame to contradict it. apps/web does not use it -- all 105 of its
+   * horizontal page paddings are the Tailwind utility `px-8` (32px): 104 on an `mx-auto
    * max-w-[...]` shell and one on the full-bleed navigation panel, which wants the header's
    * gutter and not a centred one. There is no `px-8` in the app that is not a page gutter; that
    * was counted, not assumed, and it is what lets globals.css bind the utility to this token in
-   * one rule instead of editing 104 call sites.
+   * one rule instead of editing 105 call sites.
    *
    * A FIXED 32px IS 64px OF A 320px PHONE -- a fifth of the screen spent on nothing, and it is
    * load-bearing rather than cosmetic: measured in a production build, the header's minimum

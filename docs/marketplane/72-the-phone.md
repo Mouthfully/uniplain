@@ -1,6 +1,6 @@
-# 67. The phone: one gutter, five overflows, and a leading for Thai
+# 72. The phone: one gutter, five overflows, and a leading for Thai
 
-**PR:** #TBD &nbsp;·&nbsp; **Date:** 2026-09-13 &nbsp;·&nbsp; **Status:** proposed
+**PR:** #57 &nbsp;·&nbsp; **Date:** 2026-09-13 &nbsp;·&nbsp; **Status:** proposed
 
 ---
 
@@ -15,13 +15,13 @@ from a class name, and every fix below was re-measured after it landed.
 **After:** no route scrolls sideways at any of the four widths.
 
 The decision, and it is a choice rather than a constraint: **the page gutter is bound to a token in
-one CSS rule rather than edited at 104 call sites.** Of the 104 `px-8` in `apps/web`, 103 sit on
+one CSS rule rather than edited at 105 call sites.** Of the 105 `px-8` in `apps/web`, 104 sit on
 an `mx-auto max-w-[...]` shell and the 104th is the navigation panel added by this same change --
 `absolute inset-x-0` under the header, full-bleed, wanting the header's own gutter rather than a
 centred one. There is no `px-8` in this app that means anything but "page gutter" -- so
 `globals.css` re-binds the utility to `--mp-gutter-page: clamp(16px, 5vw, 32px)`. The alternative
 considered and rejected was a shared `<PageShell>` wrapper or a new class: both are the
-same edit repeated 104 times, and both leave the next section anyone writes out of the fix, which is
+same edit repeated 105 times, and both leave the next section anyone writes out of the fix, which is
 how 64px of a 320px phone came to be spent on padding in the first place.
 
 Three more single-place fixes, each mutation-proved in the browser (numbers in section 6):
