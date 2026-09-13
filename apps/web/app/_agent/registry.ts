@@ -164,6 +164,32 @@ export const AGENT_PAGES: readonly AgentPage[] = [
 ];
 
 /**
+ * THE SIGNED-IN SURFACES, WHICH NO CRAWLER GETS AND WHICH NAMING AN AI AGENT WOULD OTHERWISE OPEN.
+ *
+ * `robots.ts` used to disallow two paths and its own comment said those were "the two that carry
+ * `robots: noindex`". That was true when it was written. There are now SEVEN, and the five it had
+ * never heard of include `/connections`, where a customer attaches a credential, and `/brief`,
+ * which renders their figures. The list drifted the same way the sitemap's did and for the same
+ * reason: it was kept by hand and compared to nothing.
+ *
+ * It matters more here than it did there. A missing sitemap entry makes a public page harder to
+ * find; a missing disallow invites a crawler into a signed-in surface. And it matters most of all
+ * the moment AI agents are named individually, because of the rule below.
+ *
+ * `registry.test.ts` reads `robots: { index: false }` out of every `page.tsx` on disk and asserts
+ * this list matches, in both directions.
+ */
+export const PRIVATE_PATHS: readonly string[] = [
+  "/access",
+  "/billing",
+  "/brief",
+  "/connections",
+  "/dashboard",
+  "/signin",
+  "/welcome",
+];
+
+/**
  * The claim sentences a page may publish, with withheld ones dropped.
  *
  * DROPPED AND NOT SUBSTITUTED. `optionalClaim` returns null for a claim whose capability has not
