@@ -149,7 +149,10 @@ instant.
   refresh token is next used. Closing that needs the admin API too, and is the one genuine cost of
   the rule above. It is not pretended away: it is the reason this control exists at all, since the
   owner can now end every other session themselves.
-* **Two-factor.** Still blocked on project switches this session cannot set.
+* **Two-factor.** Not here, and **not for the reason this line originally gave** -- it said
+  "blocked on project switches this session cannot set", which was false and was carried over from
+  note 86 without being checked. The TOTP flow needs no switch and no service-role key. What is
+  missing is a decision about lockout, set out in note 90.
 
 ## 5. Open or unverified spec items this builds on
 
