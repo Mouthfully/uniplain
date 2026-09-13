@@ -396,7 +396,23 @@ function moneyFormatter(currency: string): Intl.NumberFormat | null {
       style: "currency",
       currency,
       currencyDisplay: "code",
-      maximumFractionDigits: DECIMALS,
+      // NO `maximumFractionDigits` OVERRIDE, AND THAT IS THE FIX RATHER THAN AN OMISSION.
+      //
+      // It was `DECIMALS`, which is 6 -- the scale of `numeric(20, 6)` in `envelope_rows`. That
+      // constant is right for CANONICALISING, where dropping digits would make two genuinely
+      // different figures compare equal, and it was wrong here, where the job is printing money to
+      // a person. The two are different jobs and sharing the constant conflated them.
+      //
+      // What it produced: `derived.average_ticket` rendered as "THB 81.28266". A total came out at
+      // two decimal places because Intl's minimum for THB is 2, so every whole-ish figure looked
+      // right and only a RATIO -- takings divided by orders -- carried the extra digits. Five
+      // decimal places of satang is precision no currency has and no till reported, printed onto a
+      // marketing page and into a model prompt.
+      //
+      // Omitting the option lets Intl use the currency's own minor units: 2 for THB, USD and EUR,
+      // 0 for JPY and KRW. That is what "at the column's own scale" in this function's own comment
+      // was always describing. `allows` is derived from `text` rather than from the float, so the
+      // licensed tokens follow automatically and cannot drift from what is printed.
     });
   } catch {
     return null;

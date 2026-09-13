@@ -123,6 +123,21 @@ if (TOP_ACTION === undefined) {
   );
 }
 
+/**
+ * What the SECOND action is worth, for the spend row's sentence.
+ *
+ * Read from the engine like everything else. If these rows ever stop raising a second action the
+ * build fails here rather than printing a sentence about an action that does not exist.
+ */
+const SECOND_ACTION = SAMPLE_SET.actions[1];
+if (SECOND_ACTION === undefined) {
+  throw new Error(
+    "_sample-brief: the engine raised only one action, so the spend row has no second action to " +
+      "point at. Adjust the rows or the row's copy -- do not name an action the engine did not find.",
+  );
+}
+const SECOND_ACTION_WORTH = SECOND_ACTION.impactFigure.text;
+
 /** True when the top action's worth is a range rather than a point. Used to word its caption. */
 export const TOP_ACTION_IS_RANGE = TOP_ACTION.impact.kind === "range";
 
@@ -130,8 +145,28 @@ export const TOP_ACTION_IS_RANGE = TOP_ACTION.impact.kind === "range";
 export const TOP_ACTION_FLOOR = estimateFloor(TOP_ACTION.impact);
 
 /**
- * The three lines the card prints. `value` is the engine's own rendering, verbatim; `label` and
- * `detail` are authored copy describing what KIND of arithmetic produced it.
+ * THE THREE LINES THE CARD PRINTS, AND WHY THE SENTENCE UNDER EACH ONE IS COMPOSED RATHER THAN
+ * WRITTEN.
+ *
+ * They used to read like an engineer's note -- "Both totals summed from the rows; the difference
+ * computed in code, not written" -- which describes the ARITHMETIC and tells an owner nothing about
+ * their shop. A figure with a provenance is the product's promise; a figure with a provenance and
+ * no meaning is a receipt.
+ *
+ * So each row now states a FINDING, and every numeral in it comes out of `figure()`. That is the
+ * constraint that makes this safe to make interesting: the moment a sentence like "orders rose
+ * faster than takings" carries a number somebody typed, the card is doing the thing the section
+ * above it says the product refuses. Composing from figures means the copy cannot outrun the
+ * arithmetic -- and `assistant-insights.test.ts` checks every numeral on the card back against the
+ * figure set.
+ *
+ * WHAT IS DELIBERATELY NOT HERE: a cause. "Takings rose BECAUSE the weather turned", "competitors
+ * raised prices" -- those are the sentences that make an insight feel alive, and this product
+ * cannot support either. It reads a customer's own platform data on the customer's own
+ * credentials; it has no competitor feed, no market data and no way to know why anything moved.
+ * The honest version of "interesting" is to put two computed figures next to each other and let
+ * the reader draw the conclusion: orders up 6.9%, takings up 5.6%, average ticket THB 81.28. The
+ * gap is the insight, and every part of it is measured.
  */
 export const SAMPLE_FIGURES = [
   {
@@ -139,17 +174,28 @@ export const SAMPLE_FIGURES = [
     label: "Takings",
     value: figure("metric.revenue").text,
     change: figure("metric.revenue.delta_share").text,
+    sources: figure("metric.revenue").sources,
+    // MORE ORDERS, EACH SLIGHTLY SMALLER. Both percentages and the ticket are figures; the reader
+    // draws the conclusion from the gap, which is the part no model wrote.
+    detail: `Orders rose ${figure("metric.orders.delta_share").text.replace(/^up /, "")} against takings' ${figure("metric.revenue.delta_share").text.replace(/^up /, "")}, so the average ticket sits at ${figure("derived.average_ticket").text}.`,
   },
   {
-    id: "share",
-    label: "Share through the till",
-    value: figure("channel.woocommerce.share").text,
-    change: null,
+    id: "spend",
+    label: "Advertising spend",
+    value: figure("metric.spend").text,
+    change: figure("metric.spend.delta_share").text,
+    sources: figure("metric.spend").sources,
+    // THE STORY THE ENGINE ACTUALLY FOUND. Spend up 40.5%, takings up 5.6%, and the second action
+    // it raised is exactly that gap -- so the sentence points at the action rather than asserting
+    // a cause the rows cannot show.
+    detail: `Takings rose ${figure("metric.revenue.delta_share").text.replace(/^up /, "")} over the same week. That gap is what raised an action worth ${SECOND_ACTION_WORTH}.`,
   },
   {
     id: "worth",
     label: "Top action, and what it is worth",
     value: TOP_ACTION.impactFigure.text,
     change: null,
+    sources: TOP_ACTION.impactFigure.sources,
+    detail: null,
   },
 ] as const;

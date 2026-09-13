@@ -1,4 +1,4 @@
-import { type ImplementedSourceId, SOURCE_LABELS } from "@repo/brand";
+import { IMPLEMENTED_SOURCE_IDS, type ImplementedSourceId, SOURCE_LABELS } from "@repo/brand";
 
 /**
  * WHICH CONNECTOR A FIGURE CAME FROM, AND THE ARTWORK FOR IT WHERE ARTWORK EXISTS.
@@ -60,6 +60,24 @@ const SOURCE_ARTWORK: Partial<Record<ImplementedSourceId, string>> = {
 
 export function sourceMark(id: ImplementedSourceId): SourceMark {
   return { id, label: SOURCE_LABELS[id], slug: SOURCE_ARTWORK[id] ?? null };
+}
+
+/**
+ * Narrow a figure's sources to the connectors this product actually reads.
+ *
+ * `Figure.sources` is typed `Source`, and `SOURCES` in `@repo/contract` is a WIDER union than
+ * `IMPLEMENTED_SOURCE_IDS` -- it carries `impact`, `awin`, `cj`, `partnerstack`, `dataforseo_serp`
+ * and `ai_answers`, none of which is a built connector. A figure legitimately computed from
+ * `dataforseo_serp` would therefore hand this module a source that must never render as a chip,
+ * and §5.1's ban is on exactly that: a platform advertised as a source before it exists.
+ *
+ * So the narrowing DROPS rather than passes through, and `source-marks.test.tsx` proves the drop
+ * with a source that is in `SOURCES` and not in `IMPLEMENTED_SOURCE_IDS`. A filter that silently
+ * let one through would put an unbuilt platform's name on the home page.
+ */
+export function implementedSources(sources: readonly string[]): readonly ImplementedSourceId[] {
+  const allowed = IMPLEMENTED_SOURCE_IDS as readonly string[];
+  return sources.filter((s): s is ImplementedSourceId => allowed.includes(s));
 }
 
 /** Every source the artwork map claims a file for, so a test can check each one exists on disk. */
