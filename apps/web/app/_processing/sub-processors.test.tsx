@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { renderToStaticMarkup } from "react-dom/server";
-import { brand } from "@repo/brand";
+import { brand, withheldClaims } from "@repo/brand";
 import { describe, expect, it } from "vitest";
 
 import { PROCESSING_ACTIVITIES } from "./activities";
@@ -69,16 +69,23 @@ describe("the sub-processor list", () => {
   });
 });
 
-describe("the DPA claim is still withheld, and this page is only half of it", () => {
-  it("does not flip the brand fact", () => {
-    // `claims.ts` states the condition: a click-through Article 28 DPA PLUS a public sub-processor
-    // list. This ships the second half. The most tempting thing to do today is decide that is close
-    // enough, and this is the assertion that stops it being done quietly.
-    expect(brand.dpaAvailable).toBe(false);
-  });
-
-  it("says on the page that no agreement is available", () => {
-    expect(say(markup)).toContain(SUB_PROCESSOR_COPY.openNote);
+describe("the DPA claim is still withheld, even now that an agreement exists", () => {
+  it("keeps the claim withheld on the requirement that is still missing", () => {
+    // THIS ASSERTION CHANGED SHAPE AND THAT IS THE POINT. It used to read
+    // `expect(brand.dpaAvailable).toBe(false)`, which was right while no agreement existed and
+    // became wrong the moment one did. What it protects is not the fact but the CLAIM: `claims.ts`
+    // requires BOTH `dpaAvailable` and `euRepresentative`, because the claim's text promises
+    // "Article 28 terms" -- GDPR -- and a representative in the Union. A PDPA s.40 agreement is not
+    // that, `euRepresentative` is null, and Art. 3(2) applicability has never been decided.
+    //
+    // So the company now has an agreement and still may not advertise this claim, and pinning the
+    // withholding to its actual cause is what stops the next person reading `dpaAvailable: true`
+    // and concluding the marketing line is unlocked.
+    expect(brand.dpaAvailable).toBe(true);
+    expect(brand.euRepresentative).toBeNull();
+    const withheld = withheldClaims().find((entry) => entry.claim.id === "dpa");
+    expect(withheld, "the dpa claim is no longer withheld").toBeDefined();
+    expect(withheld?.missing).toContain("euRepresentative");
   });
 
   it("claims no agreement anywhere in the rendered page", () => {

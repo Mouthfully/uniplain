@@ -94,6 +94,7 @@ const nextConfig: NextConfig = {
       "/connectors/woocommerce",
       "/processing",
       "/sub-processors",
+      "/dpa",
       "/terms",
       "/privacy",
     ];

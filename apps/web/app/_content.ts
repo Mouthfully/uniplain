@@ -231,6 +231,27 @@ export const SITE = {
 } as const;
 
 /**
+ * THE LEGAL AND TRANSPARENCY PAGES, LINKED FROM EVERY PAGE.
+ *
+ * The footer's own comment has said since it was written that "a policy reachable only by typing
+ * its URL is not published in any sense a regulator or a customer would accept" -- and then linked
+ * two pages while three more shipped beside them unlinked. `/processing` is the PDPA s.39 record,
+ * `/sub-processors` is half of what a controller's own diligence requires, and `/dpa` is the
+ * document that decides whether a reviewer can clear the purchase at all. A customer's reviewer
+ * does not guess URLs; they look in the footer and conclude from what is not there.
+ *
+ * Labels are structural rather than sentences, which is why they are short and why `check-copy`
+ * does not reach them.
+ */
+export const FOOTER_LEGAL_LINKS: readonly { readonly href: string; readonly label: string }[] = [
+  { href: "/terms", label: "Terms" },
+  { href: "/privacy", label: "Privacy" },
+  { href: "/dpa", label: "Data processing" },
+  { href: "/sub-processors", label: "Sub-processors" },
+  { href: "/processing", label: "Processing record" },
+];
+
+/**
  * The primary navigation. Labels are structural, so they are not sentences.
  *
  * `/connections` IS HERE BECAUSE A SCREEN NOBODY CAN REACH CONNECTS NOTHING. It is a signed-in

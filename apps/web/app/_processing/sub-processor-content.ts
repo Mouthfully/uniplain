@@ -24,5 +24,5 @@ export const SUB_PROCESSOR_COPY = {
 
   openHeading: "What is not in place",
   openNote:
-    "There is no data processing agreement to sign today, and no transfer instrument such as standard contractual clauses. This page is one of the two things such an agreement needs and is published on its own for that reason; the agreement itself is legal drafting and is not written here. No claim to the contrary appears anywhere on this site.",
+    "A data processing agreement covering this service is published and names the providers on this page. What is still not in place is a transfer instrument such as standard contractual clauses, and no retention schedule has been set for data nobody has asked about. Neither is claimed anywhere on this site.",
 } as const;
