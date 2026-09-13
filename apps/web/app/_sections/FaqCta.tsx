@@ -121,17 +121,28 @@ const HELP_LINK_LABEL = "Visit the help center";
  */
 const PRODUCT = brand.productName;
 
-const QUESTIONS = [
+// EXPORTED SO A TEST CAN READ THE ANSWER IT IS GUARDING, rather than scrape it back out of the
+// rendered markup. `ActionSheet.tsx` learned the same lesson: a DOM scrape finds whichever sentence
+// happens to match first, and a test that guards the wrong sentence is worth less than no test.
+export const QUESTIONS = [
   {
-    question: `What does ${PRODUCT} send me each morning?`,
-    // The second sentence was "You can reply to ask a follow-up, in Thai or English." It is gone
-    // for the reason given at `FeatureGrid`'s brief card: no channel adapter exists, so there is
-    // nothing to reply to, and -- the half that is not merely unbuilt -- NOTHING IN THIS REPOSITORY
-    // IS LOCALISED TO THAI. Not a string table, not a locale, not a model instruction. Naming a
-    // language is a specific promise a customer tests on their first attempt.
+    // THIS QUESTION USED TO SAY "send me each morning" AND BOTH HALVES WERE FALSE.
+    //
+    // Nothing sends. `packages/email` cannot deliver until the domain has SPF and DKIM, which note
+    // 70 verified it does not. And nothing happens each morning: `generateBrief` in
+    // `apps/web/app/brief/actions.ts` is a form action with no other caller anywhere, and the only
+    // scheduled work in the product ingests rows -- no cron writes a brief. A reader who connected
+    // a source and waited for breakfast would get nothing, twice over.
+    //
+    // The second sentence was also once "You can reply to ask a follow-up, in Thai or English",
+    // removed because no channel adapter exists to reply to and -- the half that is not merely
+    // unbuilt -- NOTHING IN THIS REPOSITORY IS LOCALISED TO THAI. Naming a language is a specific
+    // promise a customer tests on their first attempt.
+    question: "What do I get when I ask for a brief?",
     answer:
-      "Yesterday in three lines, anything that looks unusual, and one thing worth doing today. " +
-      "Every figure in it names the source it came from and the time it was read.",
+      "The last seven days in three lines, anything that looks unusual, and one thing worth doing. " +
+      "You ask for it and it is written then; nothing is sent to you and nothing runs on a " +
+      "schedule yet. Every figure it prints names the source it came from and the time it was read.",
   },
   {
     question: "Where do the numbers come from?",
@@ -142,16 +153,32 @@ const QUESTIONS = [
   },
   {
     question: "Will it change anything in my accounts?",
+    // THE OLD LAST CLAUSE DESCRIBED A MECHANISM THAT DOES NOT EXIST: "where a platform will not
+    // issue a token limited to reading, our own code is what refuses to write." Nothing in this
+    // repository inspects a credential's scope and refuses a call on the strength of it. There is
+    // no such guard, so the sentence was a promise about code nobody had written.
+    //
+    // What IS true and checkable: no connector calls an endpoint that changes anything. The three
+    // POST requests in `packages/connectors/src/sources` are reporting queries -- GA4's runReport,
+    // Search Console's and Google Ads' -- which is why this does not claim "we only ever send GET".
+    // That would be the same kind of tidy falsehood in the other direction.
     answer:
       "No. Nothing is done for you: you stay in control of prices, ads and staff. We ask each " +
-      "platform for read access only, and where a platform will not issue a token limited to " +
-      "reading, our own code is what refuses to write.",
+      "platform for the narrowest access it offers, and some issue only one kind of token that " +
+      "covers reading and writing alike. Either way, nothing here calls an endpoint that changes " +
+      "anything in your account: every request it makes is asking for figures.",
   },
   {
-    question: "Do I need to understand any of the charts?",
+    question: "Do I need to read a chart to use this?",
+    // "A chart is there if you want to look" PROMISED A CHART OF THE CUSTOMER'S OWN DATA, and
+    // there is not one. The only chart in the product is `RevenueChart` in `dashboard/page.tsx`:
+    // a hard-coded SVG path with fixed tick labels, on a page whose own module comment says EVERY
+    // NUMBER ON THIS PAGE IS ILLUSTRATIVE and which is `robots: noindex` for that reason. An owner
+    // who came for the chart would find a drawing of somebody else's month.
     answer:
-      "The brief is sentences. A chart is there if you want to look, and nothing asks you to " +
-      "read one to find out what to do.",
+      "No, and there is nothing to read one in. The brief is sentences: what changed, what looks " +
+      "unusual, and the one thing worth doing. Underneath each figure is the source it came from " +
+      "and the moment it was read, so you can check it rather than take it on trust.",
   },
   {
     question: "Can I give my accountant access without giving them my login?",
@@ -165,12 +192,20 @@ const QUESTIONS = [
     // `docs/marketplane/70-the-mail-nobody-can-send-yet.md` -- so a buyer who reads "invite" and
     // expects an email to arrive would find out on their first attempt. Saying which way the link
     // travels costs one clause; discovering it costs the trust the rest of the page is asking for.
+    // AND THE CLAUSE THIS ANSWER LOST. It read "read the figures in the workspaces you give them",
+    // which is the sentence an accountant's engagement turns on -- and it is false today.
+    // `createInvitation` inserts organisation_id, email, role, token_hash and expires_at and no
+    // workspace_ids, so the array is always empty; `app.can_read_workspace` admits an analyst or a
+    // viewer only through a `workspace_members` row, and nothing creates one. The least-privileged
+    // option -- the one a buyer would pick for a bookkeeper -- currently grants access to NOTHING.
+    // That is issue #66. Until it is closed this answer describes the roles that do work, and the
+    // FAQ does not sell the one that does not.
     answer:
-      "Yes. Add them with their own sign-in, and choose what they may do: read the figures in the " +
-      "workspaces you give them, or that plus connecting a source and inviting other people. You " +
-      "can change what somebody may do later, take an invitation back before it is used, or " +
-      "remove them, and an account always keeps at least one owner so nobody can shut everybody " +
-      "out. Nothing is sent for you: the invitation is a link you pass on yourself.",
+      "Yes. Add them with their own sign-in, and choose what they may do: read the figures, or " +
+      "that plus connecting a source and inviting other people. You can change what somebody may " +
+      "do later, take an invitation back before it is used, or remove them, and an account always " +
+      "keeps at least one owner so nobody can shut everybody out. Nothing is sent for you: the " +
+      "invitation is a link you pass on yourself.",
   },
   {
     question: "Who at your company can see my numbers?",
@@ -249,7 +284,15 @@ const QUESTIONS = [
  * subscriptions -- four plans and six live Stripe prices -- and the lead says only what the Free
  * tier really is.
  */
-const CTA_HEADING = "Connect tonight. Decide at breakfast.";
+// "CONNECT TONIGHT. DECIDE AT BREAKFAST." WAS WRONG TWICE, AND THE SECOND WAY IS THE FUNNIER ONE.
+//
+// Nothing produces a decision overnight -- a brief is written when somebody asks for one. And the
+// only ingest sweep is `INGEST_CRON = "23 2 * * *"`, which Cloudflare evaluates in UTC: 09:23 in
+// Asia/Bangkok. For the customer this product is built for, the rows are not in by breakfast.
+//
+// A heading is the last place to put a promise about timing, because it is the first thing read and
+// the last thing anybody thinks to check against a cron expression.
+export const CTA_HEADING = "Connect once. Ask whenever you need to know.";
 const CTA_LEAD = "Free to start. We ask each platform for read access and nothing more.";
 const CTA_LABEL = "Start free";
 

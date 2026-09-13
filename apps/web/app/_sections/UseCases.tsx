@@ -57,8 +57,10 @@
  */
 const EYEBROW = "Who it is for";
 const HEADING = "Built for owner-run businesses.";
+// "THE SAME BRIEF EVERY MORNING" -- the fourth place the unbuilt cadence was written down. The
+// half of the sentence that is true and load-bearing is the second: the layout follows the trade.
 const LEAD =
-  "The same brief every morning, laid out for the trade you are in. A café is not a guesthouse, and neither of them is a clinic.";
+  "The same brief, laid out for the trade you are in. A café is not a guesthouse, and neither of them is a clinic.";
 
 /** The card CTA. One label for all five, as the reference uses one for all three. */
 const CTA_LABEL = "See a sample dashboard";

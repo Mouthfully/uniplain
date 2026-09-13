@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 
 import { PLAN_ENTITLEMENTS } from "../_billing/entitlements";
 import { claim, connectionAllowance } from "../_content";
-import { Faq, FinalCta } from "./FaqCta";
+import { Faq, FinalCta, QUESTIONS } from "./FaqCta";
 
 /**
  * WHAT THE FAQ IS ALLOWED TO PROMISE.
@@ -224,17 +224,6 @@ const UNBUILT = [
       "The passive voice is the way this promise gets written without anybody deciding to make " +
       "it. Nothing removes anything on a schedule; /privacy says so in its retention clause.",
   },
-  {
-    // Borrowed verbatim in spirit from packages/email/src/templates.test.ts, which refuses a
-    // cadence for messages that cannot be delivered. Narrowed to DELIVERY rather than to "every
-    // morning": the page's positioning is that a brief covers each morning, and the hero says so.
-    // What is unbuilt is anything that pushes it to somebody -- nothing schedules a send.
-    pattern:
-      /\bwe.?ll send\b|\bwill arrive\b|\bdelivered (?:each|every)\b|\bsent (?:each|every)\b/i,
-    reason:
-      "Nothing schedules a delivery. The only schedule in the codebase is app.due_connections, " +
-      "which decides when a connection is PULLED, and there is no sender on the other end.",
-  },
 ];
 
 describe("no answer promises a capability the product lacks", () => {
@@ -244,4 +233,82 @@ describe("no answer promises a capability the product lacks", () => {
       expect(text, entry.reason).not.toMatch(entry.pattern);
     },
   );
+});
+
+/**
+ * THE PUSH-CADENCE CHECK, WHICH NEEDS TO KNOW THE DIFFERENCE BETWEEN A PROMISE AND A DENIAL.
+ *
+ * This began as an entry in UNBUILT above and could not stay there, for a reason worth keeping:
+ * the honest sentences on this page are "nothing IS SENT to you" and "Nothing IS SENT for you",
+ * and a flat ban on the phrase fires on both. Banning a form of words also bans saying you do not
+ * do it -- the same shape note 65 found when deleting a phrase deleted its own guard.
+ *
+ * So a match is a finding only when nothing negates it within the clause before. That is a
+ * heuristic and it is written down as one: "we never send you anything" passes, and a sufficiently
+ * contorted sentence could smuggle a promise past it. It catches the shape the page actually had.
+ *
+ * WHAT IT REPLACED. The old pattern was /we.?ll send|will arrive|delivered (each|every)|sent
+ * (each|every)/ with a comment saying it was "narrowed to DELIVERY rather than to 'every morning':
+ * the page's positioning is that a brief covers each morning, and the hero says so". That assumes
+ * the conclusion, and the question immediately above it read "What does the product SEND me each
+ * morning?" -- the exact false claim, sailing straight past its own guard. A guard that passes the
+ * page's own worst sentence is worse than no guard: it makes an unexamined claim look examined.
+ */
+const CADENCE =
+  /\b(?:send|sends|sending|deliver|delivers|delivering|push|pushes)\b\W{0,12}\b(?:you|me|it|them|us)\b|\b(?:we|it|the brief)\W{0,6}(?:will|.ll)\W{0,4}(?:send|arrive|land|turn up|be sent|be delivered)\b|\b(?:arrives|lands|turns up|shows up|is sent|is delivered|gets sent)\b|\b(?:each|every)\W{0,4}(?:morning|day|week|month)\b|\bbreakfast\b|\btonight\b|\bovernight\b|\bby (?:the )?morning\b|\bnext morning\b|\bwakes? (?:you )?up\b|\bwhen you wake\b/gi;
+
+/** Words that turn a delivery promise into a denial of one, within the clause before the match. */
+const NEGATOR =
+  /\b(?:nothing|not|never|no|without|neither|nor|cannot|can't|won't|does not|doesn't)\b/i;
+
+/** The run-up to a match, back to the previous clause boundary -- where a negator would sit. */
+function clauseBefore(text: string, at: number): string {
+  const from = Math.max(0, at - 90);
+  const run = text.slice(from, at);
+  const boundary = run.search(/[.;:!?][^.;:!?]*$/);
+  return boundary === -1 ? run : run.slice(boundary + 1);
+}
+
+describe("the page promises no cadence, because the product keeps none", () => {
+  /**
+   * NOTHING SENDS AND NOTHING RUNS ON A SCHEDULE. `generateBrief` is a form action with no other
+   * caller in the repository, and no cron writes a brief -- the only scheduled work ingests rows.
+   * `packages/email` has no caller either, because note 70 verified the domain has neither an MX
+   * nor a TXT record. A reader who connected a source and waited for breakfast would get nothing,
+   * twice over.
+   *
+   * And the sweep that DOES run is `INGEST_CRON = "23 2 * * *"`, which Cloudflare evaluates in
+   * UTC -- 09:23 in Asia/Bangkok. The closing panel used to say "Connect tonight. Decide at
+   * breakfast."
+   */
+  it("makes no unnegated promise that anything is sent, arrives, or happens on a clock", () => {
+    const promises: string[] = [];
+    for (const match of text.matchAll(CADENCE)) {
+      const index = match.index ?? 0;
+      if (NEGATOR.test(clauseBefore(text, index))) continue;
+      promises.push(`"${match[0]}" in: …${text.slice(Math.max(0, index - 60), index + 40)}…`);
+    }
+    expect(promises).toEqual([]);
+  });
+
+  /**
+   * THE DENIAL IS PINNED TO THE ANSWER THAT NEEDS IT, NOT TO THE PAGE.
+   *
+   * The first version of this asserted /nothing is sent/ anywhere in the rendered text -- and
+   * deleting the clause from the brief answer left it green, because the INVITATION answer also
+   * says "Nothing is sent for you". Two true sentences, and the test could not tell which one it
+   * was standing guard over. A guard that any passing sentence can satisfy is guarding nothing.
+   */
+  it("says outright, in the answer about asking for a brief, that nothing is sent", () => {
+    const asking = QUESTIONS.find((entry) => /ask for a brief/i.test(entry.question));
+    expect(asking, "the question this denial belongs to has been renamed").toBeDefined();
+    expect(asking?.answer).toMatch(/nothing is sent to you/i);
+    expect(asking?.answer).toMatch(/nothing runs on a schedule/i);
+  });
+
+  it("still allows the page to say that it does NOT send anything", () => {
+    // The negation window is the whole reason the guard above is usable. If this fails, the window
+    // is wrong and the page gets edited into silence rather than honesty.
+    expect(text).toMatch(/nothing is sent/i);
+  });
 });

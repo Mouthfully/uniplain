@@ -31,11 +31,14 @@ import Image from "next/image";
  * list until the image is redrawn in baht. Labelling an unfixable illustration is the artboard's
  * own remedy; leaving it unlabelled would let an illustration read as a customer.
  */
-const EYEBROW = "One page, every morning";
+// "ONE PAGE, EVERY MORNING" AND "ONCE A DAY" ARE THE SAME UNBUILT PROMISE AS THE OLD HERO. Nothing
+// runs on a clock, so a cadence in an eyebrow is a claim nobody reads carefully and everybody
+// believes. What is true is the shape: one page rather than four tabs.
+const EYEBROW = "One page, not four tabs";
 const HEADING_LEAD = "The page you open";
-const HEADING_REST = "once a day.";
+const HEADING_REST = "instead of the others.";
 const LEAD =
-  "Yesterday's takings, anything unusual, and the one thing worth doing — laid out for the trade you are in, not for an analyst who is not coming.";
+  "Your takings, anything unusual, and the one thing worth doing — laid out for the trade you are in, not for an analyst who is not coming.";
 const IMAGE_ALT =
   "Dashboard concept showing revenue, orders, spend, channel performance and a list of suggested actions";
 const SAMPLE_LABEL = "Product concept. Sample figures, not a customer.";
@@ -44,7 +47,10 @@ const OPEN_LABEL = "Explore the client dashboard";
 const BENEFITS = [
   {
     id: "changed",
-    label: "Know what changed overnight",
+    // "OVERNIGHT" IS THE SAME CLAIM IN A THIRD PLACE. The only scheduled work is
+    // INGEST_CRON = "23 2 * * *", which Cloudflare evaluates in UTC -- 09:23 in Asia/Bangkok, so
+    // even the rows are not in overnight for the customer this is built for.
+    label: "Know what changed",
     d: "M4 13h3v8H4zM10 8h3v13h-3zM16 3h3v18h-3z",
   },
   {
