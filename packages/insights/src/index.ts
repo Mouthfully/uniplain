@@ -26,6 +26,27 @@ export {
   type Reading,
 } from "./figures.ts";
 export {
+  FEEDBACK_VERDICTS,
+  NO_PRIORS,
+  SILENCE_AFTER,
+  buildPriors,
+  defectSignals,
+  isSilenced,
+  type ActionFeedback,
+  type ActionPrior,
+  type FeedbackVerdict,
+  type PriorSet,
+} from "./feedback.ts";
+export {
+  LARGE_AT_PERCENT,
+  NOTABLE_AT_PERCENT,
+  SALIENCE_BANDS,
+  bandOf,
+  leadingChanges,
+  salienceOf,
+  type Salience,
+} from "./salience.ts";
+export {
   INSIGHT_RESPONSE_SCHEMA,
   SUMMARY_LINES,
   SYSTEM_PROMPT,

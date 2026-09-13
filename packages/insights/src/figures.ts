@@ -54,6 +54,8 @@ import {
   combineMetric,
 } from "@repo/contract";
 
+import { type PriorSet, isSilenced } from "./feedback.ts";
+
 /* ==============================================================================================
  * THE ROW
  * ============================================================================================== */
@@ -291,6 +293,19 @@ export interface FigureInput {
   readonly comparison: Period;
   /** Rows covering BOTH periods. Rows outside them are ignored rather than refused. */
   readonly rows: readonly InsightRow[];
+  /**
+   * What this workspace has said about previous suggestions.
+   *
+   * REQUIRED, AND `NO_PRIORS` IS THE WAY TO SAY "NOTHING". An optional field would have saved
+   * about fifteen lines across the tests and bought a failure mode this repository is organised
+   * against: a caller that forgets it gets a full action list and no error, which is the product
+   * silently ignoring what a customer told it. Ignoring feedback is not a state anything should be
+   * able to reach by omission, so every caller states its position.
+   *
+   * It is not a defaulted measurement either way. A workspace that has never given feedback has an
+   * empty history, and an empty history is a fact rather than a stand-in for one.
+   */
+  readonly priors: PriorSet;
 }
 
 /* ==============================================================================================
@@ -731,7 +746,7 @@ export function buildFigureSet(input: FigureInput): FigureSetResult {
   figures.push(...channelFigures(current, currency));
   figures.push(...ticketFigures(current, currency));
 
-  const actions = rankActions(current, previous, currency, figures);
+  const actions = rankActions(current, previous, currency, figures, input.priors);
   for (const action of actions) figures.push(action.impactFigure);
   figures.push(countFigure("actions.count", "actions on the sheet", actions.length, current));
 
@@ -1076,6 +1091,7 @@ function rankActions(
   previous: readonly ReadRow[],
   currency: string,
   figures: readonly Figure[],
+  priors: PriorSet,
 ): readonly RankedAction[] {
   // Whether an impact renders at all depends only on the currency, which is one value for the
   // whole set -- `mixed_currency` refused earlier otherwise. Checking it once here means ranks are
@@ -1090,6 +1106,22 @@ function rankActions(
     ...spendWithoutReturn(current, previous),
   ]
     .filter((candidate) => estimateFloor(candidate.estimate) > 0)
+    // WHAT THE OWNER HAS ASKED NOT TO SEE, DROPPED BEFORE RANKS ARE ASSIGNED.
+    //
+    // Here rather than after ranking, and that position is the whole of the design. "Ordered by
+    // value, biggest first" is a promise this section makes about the DATA, so feedback may not
+    // re-order the list -- an owner's opinion is not worth more money than the arithmetic says.
+    // What it may do is remove an item entirely, which leaves the survivors in value order and the
+    // promise intact.
+    //
+    // Filtering first also means the ranks the model is shown are 1, 2, 3 with no hole to explain,
+    // and no impact label reads "what action 4 is worth" beside a list of two.
+    //
+    // NOTE WHICH VERDICTS REACH HERE. Only `not_doing_it` and `already_knew` count toward silence.
+    // `wrong` -- the owner saying our arithmetic is broken -- deliberately never suppresses
+    // anything; see `feedback.ts`. Hiding a finding because somebody called it wrong destroys the
+    // evidence that a detector needs fixing.
+    .filter((candidate) => !isSilenced(priors, candidate.kind, candidate.source))
     .sort(
       (a, b) =>
         estimateFloor(b.estimate) - estimateFloor(a.estimate) ||

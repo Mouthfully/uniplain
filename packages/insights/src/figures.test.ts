@@ -1,3 +1,4 @@
+import { NO_PRIORS, type PriorSet } from "./feedback.ts";
 import { describe, expect, it } from "vitest";
 
 import { COMPARISON, PERIOD, row, settledWeek } from "./fixtures.ts";
@@ -15,8 +16,9 @@ import {
 function build(
   rows: Parameters<typeof buildFigureSet>[0]["rows"],
   business: BusinessType = "cafe",
+  priors: PriorSet = NO_PRIORS,
 ): FigureSet {
-  const result = buildFigureSet({ business, period: PERIOD, comparison: COMPARISON, rows });
+  const result = buildFigureSet({ business, period: PERIOD, comparison: COMPARISON, rows, priors });
   if (!result.ok) throw new Error(`expected a figure set, got ${result.code}: ${result.detail}`);
   return result.set;
 }
@@ -68,6 +70,7 @@ describe("buildFigureSet refuses rather than producing a number with no meaning"
   it("refuses when no row falls in either period", () => {
     const result = buildFigureSet({
       business: "cafe",
+      priors: NO_PRIORS,
       period: PERIOD,
       comparison: COMPARISON,
       rows: [row({ source: "woocommerce", date: "2020-01-01", metrics: { revenue: 1 } })],
@@ -78,6 +81,7 @@ describe("buildFigureSet refuses rather than producing a number with no meaning"
   it("refuses to total across two currencies rather than inventing a rate", () => {
     const result = buildFigureSet({
       business: "cafe",
+      priors: NO_PRIORS,
       period: PERIOD,
       comparison: COMPARISON,
       rows: [
@@ -101,6 +105,7 @@ describe("buildFigureSet refuses rather than producing a number with no meaning"
   it("refuses an impossible period", () => {
     const result = buildFigureSet({
       business: "cafe",
+      priors: NO_PRIORS,
       period: { from: "2026-09-13", to: "2026-09-07" },
       comparison: COMPARISON,
       rows: settledWeek(),
@@ -111,6 +116,7 @@ describe("buildFigureSet refuses rather than producing a number with no meaning"
   it("refuses when every metric in the period is absent or unreadable", () => {
     const result = buildFigureSet({
       business: "cafe",
+      priors: NO_PRIORS,
       period: PERIOD,
       comparison: COMPARISON,
       rows: [

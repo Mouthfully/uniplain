@@ -24,6 +24,7 @@
  * and a Stripe fee in `meta_data` that is the minority case where a payment fee is knowable at all.
  */
 
+import { NO_PRIORS } from "./feedback.ts";
 import { type WooOrder, normalizeWooOrders } from "@repo/connectors";
 import { describe, expect, it } from "vitest";
 
@@ -104,6 +105,7 @@ describe("an EnvelopeRow from a real connector is an InsightRow", () => {
 
     const built = buildFigureSet({
       business: "cafe",
+      priors: NO_PRIORS,
       period: PERIOD,
       comparison: COMPARISON,
       rows: [...rows, ...priorRows()],
@@ -115,6 +117,7 @@ describe("an EnvelopeRow from a real connector is an InsightRow", () => {
   it("carries the connector's own money through to the prompt", () => {
     const built = buildFigureSet({
       business: "cafe",
+      priors: NO_PRIORS,
       period: PERIOD,
       comparison: COMPARISON,
       rows: [...realRows(), ...priorRows()],
@@ -139,6 +142,7 @@ describe("an EnvelopeRow from a real connector is an InsightRow", () => {
     // the platform kept the difference -- and it is false.
     const built = buildFigureSet({
       business: "cafe",
+      priors: NO_PRIORS,
       period: PERIOD,
       comparison: COMPARISON,
       rows: [...realRows(), ...priorRows()],
@@ -155,6 +159,7 @@ describe("an EnvelopeRow from a real connector is an InsightRow", () => {
   it("licenses every number the real rows put in the prompt", () => {
     const built = buildFigureSet({
       business: "cafe",
+      priors: NO_PRIORS,
       period: PERIOD,
       comparison: COMPARISON,
       rows: [...realRows(), ...priorRows()],
@@ -189,6 +194,7 @@ describe("the whole engine over real rows", () => {
 
   const input = {
     business: "cafe" as const,
+    priors: NO_PRIORS,
     period: PERIOD,
     comparison: COMPARISON,
     model: "some/model",

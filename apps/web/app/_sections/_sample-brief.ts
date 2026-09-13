@@ -1,4 +1,10 @@
-import { type Figure, type InsightRow, buildFigureSet, estimateFloor } from "@repo/insights";
+import {
+  type Figure,
+  type InsightRow,
+  NO_PRIORS,
+  buildFigureSet,
+  estimateFloor,
+} from "@repo/insights";
 
 /**
  * THE NUMBERS ON THE ASSISTANT PANEL, COMPUTED BY THE ENGINE RATHER THAN TYPED BESIDE IT.
@@ -76,6 +82,11 @@ const RESULT = buildFigureSet({
   period: { from: "2026-09-07", to: "2026-09-13" },
   comparison: { from: "2026-08-31", to: "2026-09-06" },
   rows: SAMPLE_ROWS,
+  // NO_PRIORS, AND SAYING SO IS THE POINT. Feedback silences detectors an owner has declined, and
+  // this panel illustrates what a NEW customer sees -- nobody has declined anything yet. A sample
+  // built from somebody's accumulated preferences would be a sample of one shop's habits rather
+  // than of the product.
+  priors: NO_PRIORS,
 });
 
 if (!RESULT.ok) {

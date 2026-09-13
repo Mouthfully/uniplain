@@ -1,3 +1,4 @@
+import { NO_PRIORS } from "./feedback.ts";
 import { describe, expect, it } from "vitest";
 
 import { SYSTEM_PROMPT, renderUserPrompt } from "./brief.ts";
@@ -12,7 +13,13 @@ import {
 import { numericTokens, verifyInsight } from "./verify.ts";
 
 function build(rows = settledWeek(), business: BusinessType = "cafe"): FigureSet {
-  const result = buildFigureSet({ business, period: PERIOD, comparison: COMPARISON, rows });
+  const result = buildFigureSet({
+    business,
+    period: PERIOD,
+    comparison: COMPARISON,
+    rows,
+    priors: NO_PRIORS,
+  });
   if (!result.ok) throw new Error(`expected a figure set, got ${result.code}`);
   return result.set;
 }

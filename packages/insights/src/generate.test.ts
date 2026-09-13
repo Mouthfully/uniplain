@@ -1,3 +1,4 @@
+import { NO_PRIORS } from "./feedback.ts";
 import { describe, expect, it } from "vitest";
 
 import { COMPARISON, PERIOD, row, settledWeek } from "./fixtures.ts";
@@ -34,6 +35,7 @@ function run(content: string, rows = settledWeek()) {
     calls,
     result: generateInsight({
       business: "cafe",
+      priors: NO_PRIORS,
       period: PERIOD,
       comparison: COMPARISON,
       rows,
@@ -123,6 +125,7 @@ describe("the stages before the model refuse without calling it at all", () => {
     const impl = (async () => new Response("{}", { status: 401 })) as unknown as typeof fetch;
     const outcome = await generateInsight({
       business: "cafe",
+      priors: NO_PRIORS,
       period: PERIOD,
       comparison: COMPARISON,
       rows: settledWeek(),

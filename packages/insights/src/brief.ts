@@ -27,6 +27,7 @@
  */
 
 import { type Figure, type FigureSet, type RankedAction, leadingMetrics } from "./figures.ts";
+import { type Salience, salienceOf } from "./salience.ts";
 
 /* ==============================================================================================
  * THE SYSTEM PROMPT
@@ -40,7 +41,7 @@ export const SYSTEM_PROMPT = [
   "You write the morning brief for the owner of a small business.",
   "",
   "You are given a closed set of figures that have already been computed from the owner's own",
-  "data. Your job is to phrase them. It is not to calculate.",
+  "data. Your job is to say what they mean. It is not to calculate.",
   "",
   "RULES, in order of how badly breaking them ends:",
   "",
@@ -55,6 +56,30 @@ export const SYSTEM_PROMPT = [
   "5. Do not name a competitor, a rival, an app ranking or a price cut, and do not describe",
   "   anything as automatic or done on the owner's behalf. The product reads; it never writes.",
   "6. Plain language. Short sentences. No preamble, no sign-off, no encouragement.",
+  "",
+  "HOW TO USE A NUMBER. A figure repeated back is not worth reading; the owner can already see",
+  "the figures. Each line you write must do one of these and not merely restate a label:",
+  "",
+  "  * say what a figure means for the day ahead;",
+  "  * name what changed and against what;",
+  "  * say plainly that nothing moved, when nothing did.",
+  "",
+  "Keep the unit or currency attached to every amount, exactly as the figure prints it. A bare",
+  "number in a sentence is a number the owner has to go and look up.",
+  "",
+  "SIZE IS NOT YOURS TO JUDGE. Each change carries one of four marks, already worked out from the",
+  "arithmetic, and your words must match the mark:",
+  "",
+  "  [large]       you may call this a real change, and it should come first.",
+  "  [notable]     name it plainly. Do not reach for a strong word.",
+  "  [negligible]  too small to act on. Say it held steady, or leave it out. Never call it a",
+  "                rise, a fall, a jump, a drop or a swing.",
+  "  [unknown]     THERE IS NO COMPARISON. The earlier period measured nothing, or the figure",
+  "                could not be read. Say the comparison is not available. Never guess a size,",
+  "                and never treat this as small.",
+  "",
+  "Do not describe a change as sharp, dramatic, huge, massive, steep, alarming, collapsing or",
+  "soaring. Those are sizes, and the mark is the size.",
   "",
   "Every number you write is checked against the figures you were given. A number that cannot be",
   "traced to them causes the entire brief to be discarded, not corrected.",
@@ -87,7 +112,7 @@ export function renderUserPrompt(set: FigureSet): string {
 
   lines.push("FIGURES. These are the only numbers you may write.");
   lines.push(RULE);
-  for (const figure of orderFigures(set)) lines.push(renderFigure(figure));
+  for (const figure of orderFigures(set)) lines.push(renderFigure(figure, bandFor(set, figure)));
   lines.push("");
 
   lines.push("ACTIONS, already ordered by what each is worth, biggest first.");
@@ -143,12 +168,35 @@ function orderFigures(set: FigureSet): readonly Figure[] {
  * around the figures the brief is actually about. The source id is printed, because a model naming
  * where a figure came from is exactly what should be encouraged.
  */
-function renderFigure(figure: Figure): string {
+function renderFigure(figure: Figure, band: Salience | null): string {
   const marks: string[] = [];
+  // THE BAND GOES FIRST, because it governs how the rest of the line may be described and a mark
+  // read after the sentence is already written is a mark that changes nothing.
+  if (band !== null) marks.push(band);
   if (figure.provisional) marks.push("may still be restated");
   if (figure.sources.length > 0) marks.push(`from ${figure.sources.join(", ")}`);
   const suffix = marks.length === 0 ? "" : `  [${marks.join("; ")}]`;
   return `  ${figure.label}: ${figure.text}${suffix}`;
+}
+
+/**
+ * The salience mark for one figure, or null for a figure that is not a change.
+ *
+ * ONLY CHANGE FIGURES CARRY A BAND. A total is not large or negligible -- it is just the takings --
+ * and marking one would invite the model to describe a big shop's ordinary Tuesday as a large
+ * anything. Both of a metric's change figures take the same band, because they are the same
+ * movement said two ways and two different marks on one movement is a contradiction the model
+ * would have to resolve for itself.
+ *
+ * `id` is matched rather than `kind` because `kind: "delta"` is also carried by figures that are
+ * not a period-over-period change, and a band on one of those would be a size for a comparison
+ * nobody made.
+ */
+function bandFor(set: FigureSet, figure: Figure): Salience | null {
+  const match = /^metric\.([a-z_]+)\.delta(_share)?$/.exec(figure.id);
+  const metric = match?.[1];
+  if (metric === undefined) return null;
+  return salienceOf(set, metric as Parameters<typeof salienceOf>[1]);
 }
 
 function renderAction(action: RankedAction): string {

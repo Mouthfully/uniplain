@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { NO_PRIORS } from "./feedback.ts";
 import { COMPARISON, PERIOD, settledWeek } from "./fixtures.ts";
 import { type FigureSet, buildFigureSet } from "./figures.ts";
 import { verifyInsight } from "./verify.ts";
@@ -7,6 +8,7 @@ import { verifyInsight } from "./verify.ts";
 function build(): FigureSet {
   const result = buildFigureSet({
     business: "cafe",
+    priors: NO_PRIORS,
     period: PERIOD,
     comparison: COMPARISON,
     rows: settledWeek(),
@@ -189,6 +191,7 @@ describe("the gate is checked against the set it was given, not a global", () =>
   it("refuses a figure that is true of a DIFFERENT business", () => {
     const other = buildFigureSet({
       business: "cafe",
+      priors: NO_PRIORS,
       period: PERIOD,
       comparison: COMPARISON,
       rows: settledWeek().map((r) => ({ ...r, metrics: { ...r.metrics, revenue: 777 } })),
@@ -199,4 +202,62 @@ describe("the gate is checked against the set it was given, not a global", () =>
       verifyInsight(answer({ summary: ["Takings were THB 29,000.00.", "b", "c"] }), other.set),
     ).toMatchObject({ ok: false, code: "unverifiable_number" });
   });
+});
+
+/* ================================================================================================
+ * A SIZE ASSERTED IN PROSE
+ * ============================================================================================== */
+
+describe("a word that states a size the arithmetic did not", () => {
+  /**
+   * `salience.ts` bands every change and the prompt tells the model the band IS the size. A word
+   * that asserts a size on top of it is a quantity the gate cannot check -- the same defect as a
+   * spelled-out number, wearing an adverb. "Takings fell sharply" over a 2.1% move is a false
+   * statement about the data containing no false number, so every other check here waves it past.
+   */
+  const overstatements = [
+    "Takings fell sharply against last week.",
+    "Orders plummeted on Tuesday.",
+    "Spend soared while what it returned did not.",
+    "Commission surged on that channel.",
+    "Takings collapsed at the weekend.",
+    "Delivery orders skyrocketed.",
+    "Revenue nosedived.",
+    "Costs rose dramatically.",
+    "The change was drastically worse than last week.",
+    "Margins steeply narrowed.",
+  ];
+
+  for (const line of overstatements) {
+    it(`refuses ${JSON.stringify(line.slice(0, 40))}`, () => {
+      const verdict = verifyInsight(answer({ unusual: line }), SET);
+      expect(verdict.ok).toBe(false);
+      if (verdict.ok) return;
+      expect(verdict.code).toBe("magnitude_word");
+      expect(verdict.detail).not.toHaveLength(0);
+    });
+  }
+
+  /**
+   * THE OTHER HALF, AND THE REASON THE LIST IS SHORT. A guard that fires on correct copy gets
+   * switched off, which is worse than not having one. Direction words are not sizes -- the delta
+   * figure states the direction -- so a brief saying takings fell must pass, every morning.
+   */
+  const mustStayLegal = [
+    "Takings fell against last week.",
+    "Orders rose on Saturday.",
+    "Spend is up and what it returned is not.",
+    "Takings held steady.",
+    "Nothing moved that is worth acting on.",
+    "The comparison is not available for that figure.",
+    "Commission was not reported on one row.",
+    "Takings dropped on the delivery channel.",
+  ];
+
+  for (const line of mustStayLegal) {
+    it(`does NOT refuse ${JSON.stringify(line.slice(0, 40))}`, () => {
+      const verdict = verifyInsight(answer({ unusual: line }), SET);
+      if (!verdict.ok) expect(verdict.code).not.toBe("magnitude_word");
+    });
+  }
 });
