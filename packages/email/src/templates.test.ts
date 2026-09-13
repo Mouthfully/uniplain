@@ -7,6 +7,7 @@ import {
   EMAIL_COPY,
   briefEmail,
   howToUseEmail,
+  invitationEmail,
   refusalEmail,
   welcomeEmail,
 } from "./templates.ts";
@@ -45,6 +46,7 @@ function everyMessage() {
     ...BRIEF_SPANS.map((span) =>
       refusalEmail(TO, span, CONTENT.period, "unverifiable_number: THB 900.00 is not any figure"),
     ),
+    invitationEmail(TO, "https://example.test/join?token=abc"),
   ];
 }
 
@@ -167,6 +169,45 @@ describe("the brief message", () => {
     expect(bare).not.toContain(EMAIL_COPY.unusualHeading);
     expect(bare).not.toContain(EMAIL_COPY.actionHeading);
     expect(bare).toContain(CONTENT.summary[0] as string);
+  });
+});
+
+describe("the invitation message", () => {
+  /**
+   * IT NAMES NOBODY. The inviter, the business and the role are all omitted on purpose: each is
+   * tenant-chosen text arriving in a stranger's inbox, and an invitation that names a business also
+   * tells whoever holds that address -- possibly a former employee, possibly a typo -- that the
+   * business uses this product.
+   */
+  it("interpolates the link and nothing else", () => {
+    const link = "https://example.test/join?token=abc";
+    const message = invitationEmail(TO, link);
+    expect(message.text).toContain(link);
+
+    // Rendering with a second link must differ in exactly that one substring; anything else varying
+    // would mean some other value had found its way in.
+    const other = invitationEmail(TO, "https://example.test/join?token=zzz");
+    expect(message.text.replace(link, "")).toBe(
+      other.text.replace("https://example.test/join?token=zzz", ""),
+    );
+  });
+
+  /**
+   * THE PART THAT IS A LEGAL NOTICE RATHER THAN COPY. The person reading this did not sign up:
+   * their address was typed in by somebody else, which under PDPA s.23 obliges telling them what is
+   * held and what they can do about it. Deleting any of the three for brevity is the failure mode.
+   */
+  it("tells the recipient what is held, that it is read-only, and how to get out", () => {
+    const text = invitationEmail(TO, "https://example.test/join?token=abc").text;
+    expect(text).toContain(EMAIL_COPY.invitationWhoHasWhat);
+    expect(text).toContain(EMAIL_COPY.invitationReadOnly);
+    expect(text).toContain(EMAIL_COPY.invitationWhatYouCanDo);
+  });
+
+  it("says what to do if it was not meant for them", () => {
+    expect(invitationEmail(TO, "https://example.test/join?token=abc").text).toContain(
+      EMAIL_COPY.invitationNotForYou,
+    );
   });
 });
 

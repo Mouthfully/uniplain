@@ -14,6 +14,7 @@ export {
   EMAIL_COPY,
   briefEmail,
   howToUseEmail,
+  invitationEmail,
   refusalEmail,
   welcomeEmail,
   type BriefContent,

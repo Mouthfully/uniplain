@@ -192,8 +192,11 @@ const INVENTORY_ROWS = [
   {
     category: "Invitations",
     what: "The email address of a colleague who has been invited, and the role offered.",
-    why: "To send the invitation and to let that person join the workspace that invited them.",
-    from: "Entered by an administrator of the workspace.",
+    why: "To let that person join the account that invited them, and to record that the invitation was made.",
+    // THE ONLY ROW IN THIS TABLE WHOSE SUBJECT NEVER VISITED THE SITE. Everything else here was
+    // typed in, connected or bought by the person it describes. This was typed in by somebody else
+    // about a third party, which is why clause "invitations" exists and why the wording says so.
+    from: "Typed in by an administrator of the account, about somebody who has not used this product.",
   },
   {
     // THE FORM IS GONE AND THE ROWS ARE NOT, so this row stays. `/access` no longer collects
@@ -279,7 +282,18 @@ const CLAUSES: readonly Clause[] = [
     body: [
       "The account holds a name and a work email address for the person signing in. That is what an account is made of here, and nothing about a person's use of a connected platform is added to it.",
       "Sign-up requires a company email address rather than a personal one, and the check runs on the server as well as in the browser, so the address held for an account is a business contact rather than a private one. The check is a list of known consumer and disposable domains rather than an exhaustive wall.",
-      "An invitation stores the address it was sent to and the role it offers, until it is accepted or withdrawn. Addresses submitted through the earlier sign-up form are still held, and that form no longer exists.",
+      "An invitation stores the address it names and the role it offers. Withdrawing one marks it withdrawn rather than erasing it, so the record that an address was once entered survives being cancelled; the next clause covers the case where that address is yours and somebody else entered it. Addresses submitted through the earlier sign-up form are still held, and that form no longer exists.",
+    ],
+  },
+  {
+    id: "invitations",
+    title: "When somebody else gives us your address",
+    body: [
+      "An account can have more than one person in it, and somebody already in it adds the others by typing an email address into a form. If that is how your address reached us, you did not give it to us and you may never have visited this site.",
+      "What is held about you at that point is the address itself, the role you were offered, who invited you, and when. Nothing else, and nothing at all about you from any connected platform. The invitation stops working after seven days or once it is used.",
+      "An invitation is a link. We store a fingerprint of it rather than the link, so nobody here can recover a working invitation from our records, from a backup, or on request.",
+      "We do not send that link at present. The person who invited you passes it on, which means the first you hear of any of this comes from them rather than from us, and it is on them to say what they have done. When we can send it ourselves, the message will say who holds your address, what the account contains and how to get out of it.",
+      "You can ask the person who invited you to withdraw the invitation, and any owner or administrator of that account can remove you from it afterwards. You can also write to us, and we will act on it whether or not you ever accepted.",
     ],
   },
   {

@@ -239,6 +239,10 @@ export const NAV = [
   // is the same defect as a test nothing runs.
   { href: "/brief", label: "Brief" },
   { href: "/dashboard", label: "Dashboard" },
+  // PEOPLE SITS IN THE SAME LIST FOR THE SAME REASON THE BRIEF DOES. An admin who cannot find the
+  // page cannot remove a colleague who left, which is not a missing feature -- it is a former
+  // employee still reading the takings.
+  { href: "/members", label: "People" },
   { href: "/signin", label: "Sign in" },
 ] as const;
 
