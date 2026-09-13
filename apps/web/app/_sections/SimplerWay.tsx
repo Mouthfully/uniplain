@@ -28,14 +28,22 @@ import { brand } from "@repo/brand";
  */
 
 /**
- * Section copy. Every sentence lives here because `scripts/check-copy.mjs` refuses one typed into
- * the JSX, and the uppercase eyebrow is set as sentence case because the capitals are CSS.
+ * Section copy, re-aimed from "see your data" to "get told what to do".
+ *
+ * The section used to be headed "A simpler way to work with your data." and its four cards were
+ * Connect / Unify / Analyze / Share -- a description of a pipeline, which is what
+ * `docs/marketplane/58-plan-reconciliation.md` section 5.1 calls plumbing: "unification is
+ * plumbing" and every BI tool sells it. The four steps now end where the product ends, in a
+ * decision and then in a check that the decision worked.
+ *
+ * Every sentence lives here because `scripts/check-copy.mjs` refuses one typed into the JSX, and
+ * the uppercase eyebrow is set as sentence case because the capitals are CSS.
  */
-const EYEBROW = "Turn complexity into clarity";
+const EYEBROW = "From connected to decided";
 
 /** The line break inside the heading is the design's, so the two lines are two values. */
-const HEADING_TOP = "A simpler way to work";
-const HEADING_BOTTOM = "with your data.";
+const HEADING_TOP = "Told what to do,";
+const HEADING_BOTTOM = "not shown a chart.";
 
 /**
  * The lead opens on the product name, which may not be typed as a literal anywhere outside the
@@ -44,38 +52,61 @@ const HEADING_BOTTOM = "with your data.";
  * while the brand guide requires the capital at the front of a sentence.
  */
 const PRODUCT = brand.productName;
-const LEAD = `${PRODUCT} brings your marketing, sales, and product tools together. Keep everything in sync, make sense of your numbers, and focus on what matters: growth.`;
+const LEAD = `${PRODUCT} reads the tools your business already runs on and works out which numbers matter for the trade you are in. Nobody picks a chart, writes a formula or exports anything.`;
 
 const CTA_LABEL = "See how it works";
 
 /**
- * The four capabilities, in the design's order. `path` is the outline mark's single `d`; the marks
- * are 24px-grid outlines on a 1.75 stroke, per the brand guide's "Shape and interface details".
+ * The four steps, in the order an owner meets them. `path` is the outline mark's single `d`; the
+ * marks are 24px-grid outlines on a 1.75 stroke, per the brand guide's "Shape and interface
+ * details", and they are the reference's own four in the reference's own order.
+ *
+ * STEP FOUR USED TO BE "Check" -- "Next week it says whether it worked, in your own numbers" -- on
+ * the argument that a recommendation nobody ever checks is indistinguishable from a guess. The
+ * argument is right and the capability does not exist: nothing in `apps/` or `packages/` compares a
+ * recommendation against what happened afterwards, and it is not a cron away. It needs a record of
+ * what was recommended, a record of what the owner did about it, and a measurement of the period
+ * after -- two tables and a job, none of which is written.
+ *
+ * So the step now carries the property that IS true at the end of the sequence, and is the reason
+ * the whole product exists: every figure names its source and the moment it was read, and says so
+ * while it may still change. `fetched_at` and `is_provisional` are envelope columns that
+ * `/dashboard` renders today. The follow-up check belongs in this section when it is built; a step
+ * that describes it before then is the guess it warns against.
+ *
+ * STEP TWO went the same way. It read "It works out what kind of business you run from the data",
+ * and nothing infers a business type: `leadingMetrics(business)` in
+ * `packages/insights/src/figures.ts` takes the type as an INPUT. The per-trade emphasis is real
+ * code; the inference is not, so the step now says who supplies it.
  */
 const CAPABILITIES = [
   {
     title: "Connect",
-    body: "Link your business tools in minutes.",
+    body: "You log in to each tool yourself. We ask for read access.",
     tone: "text-accent",
     path: "M8 3v5m8-5v5M6 8h12v4a6 6 0 0 1-6 6v3m-6-9a6 6 0 0 0 6 6",
   },
   {
-    title: "Unify",
-    body: "Clean and merge your data automatically.",
+    title: "Learn",
+    body: "You say what kind of business you run. It works out which numbers matter for it.",
     tone: "text-brand-mint",
     path: "m12 3 9 5-9 5-9-5 9-5ZM3 12l9 5 9-5M3 16l9 5 9-5",
   },
   {
-    title: "Analyze",
-    body: "Get the insights you need, without the busywork.",
+    title: "Decide",
+    body: "You get the one thing worth doing, and what it is worth.",
     tone: "text-brand-blue",
     path: "M4 13h3v8H4zM10 8h3v13h-3zM16 3h3v18h-3z",
   },
   {
-    title: "Share",
-    body: "Turn data into clear reports for your team or clients.",
+    title: "Trace",
+    body: "Every figure says which source it came from, and when it was read.",
     tone: "text-accent",
-    path: "M16 21v-3a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v3m20 0v-3a4 4 0 0 0-3-3.9M9 10a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm8-8a4 4 0 0 1 0 8",
+    // The mark changed with the step. The reference's fourth was a group-of-people outline, drawn
+    // for "Check" when that step was about a human being told whether something worked; on a step
+    // about a figure's link back to its source it reads as the wrong noun. A chain link on the same
+    // 24 box and 1.75 stroke as the other three.
+    path: "M9 15l6-6M10.5 7.5 12 6a4.2 4.2 0 0 1 6 6l-1.5 1.5m-3 3L12 18a4.2 4.2 0 0 1-6-6l1.5-1.5",
   },
 ] as const;
 
@@ -89,7 +120,7 @@ export function SimplerWay() {
         <span className="text-ink-faint block text-xs font-bold tracking-[0.14em] uppercase">
           {EYEBROW}
         </span>
-        <h2 className="font-display text-ink mt-[18px] text-[28px] leading-[1.16] font-bold tracking-[-0.03em] md:text-[36px]">
+        <h2 className="font-display text-ink mt-[18px] text-[28px] leading-[1.16] font-semibold tracking-[-0.03em] md:text-[36px]">
           {HEADING_TOP}
           <br />
           {HEADING_BOTTOM}
@@ -129,7 +160,7 @@ export function SimplerWay() {
             >
               <path d={capability.path} />
             </svg>
-            <h3 className="font-display text-ink mb-2 text-lg leading-[1.3] font-bold tracking-[-0.01em]">
+            <h3 className="font-display text-ink mb-2 text-lg leading-[1.3] font-semibold tracking-[-0.01em]">
               {capability.title}
             </h3>
             <p className="text-ink-muted text-sm leading-[1.55]">{capability.body}</p>
