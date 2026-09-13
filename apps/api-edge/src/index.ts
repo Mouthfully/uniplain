@@ -35,9 +35,16 @@ import {
   parseIngestRequest,
   runIngest,
 } from "./ingest.js";
+import {
+  type ClientCredentials,
+  handleOAuthCallback,
+  handleOAuthStart,
+  type OAuthConnectDeps,
+} from "./oauth-connect.js";
 import { handlePerformance } from "./performance.js";
 import { type ScheduledOutcome, handleScheduled } from "./scheduled.js";
 import type { SweepDeps } from "./scheduled-ingest.js";
+import type { ProviderId } from "@repo/oauth";
 
 /**
  * The bindings are declared once, in `env.d.ts`, as `Cloudflare.Env` -- the extension point both
@@ -314,6 +321,91 @@ async function handleConnections(request: Request, env: Env): Promise<Response> 
   return await handleConnect(request, deps);
 }
 
+/**
+ * `POST /v1/connections/oauth/start` and `POST /v1/connections/oauth/callback`.
+ *
+ * THE THIRD PLACE `env` BECOMES PORTS, and the shape is `handleConnections`' with one addition: the
+ * CLIENT REGISTRATION IS RESOLVED PER PROVIDER RATHER THAN GATHERED UP FRONT. A deployment that has
+ * registered a Loyverse app and not a Google one can connect Loyverse perfectly well -- Loyverse's
+ * registration is self-serve and instant, Google's sits behind an unbounded sensitive-scope review
+ * -- so demanding all six secrets here would make both routes answer 503 for a flow this deployment
+ * is fully configured for. The four bindings that EVERY flow needs are still gathered and named
+ * together, exactly as the other three routes gather theirs.
+ */
+function oauthConnectDeps(env: Env): OAuthConnectDeps | { missing: readonly string[] } {
+  const config = supabaseConfig(env);
+  const missing = "missing" in config ? [...config.missing] : [];
+  if (!env.CREDENTIAL_KEK) missing.push("CREDENTIAL_KEK");
+  if (!env.OAUTH_REDIRECT_URI) missing.push("OAUTH_REDIRECT_URI");
+  if (missing.length > 0) return { missing };
+
+  return {
+    postgrest: config as PostgrestConfig,
+    kek: env.CREDENTIAL_KEK ?? "",
+    crypto: crypto as unknown as OAuthConnectDeps["crypto"],
+    requestId: crypto.randomUUID(),
+    redirectUri: env.OAUTH_REDIRECT_URI ?? "",
+    clientCredentials: (provider) => clientCredentials(env, provider),
+    // The TOKEN ENDPOINT's fetch, and deliberately a different one from `postgrest.fetch`: two
+    // upstreams, two fakes in the test, and no way for one to stand in for the other by accident.
+    fetchImpl: fetch,
+  };
+}
+
+/**
+ * One provider's client registration, or the names of the bindings that are absent.
+ *
+ * A TOTAL SWITCH RATHER THAN `env[\`OAUTH_${provider.toUpperCase()}_CLIENT_ID\`]`, and the reason is
+ * the same one `providerFor` gives for being a map instead of a ternary: a computed binding name
+ * resolves to `undefined` for a provider nobody wired up, which presents as "not configured" for a
+ * provider that IS configured under a name somebody typed differently. A switch over `ProviderId`
+ * makes a new provider a COMPILE error here instead of a 503 in production.
+ *
+ * GATHERED, NOT SHORT-CIRCUITED: an operator who has set the id and forgotten the secret learns
+ * about both in one response.
+ */
+function clientCredentials(
+  env: Env,
+  provider: ProviderId,
+): ClientCredentials | { readonly missing: readonly string[] } {
+  const pair: Record<ProviderId, { id: string | undefined; secret: string | undefined }> = {
+    google: { id: env.OAUTH_GOOGLE_CLIENT_ID, secret: env.OAUTH_GOOGLE_CLIENT_SECRET },
+    meta: { id: env.OAUTH_META_CLIENT_ID, secret: env.OAUTH_META_CLIENT_SECRET },
+    loyverse: { id: env.OAUTH_LOYVERSE_CLIENT_ID, secret: env.OAUTH_LOYVERSE_CLIENT_SECRET },
+  };
+  const names: Record<ProviderId, readonly [string, string]> = {
+    google: ["OAUTH_GOOGLE_CLIENT_ID", "OAUTH_GOOGLE_CLIENT_SECRET"],
+    meta: ["OAUTH_META_CLIENT_ID", "OAUTH_META_CLIENT_SECRET"],
+    loyverse: ["OAUTH_LOYVERSE_CLIENT_ID", "OAUTH_LOYVERSE_CLIENT_SECRET"],
+  };
+
+  const { id, secret } = pair[provider];
+  const [idName, secretName] = names[provider];
+  const missing: string[] = [];
+  // Empty strings count as missing, for `supabaseConfig`'s reason: an empty secret is the shape a
+  // failed `wrangler secret put` leaves behind, and it would otherwise be refused by the provider
+  // in a message that sends whoever reads it to look at the customer's account.
+  if (!id) missing.push(idName);
+  if (!secret) missing.push(secretName);
+  if (missing.length > 0) return { missing };
+  return { clientId: id ?? "", clientSecret: secret ?? "" };
+}
+
+/** The 503 both OAuth routes answer with when a shared binding is absent. */
+function oauthNotConfigured(route: string, missing: readonly string[]): Response {
+  return Response.json(
+    {
+      ok: false,
+      error: "not_configured",
+      message:
+        `\`${route}\` is missing ${missing.join(", ")} on this deployment. The flow, the vault ` +
+        "and the pending-authorisation store are implemented and tested; this deployment is not " +
+        "configured.",
+    },
+    { status: 503 },
+  );
+}
+
 /** The wire shape. snake_case, like every other body this API emits. */
 function body_of(report: IngestReport): Record<string, unknown> {
   return {
@@ -511,8 +603,30 @@ export default {
       return await handleConnections(request, env);
     }
 
+    // THE OAUTH DOOR, AND IT IS A SEPARATE PATH RATHER THAN A LANE ON THE ONE ABOVE. `connect.ts`
+    // refuses a body naming `oauth` because accommodating it would mean fabricating a
+    // `TokenResponse` out of a pasted string; that refusal is correct and unchanged. See
+    // `oauth-connect.ts`.
+    if (
+      pathname === "/v1/connections/oauth/start" ||
+      pathname === "/v1/connections/oauth/callback"
+    ) {
+      const deps = oauthConnectDeps(env);
+      if ("missing" in deps) return oauthNotConfigured(pathname, deps.missing);
+      return pathname.endsWith("/start")
+        ? await handleOAuthStart(request, deps)
+        : await handleOAuthCallback(request, deps);
+    }
+
     return Response.json({ ok: false, error: "not_found" }, { status: 404 });
   },
 } satisfies ExportedHandler<Env>;
 
-export { handleConnections, handleIngestRun, handlePerformance, handleScheduled };
+export {
+  clientCredentials,
+  handleConnections,
+  handleIngestRun,
+  handlePerformance,
+  handleScheduled,
+  oauthConnectDeps,
+};

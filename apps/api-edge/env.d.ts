@@ -101,6 +101,51 @@ declare namespace Cloudflare {
      * `openssl rand -base64 32`, same as the KEK. Compared in constant time; see `tokenMatches`.
      */
     readonly INGEST_TOKEN?: string;
+
+    /**
+     * WHERE A PROVIDER SENDS THE CUSTOMER BACK TO, e.g. `https://<app>/connections/callback`.
+     *
+     * A `var`, not a secret -- it is in every authorisation URL the customer's own browser follows,
+     * so it is public by construction. It is a BINDING rather than a request field for the reason
+     * `oauth-connect.ts` states: a caller-supplied redirect URI is an open redirect with an
+     * authorisation code attached.
+     *
+     * IT POINTS AT THE WEB APP AND NOT AT THIS WORKER, and that is not an accident of hosting. The
+     * web app's origin is the only one carrying the Supabase session cookie, and "the workspace
+     * comes from the caller's session" is unsatisfiable at a redirect that arrives with no session.
+     *
+     * NOT COMMITTED, for the same reason `SUPABASE_URL` is not: the domain is deliberately
+     * unsettled, and a value in `wrangler.jsonc` would be a guess about which deployment this is.
+     */
+    readonly OAUTH_REDIRECT_URI?: string;
+
+    /**
+     * THE CLIENT REGISTRATIONS, one pair per authorisation server (`@repo/oauth`'s `PROVIDERS`).
+     *
+     * PER PROVIDER, AND RESOLVED PER REQUEST RATHER THAN ALL AT ONCE. A deployment that has
+     * registered a Loyverse app and not a Google one can connect Loyverse perfectly well --
+     * Loyverse's registration is self-serve and instant, Google's sits behind an unbounded
+     * sensitive-scope review -- so requiring all six would make the whole route answer 503 for a
+     * flow it is fully configured for. `handleOAuthStart` asks for the pair belonging to the
+     * provider that was requested and names both halves if either is absent.
+     *
+     * EVERY `_SECRET` IS A WORKER SECRET (`wrangler secret put`), never a `var`. The client secret
+     * is one half of what completes an exchange; the other half is the one-time code. The client
+     * IDs are declared alongside them rather than as vars because they are supplied by the same
+     * registration step and absent in exactly the same deployments -- and an id set without its
+     * secret is a deployment that fails at the token endpoint rather than at the door.
+     *
+     * THERE IS NO COMPANY-HELD FALLBACK, and there must never be one. Google's developer policy
+     * forbids letting third parties "avoid applying for their own Google Ads developer access and
+     * Google Cloud Platform project"; Meta requires per-client separation. These name the CUSTOMER
+     * DEPLOYMENT's own registration, not a shared one.
+     */
+    readonly OAUTH_GOOGLE_CLIENT_ID?: string;
+    readonly OAUTH_GOOGLE_CLIENT_SECRET?: string;
+    readonly OAUTH_META_CLIENT_ID?: string;
+    readonly OAUTH_META_CLIENT_SECRET?: string;
+    readonly OAUTH_LOYVERSE_CLIENT_ID?: string;
+    readonly OAUTH_LOYVERSE_CLIENT_SECRET?: string;
   }
 }
 
