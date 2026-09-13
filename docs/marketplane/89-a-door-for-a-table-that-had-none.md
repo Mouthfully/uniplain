@@ -1,6 +1,6 @@
 # 89. A door for a table that had none
 
-**PR:** #TBD &nbsp;·&nbsp; **Date:** 2026-09-13 &nbsp;·&nbsp; **Status:** proposed
+**PR:** [#77](https://github.com/Mouthfully/uniplain/pull/77) &nbsp;·&nbsp; **Date:** 2026-09-13 &nbsp;·&nbsp; **Status:** proposed
 
 ---
 
