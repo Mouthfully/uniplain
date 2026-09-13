@@ -1,6 +1,6 @@
 import { brand, formatAddress } from "@repo/brand";
 
-import { NAV, NAV_MENU, SITE } from "./_content";
+import { FOOTER_LEGAL_LINKS, NAV, NAV_MENU, SITE } from "./_content";
 
 /**
  * The header and footer, shared by the marketing page and the dashboard.
@@ -227,13 +227,12 @@ export function Footer() {
 
           {/* Linked from every page, because a policy reachable only by typing its URL is not
               published in any sense a regulator or a customer would accept. */}
-          <p className="mt-3 flex gap-4">
-            <a className="text-accent hover:underline" href="/terms">
-              Terms
-            </a>
-            <a className="text-accent hover:underline" href="/privacy">
-              Privacy
-            </a>
+          <p className="mt-3 flex flex-wrap gap-x-4 gap-y-2">
+            {FOOTER_LEGAL_LINKS.map((link) => (
+              <a key={link.href} className="text-accent hover:underline" href={link.href}>
+                {link.label}
+              </a>
+            ))}
           </p>
         </div>
       </div>

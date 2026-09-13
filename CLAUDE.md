@@ -42,6 +42,7 @@ So: **refuse rather than repair or default.**
 | `check-capabilities` | a connector claimed in `claims.ts` that is not implemented and exported |
 | `check-claim-sources` | a claim citing a superseded specification section |
 | `check-providers`, `check-registry` | provider and field-registry drift |
+| `check-erasure` | a payload write shipping without anything able to delete it when a customer closes their account |
 
 Plus two test-shaped guards that behave the same way: `withheld-claims.test.tsx` refuses a claim the
 capability gate withholds being rewritten as hand-typed section copy, and `forbidden-claims.test.ts`

@@ -214,7 +214,7 @@ export const brand: Brand = {
   // here. It stays withheld behind `surface:region-choice` until a customer can actually choose.
   dataRegion: "ap-southeast-1",
   euRepresentative: null,
-  dpaAvailable: false,
+  dpaAvailable: true,
 
   // Neither is held. Both are flipped by a third party handing over a document, never by an edit
   // here -- and `packages/brand/src/brand.test.ts` fails the moment one is flipped while the

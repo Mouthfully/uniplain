@@ -146,15 +146,44 @@ today, but the trigger is a standing review item, not a one-off.
 
 ---
 
-## 2. GDPR — applies only if a business decision says so
+## 2. GDPR — the business decision was taken by the pricing table
 
-**Applicability is genuinely open and nobody has decided it.** The entity is Thai, so the GDPR
-reaches it only through Art. 3(2) — offering goods or services to data subjects in the Union, or
-monitoring their behaviour. That turns on whether the business sells into the EU. Until it is
-settled, `brand.euRepresentative` stays `null` and the `gdpr` and `dpa` claims stay withheld.
+**This section used to open "Applicability is genuinely open and nobody has decided it… That turns
+on whether the business sells into the EU." That premise was false when it was written.** The site
+sells into the EU: `/pricing` quotes **euro** prices to any visitor, the footer on every page says
+the product is built for businesses everywhere, the pricing hero reads "Priced in your currency",
+and tax is added at checkout according to where the buyer is.
 
-Note: **if Art. 3(2) does bite, Art. 27 requires a representative in the Union designated in
-writing**, and every PDPA gap above reappears with a different section number and a larger fine.
+Nobody decided that as a legal position. A pricing table decided it, and the conclusion was never
+carried back to the paragraph saying the question was open — which is why nobody went looking for
+the answer for as long as the question looked unanswered.
+
+The entity is Thai, so the GDPR reaches it only through Art. 3(2). EDPB Guidelines 3/2018 name the
+possibility of paying **in the currency of a Member State, other than the one generally used in the
+trader's own State**, among the factors showing a controller envisages offering services to data
+subjects in the Union. The trader's State is Thailand; `brand.defaultCurrency` is USD; the euro is
+neither. `apps/web/app/_processing/territorial-scope.ts` reads the configuration and reports the
+factors with the file each was read from, so this is evidence rather than an impression, and
+`territorial-scope.test.ts` goes red if any of it moves.
+
+**THIS IS LIVE CONDUCT, NOT A MISSING DOCUMENT.** Every other gap on this page is something not yet
+done. If Art. 3(2)(a) is engaged, the obligations attached the day the first euro price rendered,
+and **Art. 27 requires a representative in the Union designated in writing**. Every PDPA gap in §1
+reappears with a different section number and a larger ceiling.
+
+**An obligation is not a claim.** `FORBIDDEN_CLAIMS` stops the site *saying* it is GDPR compliant
+and the `gdpr` and `dpa` claims stay withheld on `euRepresentative` — all correct, and none of it
+stops the GDPR applying. Reading "the claim is withheld" as "we are out of scope" is the specific
+mistake this section now exists to prevent.
+
+Three outcomes, and doing nothing is not among them:
+
+1. **Counsel finds Art. 3(2)(a) engaged** → designate an Art. 27 representative; `euRepresentative`
+   stops being null, which turns `territorial-scope.test.ts` red until this section is rewritten.
+2. **The founder decides the EU is not a market** → the euro price and the territory-free copy come
+   off. A commercial decision, not taken in code.
+3. **Counsel finds the factors insufficient** → record the finding *with this evidence*, so it is
+   not rediscovered, and the assessment reopens itself if the configuration moves.
 
 ### Implemented
 

@@ -171,15 +171,24 @@ declare
   -- workspace on the platform, and could hold a lease on each -- stopping every backfill fifteen
   -- minutes at a time, indefinitely.
   --
-  -- `public.join_waitlist(text, text)` IS here, from 20260912000700_waitlist.sql. It is the one
-  -- function in this schema that is MEANT to be called by a stranger: the product is pre-launch and
-  -- the people signing up are by definition not authenticated. It is safe to expose because of what
-  -- it cannot do -- it takes one address, writes one row, reads nothing back, and does nothing on
-  -- conflict, so it cannot be used to ask whether an address is already on the list. `anon` has no
-  -- grant on `public.waitlist` itself, which the table assertions above check.
+  -- `public.join_waitlist(text, text)` WAS here, and is deliberately gone as of
+  -- 20260913001500_close_waitlist_collection.sql. The entry used to read: "It is the one function
+  -- in this schema that is MEANT to be called by a stranger: the product is pre-launch and the
+  -- people signing up are by definition not authenticated."
+  --
+  -- THAT SENTENCE WAS TRUE AND STOPPED BEING TRUE WITHOUT MOVING. The waiting list was removed --
+  -- `/waitlist` became `/access`, the form and the server action went, and the function's only
+  -- caller went with them -- so the grant stood open to the internet with no page in front of it
+  -- and no purpose behind it. Nothing failed, because the justification lived in a comment and a
+  -- comment is compared to nothing.
+  --
+  -- It is recorded here rather than deleted because the safety argument it made was sound on its
+  -- own terms (one address in, one row written, nothing read back, no conflict signal -- so it
+  -- could not even be used to ask whether an address was already on the list) and the entry still
+  -- came out wrong. A grant justified by a product state has to be revisited when the product state
+  -- changes, and the only thing that makes that happen is this list being short enough to read.
   v_expected constant text[] := array[
     'public.consume_api_key_credits(bytea, integer)',
-    'public.join_waitlist(text, text)',
     'public.verify_api_key(bytea)'
   ];
   v_found text[] := '{}';
@@ -201,16 +210,20 @@ begin
     perform app_test.check(
       format('%s is an intended anon-executable function', r.sig),
       r.sig = any (v_expected),
-      format('%s is callable by anon, so it is callable by the internet. Three functions are '
-             'meant to be: two gated on possession of an API key hash, and the waiting-list '
-             'write, which is meant for strangers and can read nothing back.', r.sig)
+      -- THE COUNT IS DERIVED, NOT TYPED. This message used to open "Three functions are meant to
+      -- be" and name the waiting-list write among them. It was still saying so after that grant
+      -- was revoked, which made the failure text of the drift guard itself a piece of drift. A
+      -- number in prose beside an array is a number that will disagree with the array.
+      format('%s is callable by anon, so it is callable by the internet. %s function(s) are meant '
+             'to be, each gated on possession of a secret the caller must already hold: %s',
+             r.sig, cardinality(v_expected), array_to_string(v_expected, ', '))
     );
   end loop;
 
   -- The loop above cannot notice a DISAPPEARANCE. This does: a revoke that quietly took the edge's
   -- own entry points with it presents as "every API key is rejected" and costs somebody a day.
   perform app_test.check(
-    'exactly the three intended functions are anon-executable in public',
+    'exactly the intended functions are anon-executable in public',
     v_found = v_expected,
     format('anon-executable set in public is %s; expected %s', v_found, v_expected)
   );

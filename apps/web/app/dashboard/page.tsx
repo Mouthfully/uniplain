@@ -15,6 +15,7 @@ import {
   SITE_DASHBOARD,
 } from "../_content";
 import { LiveRows } from "./_rows";
+import { dashboardSpan, spanLabel } from "./_span";
 
 /**
  * ALWAYS RENDERED PER REQUEST.
@@ -51,8 +52,6 @@ export const metadata: Metadata = {
  * `robots: noindex` above is the other half of that honesty: nothing here should reach a search
  * result as though it were a live product screen.
  */
-/** The span the screen describes. One place, so the heading and the query cannot disagree. */
-const SPAN = { from: "2026-06-01", to: "2026-06-30" } as const;
 
 const DASH_STATE = {
   signedOut:
@@ -61,8 +60,12 @@ const DASH_STATE = {
     "Your account has no workspace yet. One is created with your organisation, and nothing has created it.",
   unavailable:
     "Your data could not be read just now. The screen below is the illustrative concept.",
-  noRows:
-    "Your workspace has no rows for this period yet. Connect a source and run a backfill to fill it.",
+  // NAMES THE PERIOD, because the sentence is about the reader's business. This used to read "no
+  // rows for this period yet" beside a query frozen to June 2026: a customer trading in September
+  // was told their data had not arrived, about a window they never chose and could not see. A
+  // reader who cannot tell which question was asked cannot tell an empty month from a wrong one.
+  noRows: (span: string) =>
+    `Your workspace has no rows for ${span} yet. Connect a source and run a backfill to fill it.`,
   // A FAILED READ IS NOT AN EMPTY PERIOD, and until the live table landed the two shared a
   // sentence: `performanceRows` returns no rows on error, so a customer whose query failed was
   // told their period was empty. That is a statement about their business made from a database
@@ -78,7 +81,12 @@ export default async function DashboardPage() {
   const user = isAuthConfigured() ? await currentUser() : null;
   const state = user ? await currentWorkspace() : null;
   const live = state?.kind === "ready" ? state.workspace : null;
-  const performance = live ? await performanceRows(SPAN.from, SPAN.to) : null;
+  // THE CLOCK IS READ ONCE, HERE, and handed down -- the pattern `/brief` established for the same
+  // reason: the period becomes an input to the render rather than a function of when the render
+  // happened to run. `dashboardSpan` throws on an unusable date rather than substituting one,
+  // because a quietly defaulted window is the defect this replaced.
+  const span = dashboardSpan(new Date().toISOString().slice(0, 10));
+  const performance = live ? await performanceRows(span.from, span.to) : null;
 
   // Rendered only when the read SUCCEEDED and returned something. An errored read has no rows to
   // show and, more importantly, nothing true to say about the period -- `DASH_STATE` says so.
@@ -97,7 +105,7 @@ export default async function DashboardPage() {
           : performance && performance.error !== null
             ? DASH_STATE.rowsUnavailable
             : performance && performance.rows.length === 0
-              ? DASH_STATE.noRows
+              ? DASH_STATE.noRows(spanLabel(span))
               : null;
 
   return (
@@ -150,7 +158,7 @@ export default async function DashboardPage() {
             direction is a real number mistaken for a concept -- never the reverse. */}
         {liveRows.length === 0 ? null : (
           <div className="mx-auto max-w-[1200px] px-8 pt-4 pb-2">
-            <LiveRows rows={liveRows} />
+            <LiveRows rows={liveRows} span={spanLabel(span)} />
           </div>
         )}
 

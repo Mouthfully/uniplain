@@ -2,6 +2,7 @@ import { brand, formatAddress } from "@repo/brand";
 import type { Metadata } from "next";
 
 import { Footer, SiteHeader } from "../_chrome";
+import { SUB_PROCESSORS } from "../_processing/sub-processors";
 
 /**
  * THE TERMS OF SERVICE, at /terms.
@@ -142,6 +143,56 @@ const LEGAL_INBOX_LINE =
     ? "There is no separate legal inbox yet, so notices and questions about this document go to the contact address above."
     : `Notices and questions about this document go to ${brand.legalEmail}.`;
 
+/**
+ * WHAT IS AND IS NOT ARRANGED, COMPUTED FROM THE FACTS RATHER THAN TYPED.
+ *
+ * This clause used to be one hand-written sentence: "There is no data processing agreement
+ * available to sign, no representative appointed in the European Union, no published list of
+ * sub-processors, and no security certification". It was true the day it was written. Two of its
+ * four items went false without it changing -- `/sub-processors` shipped, and then `/dpa` did --
+ * and nothing in the repository noticed, because a denial is prose and prose is compared to
+ * nothing.
+ *
+ * A STALE DENIAL IS THE SAME DEFECT AS A FALSE CLAIM, and in a contract it is the more dangerous
+ * direction: a customer's reviewer reads "no DPA is available", closes the tab, and never sees the
+ * agreement that would have cleared the purchase. So each arrangement is now a fact with a
+ * sentence on either side of it, and `terms.test.tsx` reads the same facts and asserts the clause
+ * says what they say.
+ */
+const ARRANGEMENTS: readonly {
+  readonly held: boolean;
+  readonly yes: string;
+  readonly no: string;
+}[] = [
+  {
+    held: brand.dpaAvailable,
+    yes: "A data processing agreement is published and can be cited by version.",
+    no: "There is no data processing agreement available to sign.",
+  },
+  {
+    held: brand.euRepresentative !== null,
+    yes: "A representative is appointed in the European Union.",
+    no: "No representative is appointed in the European Union.",
+  },
+  {
+    held: SUB_PROCESSORS.length > 0,
+    yes: "The providers that process data on our behalf are published as a list.",
+    no: "There is no published list of sub-processors.",
+  },
+  {
+    held: brand.soc2TypeIIReport || brand.iso27001Certificate,
+    yes: "A security certification or attestation is held.",
+    no: "No security certification, audit or attestation of any kind is held. No claim to the contrary appears anywhere on this site.",
+  },
+];
+
+const NOT_ARRANGED_INTRO =
+  ARRANGEMENTS.every((a) => a.held) === true
+    ? "A buyer reviewing a service of this kind usually looks for several data-protection arrangements. This document lists where each one stands."
+    : "A buyer reviewing a service of this kind usually looks for several data-protection arrangements. Some of them do not exist today, and this document states that rather than leaving it to be inferred from silence.";
+
+const NOT_ARRANGED_LINES: readonly string[] = ARRANGEMENTS.map((a) => (a.held ? a.yes : a.no));
+
 /** Where the data actually sits. `brand.dataRegion` is set; the choice of it is ours, not yours. */
 const HOSTING_LINE =
   brand.dataRegion === null
@@ -211,9 +262,9 @@ const CLAUSES: readonly Clause[] = [
     id: "not-arranged",
     title: "What we have not arranged yet",
     body: [
-      "A buyer reviewing a service of this kind usually looks for several data-protection arrangements. None of them exists today, and this document states that rather than leaving it to be inferred from silence.",
-      "There is no data processing agreement available to sign, no representative appointed in the European Union, no published list of sub-processors, and no security certification, audit or attestation of any kind. No claim to the contrary appears anywhere on this site.",
-      "A customer whose own obligations depend on any of those should treat them as unavailable today and raise it with us before relying on the service for data those obligations cover.",
+      NOT_ARRANGED_INTRO,
+      ...NOT_ARRANGED_LINES,
+      "A customer whose own obligations depend on anything listed as unavailable should treat it as unavailable today and raise it with us before relying on the service for data those obligations cover.",
     ],
   },
   {
