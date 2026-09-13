@@ -1,3 +1,8 @@
+import type { MetricName } from "@repo/contract";
+import type { ImplementedSourceId } from "@repo/brand";
+
+import { implementedSources, sourceMark } from "./_source-marks";
+
 /**
  * CONSOLIDATED REPORTS -- the fourth capability, in the section that used to sell templates.
  *
@@ -83,72 +88,122 @@ const CTA_LABEL = "See what is in one";
 /** One label for all four cards, as in the reference. */
 const CARD_CTA_LABEL = "Preview";
 
-/** Names the bar chart for assistive tech, which would otherwise hear eight empty elements. The
- *  figures are invented, and section 5.3 requires an invented figure to say so. */
-const CHART_LABEL = "Sample figures";
+/** Names each card's two lists, which otherwise read as runs of bare words. */
+const METRICS_LABEL = "Figures in this report";
+const SOURCES_LABEL = "Connectors this report reads";
 
 /**
- * The four reports, in the plan's own order. `bars` is that card's eight `[height %, opacity]`
- * pairs, transcribed from the reference's inline styles and left exactly as drawn.
+ * THE PANEL'S OWN LABEL, and it is a stronger statement than the one it replaces.
  *
- * NONE OF THESE IS GENERATED TODAY. There is no report writer anywhere in `apps/` or `packages/`,
- * and the accompanying design note records all four as claims written ahead of the capability. The
- * difference the header draws still holds: all four are unbuilt, and all four are now expressible.
+ * The chart carried `aria-label="Sample figures"` -- section 5.3's required mark on an invented
+ * figure. It was the only place the page admitted these four documents do not exist, and it was
+ * alt text, so no sighted reader ever met it. The bars are gone and the admission is now visible.
  */
-const REPORTS = [
+const PANEL_NOTE =
+  "These four are designed and not yet generated. What each one would contain is listed above, in the metrics this product already stores.";
+
+interface ReportCard {
+  readonly name: string;
+  /**
+   * Who the document is for, or the axis it is cut on. A NOUN PHRASE, NOT A SENTENCE.
+   *
+   * `check-copy` refused the first version of these and was right to. They read "Every trading day
+   * in the period, so a quiet week shows up as a shape." -- a sentence, on the page, describing the
+   * behaviour of a report that does not exist. The guard's rule is that a promise reaches the site
+   * through `claim()` so the capability gate can withhold it, and there is no reports capability to
+   * gate these on; routing them through `CLAIMS` would have withheld them and emptied the cards.
+   *
+   * Shortening them is not evading the guard, because what was removed is the promise rather than
+   * the punctuation: "For a bookkeeper, gross and net apart" says who the document is for and how
+   * it is cut, which is part of naming it. It asserts nothing about what the product does.
+   */
+  readonly asks: string;
+  /** Typed against the dictionary, so a metric with no column cannot be listed. */
+  readonly metrics: readonly MetricName[];
+  /** Typed against the built connectors, so an unbuilt platform cannot be named as a source. */
+  readonly sources: readonly ImplementedSourceId[];
+}
+
+/**
+ * SHORT NAMES FOR THE DICTIONARY'S METRICS, for a card rather than for a prompt.
+ *
+ * `METRIC_LABELS` in `figures.ts` already names these, and it is deliberately not reused: it is
+ * written for a MODEL -- "revenue, as the source reported it" exists at that length so a prompt
+ * cannot confuse gross with net. On a card it would wrap to three lines and say less. Two
+ * audiences, two renderings, which is a different thing from the same name typed twice.
+ *
+ * `Record<MetricName, string>` is TOTAL on purpose: adding a metric to the dictionary fails this
+ * file until it is named here, so the card cannot quietly stop covering part of the vocabulary.
+ */
+const METRIC_CARD_LABELS: Readonly<Record<MetricName, string>> = {
+  spend: "Ad spend",
+  impressions: "Impressions",
+  clicks: "Clicks",
+  sessions: "Sessions",
+  conversions: "Conversions",
+  conversions_value: "Conversion value",
+  revenue: "Takings",
+  orders: "Orders",
+  net_revenue: "After platform cut",
+  fees: "Fees",
+  commission: "Commission",
+  position: "Search position",
+};
+
+/**
+ * THE FOUR REPORTS, AND WHY THE CHART IS GONE.
+ *
+ * Each card used to carry an eight-bar chart. All four were THE SAME CHART: the second card's
+ * heights are the first minus 6, the third minus 12, the fourth minus 18 -- one curve from the
+ * reference artboard, shifted down three times. A reader saw four identical shapes above four
+ * different names and learned nothing, which is exactly how the section read.
+ *
+ * It was also a picture that could not be true. "Revenue and ad spend by channel" and "Orders and
+ * takings by day" are different shapes of document about different axes; drawing them identically
+ * says nothing about either, and the section's own note already warned that "a flat or
+ * evenly-ascending set reads as a placeholder" directly above four copies of one.
+ *
+ * WHAT REPLACED IT IS THE THING A READER ACTUALLY WANTS TO KNOW: what is in it. Each card now
+ * states who asks for it, which metrics it is built from, and which connectors it reads. The four
+ * become visibly different because their CONTENTS are different -- the accountant export is
+ * takings, commission and fees off one till; the channel report is takings against ad spend across
+ * four connectors.
+ *
+ * AND UNLIKE THE BARS, ALL OF IT IS CHECKED. `metrics` is typed `MetricName`, so `check-dictionary`
+ * and the compiler both refuse a metric this product has no column for -- which is the discipline
+ * the header of this file spends thirty lines on, now applied to the cards rather than only to
+ * their names. `sources` is typed `ImplementedSourceId` and narrowed again at render, so no unbuilt
+ * platform can appear as a source.
+ *
+ * NONE OF THESE IS GENERATED TODAY, which was true before this change and is stated on the panel
+ * now rather than only in the chart's alt text, where no sighted reader met it.
+ */
+export const REPORTS = [
   {
     name: "Monthly investor update",
-    bars: [
-      [35, 0.45],
-      [51, 0.52],
-      [42, 0.59],
-      [67, 0.66],
-      [57, 0.73],
-      [85, 0.8],
-      [75, 0.87],
-      [96, 0.94],
-    ],
+    asks: "For a co-founder or an investor",
+    metrics: ["revenue", "net_revenue", "orders", "spend"],
+    sources: ["woocommerce", "meta_ads", "google_ads"],
   },
   {
     name: "Revenue and ad spend by channel",
-    bars: [
-      [29, 0.45],
-      [45, 0.52],
-      [36, 0.59],
-      [61, 0.66],
-      [51, 0.73],
-      [79, 0.8],
-      [69, 0.87],
-      [90, 0.94],
-    ],
+    asks: "Earned against paid, by channel",
+    metrics: ["revenue", "spend", "conversions"],
+    sources: ["woocommerce", "meta_ads", "google_ads", "ga4"],
   },
   {
     name: "Orders and takings by day",
-    bars: [
-      [23, 0.45],
-      [39, 0.52],
-      [30, 0.59],
-      [55, 0.66],
-      [45, 0.73],
-      [73, 0.8],
-      [63, 0.87],
-      [84, 0.94],
-    ],
+    asks: "Every trading day, in order",
+    metrics: ["orders", "revenue"],
+    sources: ["woocommerce"],
   },
   {
     name: "Accountant export",
-    bars: [
-      [20, 0.45],
-      [33, 0.52],
-      [24, 0.59],
-      [49, 0.66],
-      [39, 0.73],
-      [67, 0.8],
-      [57, 0.87],
-      [78, 0.94],
-    ],
+    asks: "For a bookkeeper, gross and net apart",
+    metrics: ["revenue", "commission", "fees", "net_revenue"],
+    sources: ["woocommerce"],
   },
-] as const;
+] as const satisfies readonly ReportCard[];
 
 export function Reports() {
   return (
@@ -192,22 +247,48 @@ export function Reports() {
               className="border-line bg-surface hover:border-accent flex flex-1 flex-col rounded-lg border p-3 text-left transition-colors md:p-[18px]"
             >
               <strong className="text-ink text-xs leading-[1.3] font-bold">{report.name}</strong>
+              <span className="text-ink-muted mt-1.5 block text-[11px] leading-[1.45]">
+                {report.asks}
+              </span>
 
-              <div
-                role="img"
-                aria-label={CHART_LABEL}
-                className="mt-5 flex h-[78px] items-end gap-[7px]"
-              >
-                {report.bars.map(([height, opacity], index) => (
-                  <span
-                    key={index}
-                    /* Height and opacity are per-bar data, so they stay inline; the fill is a
-                       token-backed gradient class, so no colour literal is written here. */
-                    style={{ height: `${height}%`, opacity }}
-                    className="from-brand-blue to-brand-blue/40 block flex-1 rounded-t-[2px] bg-linear-to-b"
-                  />
+              {/* WHAT IS IN IT. The metric names are the dictionary's, so `check-dictionary` and
+                  the compiler both refuse one this product has no column for. */}
+              <ul aria-label={METRICS_LABEL} className="mt-3 flex list-none flex-wrap gap-1 p-0">
+                {report.metrics.map((metric) => (
+                  <li
+                    key={metric}
+                    className="border-line bg-surface-subtle text-ink-subtle rounded-sm border px-1.5 py-0.5 text-[10px] leading-[1.4]"
+                  >
+                    {METRIC_CARD_LABELS[metric]}
+                  </li>
                 ))}
-              </div>
+              </ul>
+
+              {/* WHERE IT COMES FROM. Narrowed again at render even though the field is already
+                  typed: a cast is all it takes to get an unbuilt platform past a type, and this is
+                  a source claim on a marketing page. */}
+              <ul aria-label={SOURCES_LABEL} className="mt-2 flex list-none flex-wrap gap-1 p-0">
+                {implementedSources(report.sources).map((id) => {
+                  const mark = sourceMark(id);
+                  return (
+                    <li
+                      key={mark.id}
+                      className="text-ink-faint inline-flex items-center gap-1 text-[10px] leading-[1.4]"
+                    >
+                      {mark.slug === null ? null : (
+                        <img
+                          src={`/platforms/${mark.slug}.svg`}
+                          alt=""
+                          width={10}
+                          height={10}
+                          className="h-2.5 w-2.5 shrink-0 object-contain"
+                        />
+                      )}
+                      {mark.label}
+                    </li>
+                  );
+                })}
+              </ul>
 
               <span className="text-accent mt-3 inline-flex items-center gap-1.5 text-xs font-bold">
                 {CARD_CTA_LABEL}
@@ -216,6 +297,9 @@ export function Reports() {
             </a>
           </li>
         ))}
+        <li className="col-span-2 list-none">
+          <p className="text-ink-faint px-1 pt-1 text-[10px] leading-[1.5]">{PANEL_NOTE}</p>
+        </li>
       </ul>
     </section>
   );
