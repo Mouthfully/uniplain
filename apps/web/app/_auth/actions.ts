@@ -83,8 +83,26 @@ export async function signInWithGoogle(): Promise<never> {
   redirect(data.url as Parameters<typeof redirect>[0]);
 }
 
+/**
+ * THE SIGN-OUT BUTTON, AND THE SCOPE NOBODY CHOSE.
+ *
+ * This called `signOut()` with no argument, and `@supabase/auth-js` documents what that means:
+ * "the default `scope` is `'global'`. This signs the user out of EVERY DEVICE they are currently
+ * signed in on, not just the current tab/session." Its own guidance is to pass `'local'` explicitly,
+ * which is "the behavior most other auth libraries default to".
+ *
+ * Nothing here chose that. The button says "Sign out" beside one person's figures on one screen,
+ * and it was ending the session on their phone and on the shop's counter tablet at the same time.
+ * For the customer this product is sold to -- an owner and two or three staff sharing devices --
+ * that is not a security feature, it is the till logging itself out because somebody closed a
+ * laptop. The scope is now written down, which is the actual fix: an unstated default is a decision
+ * nobody can review.
+ *
+ * SIGNING OUT OF THE OTHER DEVICES IS A SEPARATE, DELIBERATE ACT, on `/account`. That is the
+ * screen where the consequence can be explained, which it cannot be on a button in a page header.
+ */
 export async function signOut(): Promise<never> {
   const supabase = await supabaseServer();
-  await supabase.auth.signOut();
+  await supabase.auth.signOut({ scope: "local" });
   redirect("/");
 }

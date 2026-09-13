@@ -9,30 +9,33 @@ import { ACCOUNT_COPY } from "./_content";
 import { NOT_INCLUDED } from "./_export";
 import { EmailForm } from "./email-form";
 import { EraseForm } from "./form";
+import { SessionForm } from "./session-form";
 
 /**
- * THE TWO RIGHTS THE PDPA GIVES A CUSTOMER, AND THE ONE CHANGE THAT KEEPS THE ACCOUNT REACHABLE.
+ * THE TWO RIGHTS THE PDPA GIVES A CUSTOMER, AND THE TWO CHANGES THAT KEEP THE ACCOUNT THEIRS.
  *
  * s.31 portability and s.33 erasure. Both are laws that already bind this controller -- s.5 binds a
  * controller located in the Kingdom, and `brand.legalEntity` is a Thai juristic person -- rather
  * than features to be scheduled, which is why they are here before the things that are easier to
  * build.
  *
- * The third section is the sign-in address, and it belongs beside them rather than on a settings
- * page of its own because it answers the same question: what happens to this account when the
- * person who opened it is no longer the person holding it. An owner-run business changes hands, an
- * office manager leaves, a domain is consolidated. Without this the only route is support, and a
- * product sold to a business with no IT department should not make support the route.
+ * The middle two sections -- the sign-in address, and the other signed-in devices -- belong beside
+ * them rather than on a settings page of their own because they answer the same question: what
+ * happens to this account when the person who opened it is no longer the person holding it. An
+ * owner-run business changes hands, an office manager leaves with the laptop, a domain is
+ * consolidated. Without these the only route is support, and a product sold to a business with no
+ * IT department should not make support the route.
  *
- * THE ORDER IS TAKE, MOVE, CLOSE, and the destructive control is last on purpose -- a person
- * scrolling to find the export should not pass the button that ends the account on the way.
+ * THE DESTRUCTIVE CONTROL IS LAST on purpose -- a person scrolling to find the export should not
+ * pass the button that ends the account on the way.
  *
- * THE ADDRESS SECTION IS OUTSIDE THE MEMBERSHIP BRANCH, and that is the part worth reading twice.
- * The address belongs to the sign-in record, not to the organisation: `readMembership` returning
- * `unavailable` means the database could not answer a question about an organisation, which says
- * nothing about whether a person may move their own account to a different mailbox. Rendering it
- * inside that branch would withdraw the one remedy on this page at exactly the moment something is
- * already wrong -- which is the shape of every outage that turns into a support ticket.
+ * THE TWO MIDDLE SECTIONS ARE OUTSIDE THE MEMBERSHIP BRANCH, and that is the part worth reading
+ * twice. An address and a session belong to the sign-in record, not to the organisation:
+ * `readMembership` returning `unavailable` means the database could not answer a question about an
+ * organisation, which says nothing about whether a person may move their own account to a different
+ * mailbox or end a session on a device they no longer have. Rendering them inside that branch would
+ * withdraw the only remedies on this page at exactly the moment something is already wrong -- which
+ * is the shape of every outage that turns into a support ticket.
  *
  * ALWAYS RENDERED PER REQUEST, and never indexed. The page names an organisation and offers to
  * destroy it.
@@ -108,6 +111,16 @@ export default async function AccountPage() {
             <h2 className="text-ink text-sm font-bold">{ACCOUNT_COPY.emailHeading}</h2>
             <div className="mt-3">
               <EmailForm currentEmail={user.email ?? null} pendingEmail={user.new_email ?? null} />
+            </div>
+          </section>
+
+          {/* Beside the address for the same reason it is here at all: both answer "the person who
+              set this up is gone". Outside the membership branch on the same grounds -- a session
+              belongs to the sign-in record, not to an organisation. */}
+          <section className="mt-12">
+            <h2 className="text-ink text-sm font-bold">{ACCOUNT_COPY.sessionsHeading}</h2>
+            <div className="mt-3">
+              <SessionForm />
             </div>
           </section>
 

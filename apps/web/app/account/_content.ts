@@ -11,7 +11,11 @@
 
 export const ACCOUNT_COPY = {
   eyebrow: "Your account",
-  heading: "Take your data, move the account, or close it.",
+  // A CATEGORY RATHER THAN A LIST, so the heading does not go stale the next time a control lands
+  // here. It said "both of these" when there were two, and "take, move, close" when there were
+  // three; the fourth arrived a day later. "Change who reaches it" covers the address and the
+  // signed-in devices alike, because from the owner's side they are one question.
+  heading: "Take your data, change who reaches it, or close the account.",
   // NO COUNT IN THE SENTENCE. It said "both of these" when there were two things on the page and
   // was wrong the moment a third arrived, which is the kind of copy defect that ships because
   // nobody re-reads the lead when adding a section.
@@ -69,6 +73,30 @@ export const ACCOUNT_COPY = {
   emailUnchanged: "That is the address you already sign in with.",
   emailFailed:
     "The confirmations could not be sent, and nothing was changed. Try again in a few minutes, and tell us if it keeps happening.",
+
+  // --- Other devices. -----------------------------------------------------------------------------
+  sessionsHeading: "Sign out everywhere else",
+  sessionsBody:
+    "A laptop left at the office, a phone that was sold, a tablet behind the counter somebody else now uses. This ends every signed-in session except the one you are reading this on.",
+  // THE LIST IS NOT SHOWN BECAUSE IT CANNOT BE, AND THE SENTENCE SAYS WHICH. An empty table would
+  // read as "nothing else is signed in", which is the wrong-number failure wearing a different
+  // costume: a person checks, is reassured, and stops looking.
+  sessionsNoList:
+    "We cannot show you the list of devices. Reading it needs a key that would also read every other account here, and we do not hold one. So this ends them all rather than letting you pick.",
+  // NO WINDOW, NOT EVEN A VAGUE ONE. The first draft of this sentence ended "which is minutes
+  // rather than days". That is the project's access-token lifetime, it is configurable, and this
+  // code cannot read it -- so the reassuring half of the sentence was a guess wearing the costume
+  // of a fact, which is the one thing this product is sold against. What is certain is the
+  // mechanism, and only the mechanism is stated.
+  sessionsNotInstant:
+    "It is not instant. The other device keeps working until the access token it already holds runs out, and after this it cannot get another one.",
+  sessionsButton: "Sign out of every other device",
+  sessionsWorking: "Signing out",
+  sessionsDone:
+    "Every other session is finished. You are still signed in here, and nothing else about the account has changed.",
+  sessionsSignedOut: "You are not signed in, so there is nothing to sign out of.",
+  sessionsFailed:
+    "That did not go through, and nothing was changed. Every other device is still signed in. Try again in a few minutes.",
 
   // --- Refusals. Each maps to exactly one thing that went wrong. ---------------------------------
   confirmMismatch: "That is not the account name, so nothing was changed.",
