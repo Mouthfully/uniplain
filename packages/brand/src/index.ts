@@ -17,6 +17,7 @@ export {
   CLAIMS,
   FORBIDDEN_CLAIMS,
   IMPLEMENTED_SOURCE_IDS,
+  SOURCE_LABELS,
   allowedClaims,
   withheldClaims,
   type Capability,

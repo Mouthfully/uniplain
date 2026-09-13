@@ -1,3 +1,7 @@
+import { type ImplementedSourceId } from "@repo/brand";
+
+import { sourceMark } from "./_source-marks";
+
 /**
  * THE ACTION SHEET -- the section this site did not have and the founder's plan is built around.
  *
@@ -100,6 +104,9 @@ const FOOTNOTE =
 /** Names the ordered list for assistive tech, which otherwise hears three bare numerals. */
 const ACTIONS_LABEL = "This week's actions, most valuable first";
 
+/** Names the provenance row, which otherwise reads as a run of bare platform names. */
+const SOURCES_LABEL = "Sources this figure was computed from";
+
 /**
  * The three sample actions, in value order, which is the order the section promises.
  *
@@ -121,6 +128,21 @@ const ACTIONS_LABEL = "This week's actions, most valuable first";
  * vendors appearing as sources anywhere on the site until one is both built and reachable, and a
  * row reading "GrabFood takes 30%" -- as the artboard's does -- is a source claim in a sentence.
  */
+interface ActionRow {
+  readonly id: string;
+  readonly title: string;
+  readonly why: string;
+  readonly impact: string;
+  readonly note: string;
+  /**
+   * WHICH CONNECTORS THE FIGURE RESTS ON. Typed as `ImplementedSourceId`, so a source that has not
+   * been built cannot be written here at all -- the compiler refuses it before any guard runs, and
+   * `source-marks.test.tsx` then proves the set at runtime so a cast cannot get round it.
+   */
+  readonly sources: readonly ImplementedSourceId[];
+  readonly effort: string;
+}
+
 export const ACTIONS = [
   {
     id: "price",
@@ -128,6 +150,9 @@ export const ACTIONS = [
     why: "Both held their volume through the last two price rises, and delivery carries a fee the counter does not.",
     impact: "฿3,100 to ฿3,600 a month",
     note: "From your own prices and last month's volume",
+    // The prices come from the point of sale, the delivery volume from the store. Both are ids
+    // rather than names, so a connector this product cannot read is not expressible here.
+    sources: ["loyverse", "woocommerce"],
     effort: "10 minutes",
   },
   {
@@ -136,6 +161,8 @@ export const ACTIONS = [
     why: "It spent ฿1,840 last month and four orders came back against it. Your lunch hour fills without it.",
     impact: "฿1,840 a month",
     note: "Spend is settled, so this one is not a range",
+    // Spend from the ad platforms; the four orders that came back against it from the store.
+    sources: ["google_ads", "meta_ads", "woocommerce"],
     effort: "2 minutes",
   },
   {
@@ -144,9 +171,12 @@ export const ACTIONS = [
     why: "Orders waited longest at 12:40 last Saturday, which is also your busiest half hour of the week.",
     impact: "฿900 to ฿1,400 a week",
     note: "A range: last week's orders may still be restated",
+    // One source, and that is the point of showing them: the weakest-provenance action on the card
+    // is visibly the one resting on a single till.
+    sources: ["loyverse"],
     effort: "One rota change",
   },
-] as const;
+] as const satisfies readonly ActionRow[];
 
 export function ActionSheet() {
   return (
@@ -226,6 +256,37 @@ export function ActionSheet() {
                   <strong className="text-accent text-sm font-bold">{action.impact}</strong>
                   <span className="text-ink-faint text-[10px] leading-[1.4]">{action.note}</span>
                 </div>
+
+                {/* WHERE THE FIGURE CAME FROM. The note above says it in words; this says which
+                    connectors, from ids the compiler and a test both hold to the implemented set.
+                    The marks are decorative in the accessibility sense -- the label sits beside
+                    each one as live text, so an empty alt stops it being announced twice, which is
+                    the decision `IntegrationsStrip` records for the same artwork. */}
+                <ul
+                  aria-label={SOURCES_LABEL}
+                  className="mt-2 flex list-none flex-wrap gap-1.5 p-0"
+                >
+                  {action.sources.map((id) => {
+                    const mark = sourceMark(id);
+                    return (
+                      <li
+                        key={mark.id}
+                        className="border-line bg-surface-subtle text-ink-subtle inline-flex items-center gap-1 rounded-sm border px-1.5 py-0.5 text-[10px] leading-[1.4]"
+                      >
+                        {mark.slug === null ? null : (
+                          <img
+                            src={`/platforms/${mark.slug}.svg`}
+                            alt=""
+                            width={12}
+                            height={12}
+                            className="h-3 w-3 shrink-0 object-contain"
+                          />
+                        )}
+                        {mark.label}
+                      </li>
+                    );
+                  })}
+                </ul>
 
                 <span className="bg-surface-subtle text-ink-subtle mt-2.5 inline-block rounded-sm px-2 py-1 text-[10px]">
                   {action.effort}
