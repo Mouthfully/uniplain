@@ -6,7 +6,7 @@ import { describe, expect, it } from "vitest";
 import Page from "../dpa/page";
 import { PROCESSING_ACTIVITIES } from "./activities";
 import { DPA_COPY, DPA_VERSION } from "./dpa-content";
-import { SUB_PROCESSORS } from "./sub-processors";
+import { SUB_PROCESSOR_NOTICE_DAYS, SUB_PROCESSORS } from "./sub-processors";
 
 /**
  * THE AGREEMENT, HELD TO THE SYSTEM IT DESCRIBES.
@@ -135,15 +135,29 @@ describe("what the agreement must not claim", () => {
     }
   });
 
-  it("promises no sub-processor notice period, because no mechanism gives one", () => {
-    const lower = text.toLowerCase();
-    for (const promise of [
-      "days' notice",
-      "days notice",
-      "advance notice",
-      "we will notify you of any new",
-    ]) {
-      expect(lower, `the agreement promises "${promise}"`).not.toContain(promise);
+  it("promises a sub-processor notice period only because a mechanism now gives one", () => {
+    // THIS ASSERTION USED TO RUN THE OTHER WAY, and the reversal is the point rather than a
+    // loosened test. It banned "days' notice" and "advance notice" outright, and that was correct
+    // for as long as it was true: the domain answers NODATA for MX, so a promise to notify was a
+    // promise nothing could keep -- in the document a customer relies on most.
+    //
+    // What changed is not the appetite for the promise, it is the mechanism. Art. 28(2) says
+    // INFORM, not send. A dated change list on the page the agreement points at, plus a notice on
+    // the screen a signed-in customer lands on, informs them -- and cannot bounce, cannot go to
+    // spam, and cannot be sent to someone who left the company.
+    //
+    // So the ban is replaced by its inverse: the agreement must state a period, and that period
+    // must be THE ONE THE CODE ENFORCES. A number typed here that disagreed with
+    // SUB_PROCESSOR_NOTICE_DAYS would be the original defect wearing a commitment's clothes.
+    expect(SUB_PROCESSOR_NOTICE_DAYS).toBe(30);
+    expect(text.toLowerCase()).toContain("thirty days after it is published");
+    expect(text.toLowerCase()).toContain("may end the agreement within that window");
+
+    // Still banned: a notice about anything the mechanism does not cover. The window applies to
+    // sub-processor changes and to nothing else, and a promise that drifted wider would be
+    // unbacked again.
+    for (const promise of ["we will email you", "we will write to you", "we will contact you"]) {
+      expect(text.toLowerCase(), `the agreement promises "${promise}"`).not.toContain(promise);
     }
   });
 });

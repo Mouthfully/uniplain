@@ -204,6 +204,31 @@ export const PROCESSING_ACTIVITIES: readonly ProcessingActivity[] = [
     evidence: "apps/web/app/layout.tsx, apps/web/next.config.ts",
   },
   {
+    id: "breach-documentation",
+    purpose:
+      "Documenting a personal data breach: what happened, who and what it touched, what the likely consequences are, what was done about it, and who was told when.",
+    role: "controller",
+    tables: ["breach_records"],
+    subjects:
+      "People whose personal data was involved in a breach, whether they are account holders here or data subjects of a customer.",
+    // HONEST ABOUT THE FREE TEXT. The structured columns hold descriptions and approximate counts
+    // rather than identifiers, but `nature`, `categories_of_subjects` and `measures_taken` are free
+    // text written during an incident, and `redaction.ts` is explicit that it removes identifiers
+    // BY KEY and does not inspect values. A record about people is personal data about them, so
+    // this is listed here rather than under NO_PERSONAL_DATA on the strength of the column types.
+    categories:
+      "A description of the breach and of the categories of people and records involved, approximate counts, a contact point, and the dates any notification was given. Free-text fields written during an incident may name a person.",
+    basis:
+      "Legal obligation. GDPR Art. 33(5) requires a controller to document any personal data breach so a supervisory authority can verify compliance, and PDPA s.37(4) requires the assessment and notification this record evidences. It is kept because the law requires the record, not because it is useful to the business.",
+    recipients: ["Supabase"],
+    // No period set, and this is one where a period genuinely matters: the record exists to be
+    // producible to a regulator, and how long after an incident that remains true is a decision
+    // nobody here has taken. Recorded as unset rather than guessed, like every other activity.
+    retention: null,
+    evidence:
+      "supabase/migrations/20260913001700_breach_register.sql, supabase/tests/24_breach_register.sql",
+  },
+  {
     id: "waiting-list",
     purpose:
       "A list of addresses collected before launch, to tell people when access opened. COLLECTION HAS ENDED.",

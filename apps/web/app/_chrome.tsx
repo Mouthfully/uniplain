@@ -111,42 +111,59 @@ export function SiteHeader() {
         </a>
 
         <details id={MENU_ID} className="group ml-auto lg:hidden">
-          {/* `list-none` removes the disclosure triangle in every engine that follows the spec and
-              the ::-webkit-details-marker rule removes it in the one that does not. The accessible
-              name is the aria-label AND the visible word, which are the same constant: below 360px
-              the bar has no room for the word, and a control that loses its name at 320 is a
-              control a voice user cannot say. */}
+          {/* THE SUMMARY CARRIES NO `display`, AND THAT IS THE FIX RATHER THAN THE STYLE.
+              It was `inline-flex`, and WebKit stops treating a <summary> as the disclosure control
+              when its display is flex, inline-flex or grid -- the drawer opened on iPhone and then
+              would not close, because the second tap landed on an element the engine no longer
+              wired to the <details>. Chromium toggles it either way, which is why it survived: the
+              harness in `scripts/mobile-audit.mjs` runs Chromium, and so does every test here.
+
+              NOT VERIFIED IN WEBKIT. No WebKit build is installed in this environment, so this is
+              the known cause applied rather than a reproduction observed. What IS verified is that
+              the summary no longer sets `display` at all, which is the property the bug depends on;
+              `menu-toggle.test.tsx` asserts that, so the class cannot come back unnoticed.
+
+              All layout moved to the inner span. `list-none` removes the disclosure triangle in
+              every engine that follows the spec and the ::-webkit-details-marker rule removes it in
+              the one that does not; `w-max` keeps the control shrink-wrapped now that the summary
+              is block-level rather than inline.
+
+              THE VISIBLE WORD IS GONE and the aria-label now carries the accessible name alone.
+              That was already the arrangement below 360px, where the bar had no room for it; the
+              control is a hamburger at every width now, and a voice user can still say "Menu"
+              because the label is the same constant it always was. */}
           <summary
             aria-label={NAV_MENU.label}
-            className="border-line bg-surface text-ink hover:border-accent inline-flex min-h-[44px] min-w-[44px] cursor-pointer list-none items-center justify-center gap-2 rounded-[10px] border px-3 text-sm font-bold transition-colors [&::-webkit-details-marker]:hidden"
+            className="w-max cursor-pointer list-none [&::-webkit-details-marker]:hidden"
           >
-            <svg
-              viewBox="0 0 24 24"
-              width="20"
-              height="20"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              aria-hidden="true"
-              className="block group-open:hidden"
-            >
-              <path d="M4 7h16M4 12h16M4 17h16" />
-            </svg>
-            <svg
-              viewBox="0 0 24 24"
-              width="20"
-              height="20"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              aria-hidden="true"
-              className="hidden group-open:block"
-            >
-              <path d="M6 6l12 12M18 6L6 18" />
-            </svg>
-            <span className="hidden min-[360px]:inline">{NAV_MENU.label}</span>
+            <span className="border-line bg-surface text-ink hover:border-accent flex min-h-[44px] min-w-[44px] items-center justify-center rounded-[10px] border transition-colors">
+              <svg
+                viewBox="0 0 24 24"
+                width="20"
+                height="20"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                aria-hidden="true"
+                className="block group-open:hidden"
+              >
+                <path d="M4 7h16M4 12h16M4 17h16" />
+              </svg>
+              <svg
+                viewBox="0 0 24 24"
+                width="20"
+                height="20"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                aria-hidden="true"
+                className="hidden group-open:block"
+              >
+                <path d="M6 6l12 12M18 6L6 18" />
+              </svg>
+            </span>
           </summary>
 
           {/* `hidden group-open:block` IS NOT DECORATION, and it is not what <details> already does.

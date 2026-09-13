@@ -11,6 +11,7 @@ import {
   formatAmount,
 } from "../_billing/plans";
 import { Footer, SiteHeader } from "../_chrome";
+import { representativeRequired } from "../_processing/representative-requirement";
 import { claim, connectionAllowance } from "../_content";
 
 /**
@@ -102,6 +103,29 @@ const CURRENCY_PROMPT = "Show prices in";
  */
 const CURRENCY_NOTE =
   "Prices are set in each currency rather than converted from one, so they do not move with the exchange rate. The currency of a subscription is fixed when it starts and cannot be changed afterwards, so pick the one you want to be invoiced in. Tax is added at checkout according to where you are, so an invoice total can be higher than the figure shown.";
+
+/**
+ * THE ART. 27 DISCLOSURE, WHERE THE DECISION TO BUY IS ACTUALLY MADE.
+ *
+ * `/terms` says no representative is appointed in the European Union, and `/dpa` and the Art. 30
+ * record say it too. **None of them is this page.** A euro price is offered here, to a visitor who
+ * may be in the Union, and the one fact that bears on whether this company may lawfully take their
+ * money was three clicks away in a contract.
+ *
+ * That is the same defect as the stale denial the terms page carried: the disclosure existed where
+ * nobody reads it. Telling a buyer after they have bought is not telling them.
+ *
+ * DERIVED, NOT TYPED, so it cannot outlive its own truth. It renders only while the assessment says
+ * a representative is required and `brand.euRepresentative` is still null -- the day one is
+ * designated this paragraph disappears on the same commit as the fact changes, with no cleanup to
+ * remember and nothing left saying a gap that has closed.
+ *
+ * IT IS A DISCLOSURE AND NOT A GATE. Nothing here blocks a sale: whether to take EU customers
+ * before the designation is a commercial and legal decision, and a screen is the wrong place to
+ * make it. What a screen can do is stop the buyer being the last to know.
+ */
+const EU_REPRESENTATIVE_NOTE =
+  "This company is established in Thailand. Where the GDPR applies to a customer, a controller outside the Union must designate a representative inside it, and none is designated yet. Nothing on this site claims otherwise, and a buyer whose own obligations depend on it should raise it before subscribing.";
 
 const TERM_NOTE =
   "Monthly and yearly are both listed rather than hidden behind a switch. A yearly term is twenty per cent off twelve months, which is why the annual figure is not twelve times the monthly one.";
@@ -556,6 +580,16 @@ export default async function PricingPage({
               </dt>
               <dd className="text-ink-muted mt-2 text-[13px] leading-[1.65]">{CURRENCY_NOTE}</dd>
             </div>
+            {representativeRequired() && brand.euRepresentative === null ? (
+              <div className="min-w-0 md:col-span-2">
+                <dt className="text-ink-faint text-[11px] font-bold tracking-[0.12em] uppercase">
+                  Representative in the European Union
+                </dt>
+                <dd className="text-ink-muted mt-2 text-[13px] leading-[1.65]">
+                  {EU_REPRESENTATIVE_NOTE}
+                </dd>
+              </div>
+            ) : null}
             <div className="min-w-0">
               <dt className="text-ink-faint text-[11px] font-bold tracking-[0.12em] uppercase">
                 Billing term

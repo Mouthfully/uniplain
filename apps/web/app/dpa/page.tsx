@@ -103,6 +103,15 @@ export default function DpaPage() {
           </section>
 
           <section className="border-line bg-surface mt-6 rounded-xl border p-6">
+            <h2 className={H2}>{DPA_COPY.confidentialityHeading}</h2>
+            {DPA_COPY.confidentialityBody.map((line) => (
+              <p key={line} className={P}>
+                {line}
+              </p>
+            ))}
+          </section>
+
+          <section className="border-line bg-surface mt-6 rounded-xl border p-6">
             <h2 className={H2}>{DPA_COPY.breachHeading}</h2>
             {DPA_COPY.breachBody.map((line) => (
               <p key={line} className={P}>

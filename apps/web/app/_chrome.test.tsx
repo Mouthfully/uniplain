@@ -92,9 +92,13 @@ describe("the wide row is revealed only where it fits", () => {
 describe("the control is operable without a pointer and without React", () => {
   it("is a summary with an accessible name from _content.ts", () => {
     expect(drawer).toContain(`aria-label="${NAV_MENU.label}"`);
-    // The same constant is also the visible word, so WCAG 2.5.3 (Label in Name) holds and a voice
-    // user can say what they see.
-    expect(drawer).toContain(`>${NAV_MENU.label}</span>`);
+    // THE VISIBLE WORD IS GONE and this assertion changed with it, deliberately rather than to get
+    // green. It used to require the label to appear as text too, on WCAG 2.5.3 (Label in Name) --
+    // but 2.5.3 applies to controls that HAVE a visible text label, and requires the accessible
+    // name to contain it. An icon-only control has no visible label for the accessible name to
+    // disagree with, so the criterion is not engaged. 4.1.2 still is, and the aria-label satisfies
+    // it: a voice user says "Menu" because that is still the control's name.
+    expect(drawer).not.toContain(`>${NAV_MENU.label}</span>`);
     expect(drawer).toContain("<summary");
   });
 

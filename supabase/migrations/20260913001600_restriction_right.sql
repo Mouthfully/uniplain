@@ -1,0 +1,30 @@
+-- THE RIGHT TO RESTRICT PROCESSING, WHICH BOTH GOVERNING REGIMES GRANT AND THIS SCHEMA DID NOT.
+--
+-- `app.data_request_kind` offered five kinds: access, rectification, portability, objection,
+-- erasure. That is a good list and it is missing one. **Restriction is a distinct right, not a
+-- softer objection**, and collapsing the two loses the case each is for:
+--
+--   OBJECTION (GDPR Art. 21, PDPA s.32) says STOP. It asks the controller to cease a processing
+--   activity, and the controller may refuse by demonstrating compelling legitimate grounds.
+--
+--   RESTRICTION (GDPR Art. 18, PDPA s.34) says HOLD. It asks the controller to keep the data but
+--   stop using it, and it exists for the interval in which something else is unresolved -- while
+--   accuracy is contested, while an objection is being weighed, or where processing is unlawful but
+--   the person does not want the data erased because they need it for a legal claim.
+--
+-- The second is the one a person reaches for when they are ABOUT TO DISPUTE SOMETHING. Offering
+-- them only "stop using my data in a particular way" or "delete my data" asks them to choose
+-- between abandoning the dispute and destroying the evidence for it. A form that cannot express
+-- "hold everything while we sort this out" is not a smaller form; it is one that pushes people
+-- towards erasure, which is irreversible.
+--
+-- WHY IT WAS MISSED, AND THE GUARD THAT COMES WITH IT. Nothing related this enum to the
+-- TypeScript list that renders it. `REQUEST_KINDS` in `data-requests/_content.ts` is five strings
+-- with a comment saying the keys match `app.data_request_kind`, and nothing checked that they did.
+-- `check-providers.mjs` exists because exactly this went wrong with `app.connection_provider`, and
+-- its header says so. This migration ships with the equivalent guard rather than the equivalent
+-- comment.
+--
+-- `after 'objection'` places it beside the right it is most often confused with, so the form offers
+-- the pair together and the difference is visible at the point of choosing.
+alter type app.data_request_kind add value if not exists 'restriction' after 'objection';

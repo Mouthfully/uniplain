@@ -13,8 +13,10 @@ import {
   DASHBOARD_NAV,
   DASHBOARD_PRODUCTS,
   SITE_DASHBOARD,
+  SUB_PROCESSOR_NOTICE,
 } from "../_content";
 import { LiveRows } from "./_rows";
+import { noticeWindowOpen } from "../_processing/sub-processors";
 import { dashboardSpan, spanLabel } from "./_span";
 
 /**
@@ -85,7 +87,13 @@ export default async function DashboardPage() {
   // reason: the period becomes an input to the render rather than a function of when the render
   // happened to run. `dashboardSpan` throws on an unusable date rather than substituting one,
   // because a quietly defaulted window is the defect this replaced.
-  const span = dashboardSpan(new Date().toISOString().slice(0, 10));
+  const today = new Date().toISOString().slice(0, 10);
+  const span = dashboardSpan(today);
+  // THE ART. 28(2) NOTICE. Derived from the published change date rather than stored per viewer:
+  // a "seen" flag would need a table, and the obligation is to inform for the length of the window,
+  // not to be acknowledged once. Reading the same `today` the span reads keeps one clock on this
+  // screen -- two would disagree either side of midnight and nothing would say which was right.
+  const subProcessorNotice = noticeWindowOpen(today);
   const performance = live ? await performanceRows(span.from, span.to) : null;
 
   // Rendered only when the read SUCCEEDED and returned something. An errored read has no rows to
@@ -156,6 +164,27 @@ export default async function DashboardPage() {
             reader's own figures; everything below is the illustrative screen, which keeps its
             `SITE_DASHBOARD.notice` label. If the two are ever confused for each other, the safe
             direction is a real number mistaken for a concept -- never the reverse. */}
+        {subProcessorNotice ? (
+          <div className="mx-auto max-w-[1200px] px-8 pt-6">
+            <section className="border-line bg-surface rounded-xl border border-dashed p-5">
+              <h2 className="font-display text-ink text-base font-semibold tracking-[-0.02em]">
+                {SUB_PROCESSOR_NOTICE.heading}
+              </h2>
+              <p className="text-ink-muted mt-2 max-w-[680px] text-sm leading-relaxed">
+                {SUB_PROCESSOR_NOTICE.body}
+              </p>
+              <p className="mt-3">
+                <a
+                  className="text-accent text-sm underline-offset-4 hover:underline"
+                  href="/sub-processors"
+                >
+                  {SUB_PROCESSOR_NOTICE.link}
+                </a>
+              </p>
+            </section>
+          </div>
+        ) : null}
+
         {liveRows.length === 0 ? null : (
           <div className="mx-auto max-w-[1200px] px-8 pt-4 pb-2">
             <LiveRows rows={liveRows} span={spanLabel(span)} />

@@ -1,7 +1,12 @@
 import type { Metadata } from "next";
 
 import { Footer, SiteHeader } from "../_chrome";
-import { activitiesFor, SUB_PROCESSORS } from "../_processing/sub-processors";
+import {
+  activitiesFor,
+  lastChangedAt,
+  SUB_PROCESSOR_CHANGES,
+  SUB_PROCESSORS,
+} from "../_processing/sub-processors";
 import { SUB_PROCESSOR_COPY } from "../_processing/sub-processor-content";
 
 /**
@@ -94,6 +99,28 @@ export default function SubProcessorsPage() {
             <p className="text-ink-muted mt-2 max-w-[620px] text-sm leading-relaxed">
               {SUB_PROCESSOR_COPY.openNote}
             </p>
+          </section>
+
+          <section className="border-line bg-surface mt-10 rounded-xl border p-6">
+            <h2 className="font-display text-ink text-xl font-semibold tracking-[-0.02em]">
+              {SUB_PROCESSOR_COPY.historyHeading}
+            </h2>
+            <p className="text-ink-subtle mt-2 font-mono text-xs">
+              {SUB_PROCESSOR_COPY.effectiveLabel} {lastChangedAt()}
+            </p>
+            <p className="text-ink-muted mt-3 max-w-[680px] text-sm leading-relaxed">
+              {SUB_PROCESSOR_COPY.historyNote}
+            </p>
+            <ul className="mt-4">
+              {SUB_PROCESSOR_CHANGES.map((change) => (
+                <li key={change.published} className="mt-3">
+                  <p className="text-ink text-sm font-bold">{change.published}</p>
+                  <p className="text-ink-muted mt-1 max-w-[680px] text-sm leading-relaxed">
+                    {change.summary}
+                  </p>
+                </li>
+              ))}
+            </ul>
           </section>
         </div>
       </main>

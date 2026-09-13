@@ -7,6 +7,11 @@ export const SUB_PROCESSOR_COPY = {
   heading: "Who else touches your data.",
   lead: "Every provider that processes data on our behalf to run this service, what each one does, and which parts of the service send data to it.",
 
+  historyHeading: "What has changed, and when",
+  historyNote:
+    "This is the notice the agreement points at. A provider is published here with the date the change takes effect, and it does not take effect for thirty days — so a customer who objects has that window to end the agreement instead of accepting it. Anyone signed in also sees the change on the screen they land on while the window is open.",
+  effectiveLabel: "List last changed",
+
   whyNote:
     "Published because a customer's own obligations depend on it. Under Thailand's Personal Data Protection Act the duty to put an agreement in place sits with the controller — the customer — and an agreement that cannot name the providers behind the service is one no reviewer will sign off.",
 

@@ -42,7 +42,17 @@ export const IMPLEMENTED_SOURCE_IDS = [
 
 export type ImplementedSourceId = (typeof IMPLEMENTED_SOURCE_IDS)[number];
 
-const SOURCE_LABELS: Readonly<Record<ImplementedSourceId, string>> = {
+/**
+ * EXPORTED, because a second copy of these labels is a second thing to keep in step.
+ *
+ * The action sheet shows which sources a figure came from, and it needs the name a customer would
+ * recognise for each one. Retyping "Google Ads" beside a source id is how `google_ads` ends up
+ * rendering as "Google ads" in one place and "GoogleAds" in another -- and, worse, how a label for
+ * a source that was never implemented gets typed in without `check-capabilities` noticing, because
+ * the guard compares the ID list against the source tree and has nothing to say about strings
+ * someone wrote elsewhere.
+ */
+export const SOURCE_LABELS: Readonly<Record<ImplementedSourceId, string>> = {
   ga4: "GA4",
   google_ads: "Google Ads",
   loyverse: "Loyverse",

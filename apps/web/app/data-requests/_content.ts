@@ -23,6 +23,10 @@ export const DATA_REQUESTS = {
     rectification: "Correct something you hold",
     portability: "Give me a copy I can take elsewhere",
     objection: "Stop using my data in a particular way",
+    // NEXT TO OBJECTION, because it is the right people reach for instead when they are about to
+    // dispute something. Objection says stop; restriction says hold. Without it the form asks
+    // someone mid-dispute to choose between dropping it and deleting the evidence for it.
+    restriction: "Keep my data but stop using it while something is disputed",
     erasure: "Delete my data",
   } as const,
 
@@ -79,12 +83,23 @@ export const DATA_REQUESTS = {
   referenceLabel: "Reference",
 } as const;
 
-/** The five request kinds, in the order the form offers them. Keys match `app.data_request_kind`. */
+/**
+ * The request kinds, in the order the form offers them. Keys match `app.data_request_kind`.
+ *
+ * THAT LAST SENTENCE USED TO BE THE ONLY THING ENFORCING IT. This list is five -- now six --
+ * strings beside a comment asserting they match a database enum, and nothing compared them.
+ * `check-providers.mjs` exists because the same arrangement failed for `app.connection_provider`,
+ * and its header says a member TypeScript can name and the database cannot store fails on the
+ * INSERT, in production, after the person has finished filling the form in.
+ *
+ * `_content.test.ts` now reads the enum out of the migrations and compares both directions.
+ */
 export const REQUEST_KINDS = [
   "access",
   "rectification",
   "portability",
   "objection",
+  "restriction",
   "erasure",
 ] as const;
 
