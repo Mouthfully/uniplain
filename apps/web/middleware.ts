@@ -26,7 +26,15 @@ import { GATE_COOKIE, gateToken, isGated, tokensMatch } from "./app/_gate/token"
 // the dashboard. The page checks the session itself too, and that is not redundant: a matcher edit
 // can silently unprotect a route, and a surface that costs money per request must not depend on a
 // routing rule alone for its access decision.
-const PROTECTED = ["/brief", "/connections", "/dashboard", "/billing", "/members", "/welcome"];
+const PROTECTED = [
+  "/account",
+  "/brief",
+  "/connections",
+  "/dashboard",
+  "/billing",
+  "/members",
+  "/welcome",
+];
 
 /**
  * Reachable WITHOUT the pre-launch password.

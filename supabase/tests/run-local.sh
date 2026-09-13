@@ -126,3 +126,6 @@ psql -d "$DB" -q -f "$HERE/17_organisation_members.sql"
 
 echo "==> membership guards suite"
 psql -d "$DB" -q -f "$HERE/18_membership_guards.sql"
+
+echo "==> erasure suite"
+psql -d "$DB" -q -f "$HERE/19_erasure.sql"
