@@ -11,8 +11,11 @@
 
 export const ACCOUNT_COPY = {
   eyebrow: "Your account",
-  heading: "Take your data, or close the account.",
-  lead: "Both of these are yours to do without asking anybody, and neither of them goes through us.",
+  heading: "Take your data, move the account, or close it.",
+  // NO COUNT IN THE SENTENCE. It said "both of these" when there were two things on the page and
+  // was wrong the moment a third arrived, which is the kind of copy defect that ships because
+  // nobody re-reads the lead when adding a section.
+  lead: "Each of these is yours to do without asking anybody, and none of them goes through us.",
 
   exportHeading: "Download everything",
   exportBody:
@@ -36,6 +39,36 @@ export const ACCOUNT_COPY = {
 
   ownerOnly:
     "Only an owner can close the account. You can download your data from here whichever role you hold.",
+
+  // --- The sign-in address. ---------------------------------------------------------------------
+  emailHeading: "Change the address you sign in with",
+  emailBody:
+    "The account is reached at one address, and it is the one that receives your sign-in links. If the person who set this up has left, this is how it moves to somebody who is still here.",
+  // BOTH INBOXES, SAID PLAINLY. It is the platform's default and it is the whole protection: a
+  // session somebody else has taken over cannot move the account without the original mailbox
+  // agreeing. A person who does not expect the second email assumes it failed.
+  emailBothConfirm:
+    "Two emails go out, and both have to be opened. The new address confirms it wants the account, and the address you use now confirms it is letting go. Nothing changes until both are done.",
+  emailLabel: "The new address",
+  emailHint:
+    "A company address, as at sign-up. A personal mailbox is refused here rather than after the emails have been sent.",
+  emailSubmit: "Send the two confirmations",
+  emailSending: "Sending",
+  emailCurrent: "You sign in as",
+  emailPendingHeading: "A change is waiting on the two confirmations",
+  emailPendingBody:
+    "Until both are done you keep signing in with the address you have now. Asking again sends a fresh pair and replaces this one.",
+
+  // SAYS "SENT", NOT "CHANGED". The account is still reached at the old address at this point, and
+  // a person told their address had changed would stop watching the old inbox -- which is the one
+  // holding the confirmation the change is waiting on.
+  emailRequested:
+    "Both emails are on their way. Open the one at the new address and the one at the address you sign in with now, and the change happens when the second is done.",
+
+  emailSignedOut: "You are not signed in, so there is no address to change.",
+  emailUnchanged: "That is the address you already sign in with.",
+  emailFailed:
+    "The confirmations could not be sent, and nothing was changed. Try again in a few minutes, and tell us if it keeps happening.",
 
   // --- Refusals. Each maps to exactly one thing that went wrong. ---------------------------------
   confirmMismatch: "That is not the account name, so nothing was changed.",
