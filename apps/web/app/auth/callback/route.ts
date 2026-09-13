@@ -39,7 +39,17 @@ export async function GET(request: NextRequest) {
   if (decision.kind === "refuse") {
     // Sign out, do not merely redirect. The exchange above already created a session; leaving it
     // in place would mean a refused account is signed in and one URL away from the dashboard.
-    await supabase.auth.signOut();
+    //
+    // GLOBAL, AND WRITTEN DOWN RATHER THAN INHERITED. It was already global, because that is what
+    // `signOut()` with no argument means -- but it was global by accident, and `_auth/actions.ts`
+    // has just had the opposite default corrected on the ordinary sign-out button. The two now
+    // state their scopes, so neither can be changed by a library default moving underneath them.
+    //
+    // Global is right HERE for a reason that does not apply there: this identity is refused, so no
+    // session it holds anywhere should survive. `local` would end only the one the exchange just
+    // made and leave an older one, on another device, belonging to an address the door now turns
+    // away.
+    await supabase.auth.signOut({ scope: "global" });
     return NextResponse.redirect(new URL(`/signin?error=${decision.error}`, url.origin));
   }
 
