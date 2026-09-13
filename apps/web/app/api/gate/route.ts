@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
   const expected = await gateToken(password);
 
   if (!tokensMatch(await gateToken(presented), expected)) {
-    return NextResponse.redirect(new URL("/waitlist?wrong=1", request.url), SEE_OTHER);
+    return NextResponse.redirect(new URL("/access?wrong=1", request.url), SEE_OTHER);
   }
 
   const response = NextResponse.redirect(new URL(next, request.url), SEE_OTHER);

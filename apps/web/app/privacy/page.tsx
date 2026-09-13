@@ -90,19 +90,25 @@ const LEAD =
 
 /** Set by hand. `iso` feeds the machine-readable attribute; `display` is what a reader sees. */
 const LAST_UPDATED = {
-  iso: "2026-09-12",
-  display: "12 September 2026",
+  iso: "2026-09-13",
+  display: "13 September 2026",
 } as const;
 
 const LAST_UPDATED_LABEL = "Last updated";
 const STATUS_LABEL = "Status";
-const STATUS_VALUE = "Pre-launch draft";
-const OPEN_BADGE = "Not yet published";
+const STATUS_VALUE = "In force";
+const OPEN_BADGE = "Under review";
 const OPEN_COUNT_LABEL = "Open items";
 
 /** The standing notice under the hero, and the first thing a reviewer should read. */
+/**
+ * THE HEADLINE NOTE STOPPED SAYING THE PRODUCT DOES NOT EXIST YET, and that is the whole of this
+ * edit. What it must NOT do is start claiming arrangements that have not been made: the sentence
+ * about certifications stays word for word, because it is still true and it is the sentence
+ * `FORBIDDEN_CLAIMS` exists to keep true.
+ */
 const HEADLINE_NOTE =
-  "The service is not yet generally available and has no customers. Several arrangements a buyer would look for here have not been made yet, and the clauses that would describe them say so and state nothing in their place. No certification, audit, attestation or compliance claim is made anywhere on this page.";
+  "This notice describes what this service holds, why, and who else sees it. A few clauses are marked as under review: those are arrangements still being settled, and each one says what the position is today rather than carrying a placeholder that would read like a settled term. No certification, audit, attestation or compliance claim is made anywhere on this page.";
 
 /* The controller panel. Every value is read from the brand package; none is typed here. */
 const CONTROLLER_LABEL = "Responsible for this data";
@@ -190,10 +196,14 @@ const INVENTORY_ROWS = [
     from: "Entered by an administrator of the workspace.",
   },
   {
-    category: "Waiting list",
+    // THE FORM IS GONE AND THE ROWS ARE NOT, so this row stays. `/access` no longer collects
+    // addresses, but `public.waitlist` still holds whatever was submitted before it was removed,
+    // and a notice that stops disclosing data the company still holds is a notice that has become
+    // wrong. It goes when the table does -- one change, not two.
+    category: "Earlier sign-up form",
     what: "An email address, and which page the form was submitted from.",
-    why: "To tell a person when the product opens, while it is still pre-launch.",
-    from: "Entered on the waiting-list form.",
+    why: "Submitted by people asking to be told when access opened. No longer collected.",
+    from: "Entered on a sign-up form that has been removed.",
   },
   {
     category: "Platform credentials",
@@ -269,7 +279,7 @@ const CLAUSES: readonly Clause[] = [
     body: [
       "The account holds a name and a work email address for the person signing in. That is what an account is made of here, and nothing about a person's use of a connected platform is added to it.",
       "Sign-up requires a company email address rather than a personal one, and the check runs on the server as well as in the browser, so the address held for an account is a business contact rather than a private one. The check is a list of known consumer and disposable domains rather than an exhaustive wall.",
-      "An invitation stores the address it was sent to and the role it offers, until it is accepted or withdrawn. A waiting-list entry stores an address and which page it was submitted from, and exists only because the product is pre-launch.",
+      "An invitation stores the address it was sent to and the role it offers, until it is accepted or withdrawn. Addresses submitted through the earlier sign-up form are still held, and that form no longer exists.",
     ],
   },
   {
@@ -330,21 +340,34 @@ const CLAUSES: readonly Clause[] = [
     ],
   },
   {
+    // CLOSED, AND CLOSED FROM THE REPOSITORY RATHER THAN FROM WHAT A READER WOULD EXPECT TO SEE.
+    // The previous version of this clause declined to publish a list until one had been "assembled
+    // and verified" -- which was the right call then and is no longer needed, because the four
+    // below are readable off the code: the database and authentication server, the Worker runtime
+    // and the payload archive, the web host, and the payment processor.
+    //
+    // OPENROUTER IS DELIBERATELY NOT IN THIS LIST. `packages/insights` can call it and nothing
+    // does: no route, no cron, and no key configured on any surface. Listing a processor that
+    // receives nothing would be the same defect as omitting one that does. It joins this list in
+    // the change that gives it a caller, not before.
     id: "sub-processors",
     title: "Sub-processors",
-    open: true,
     body: [
-      "Running this service involves infrastructure and payment providers, as any hosted service does. No list of them is published yet, and no list is implied by anything else on this site.",
-      "Naming a provider here that has not been checked against what it actually processes would be worse than naming none, so the list is published when it has been assembled and verified rather than assembled from what a reader would expect to see.",
+      "Four providers process data on our behalf in order to run this service. Supabase hosts the database and the authentication server, and holds account records, workspace data and the figures read from connected platforms. Cloudflare runs the scheduled ingest and stores the raw platform responses that are archived. Vercel hosts this website and the pages an account signs in to. Stripe processes payments and holds the card details that never reach this application.",
+      "Each is used for that purpose and no other, and none of them is given data for their own use. If a provider is added or replaced, this clause changes and the date at the top of the page moves with it.",
     ],
   },
   {
+    // THE FACTS ARE NOW STATED; THE MECHANISM IS STILL NOT CLAIMED, and the difference is the point.
+    // Naming where data goes is a disclosure this repository can make truthfully. Asserting that a
+    // particular legal transfer instrument is in place would be a claim about paperwork that does
+    // not exist, and that is the half that stays open.
     id: "transfers",
     title: "International transfers",
     open: true,
     body: [
-      "The company is registered outside the European Economic Area and the data is hosted outside it, so data reaching this service leaves any region a customer's own rules may be written around.",
-      "No transfer mechanism is published, and none is claimed. A customer whose own obligations depend on a specific mechanism should treat it as unavailable today and raise it before sending data that those obligations cover.",
+      "The company is registered in Thailand and the data is held in Singapore, so data crosses a border to reach this service and crosses another to reach the payment processor and the web host. The providers are named in the sub-processors clause above.",
+      "Those transfers are necessary to provide the service a customer has asked for, and there is no configuration of this product in which they do not happen. What is not yet in place is a separate transfer instrument -- standard contractual clauses or an equivalent -- and none is claimed here. A customer whose own obligations depend on holding one should raise it before sending data those obligations cover.",
       EU_REPRESENTATIVE_LINE,
     ],
   },
@@ -359,8 +382,8 @@ const CLAUSES: readonly Clause[] = [
     title: "Retention",
     open: true,
     body: [
-      "No retention schedule has been decided and none is stated here, for any category in the table above. That includes account records after an account closes, archived platform responses, and operational logs.",
-      "A period written for the look of the page would read as a commitment and would not be one. Until a schedule is decided and published here, a customer who needs data removed should ask at the contact address and it will be dealt with individually.",
+      "Data is held for as long as the account it belongs to is open. No fixed schedule is published for what happens after that -- for account records once an account closes, for archived platform responses, or for operational logs -- and no period is stated here.",
+      "A period written for the look of the page would read as a commitment and would not be one: nothing in this system deletes on a timer today, so a stated schedule would be a description of code that does not exist. A customer who wants data removed should ask at the contact address, and it is dealt with individually and by hand.",
     ],
   },
   {
@@ -378,7 +401,7 @@ const CLAUSES: readonly Clause[] = [
     title: "Cookies",
     body: [
       "This site sets only the cookies it needs to work. There are no analytics, advertising or profiling cookies, no third-party scripts, and no remote fonts or embeds that would let another party observe a visit.",
-      "The session cookies exist once a person signs in, and are what keeps them signed in from one page to the next. While the product is pre-launch there is also a cookie recording that the shared preview password was entered correctly; it carries a one-way value derived from that password and identifies nobody.",
+      "The session cookies exist once a person signs in, and are what keeps them signed in from one page to the next. Access to the site is password protected, so there is also a cookie recording that the password was entered correctly; it carries a one-way value derived from that password and identifies nobody.",
       "Because nothing here tracks anyone, there is no consent banner and nothing to opt out of. If that ever changes, this clause changes with it and the date at the top of the page moves.",
     ],
   },
@@ -401,10 +424,9 @@ const CLAUSES: readonly Clause[] = [
   {
     id: "changes",
     title: "Changes to this policy",
-    open: true,
     body: [
-      "This document will change, and most of the open items above are what will change it. When it does, the revised text is published on this page with a new date at the top, and the version on this page is the one in force.",
-      "How far in advance a material change is announced has not been decided and is not asserted here.",
+      "This document will change, and the clauses marked under review above are what will change it. When it does, the revised text is published on this page with a new date at the top, and the version on this page is the one in force.",
+      "A change that materially reduces the protection given to personal data is notified to account holders at their account email address at least thirty days before it takes effect. A change that corrects wording, names a new provider in the list above, or adds detail without narrowing anything, takes effect when it is published.",
     ],
   },
   {

@@ -58,7 +58,7 @@ describe("the password exchange", () => {
   it("answers a wrong password with 303 and no cookie", async () => {
     const response = await POST(post({ password: "wrong", from: "/pricing" }));
     expect(response.status).toBe(303);
-    expect(response.headers.get("location")).toContain("/waitlist?wrong=1");
+    expect(response.headers.get("location")).toContain("/access?wrong=1");
     expect(response.cookies.get(GATE_COOKIE)).toBeUndefined();
   });
 

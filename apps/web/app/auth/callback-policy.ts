@@ -19,7 +19,7 @@ import { checkWorkEmail } from "../_work-email";
  *
  * `new URL()` resolves an absolute or protocol-relative reference against nothing, so an
  * unvalidated `next` turns this app's own sign-in into an open redirect a phishing mail can point
- * at. `app/api/gate/route.ts` already refuses `//evil.example` for the pre-launch gate and this is
+ * at. `app/api/gate/route.ts` already refuses `//evil.example` for the access gate and this is
  * the same rule, made stricter on one point that matters:
  *
  * A BACKSLASH IS NOT A PATH SEPARATOR IN A URL, IT IS A SLASH. WHATWG URL parsing normalises `\`

@@ -32,7 +32,7 @@ const PROTECTED = ["/connections", "/dashboard", "/billing", "/welcome"];
  * Everything else -- including routes added months from now -- is gated by default, which is the
  * property a middleware has and a per-page check does not.
  */
-const PUBLIC_WHILE_GATED = ["/waitlist", "/api/gate"];
+const PUBLIC_WHILE_GATED = ["/access", "/api/gate"];
 
 export async function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
@@ -45,11 +45,11 @@ export async function middleware(request: NextRequest) {
     const expected = await gateToken(process.env.SITE_PASSWORD as string);
 
     if (!tokensMatch(presented, expected)) {
-      const waitlist = new URL("/waitlist", request.url);
+      const door = new URL("/access", request.url);
       // Carried so a person who unlocks lands where they were headed. It is a PATH from this
       // request, never a full URL from a query parameter -- the latter is an open redirect.
-      if (path !== "/") waitlist.searchParams.set("from", path);
-      return NextResponse.redirect(waitlist);
+      if (path !== "/") door.searchParams.set("from", path);
+      return NextResponse.redirect(door);
     }
   }
 
