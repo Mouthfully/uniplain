@@ -102,6 +102,12 @@ describe("the scroll reveal", () => {
     expect(SUPPORTS, "no @supports (animation-timeline: view()) block in globals.css").toBeTypeOf(
       "string",
     );
+    // `describe.each([])` registers NO tests and reports green. The entrance rules below are the
+    // strictest thing in this file; an empty list would silently switch them all off.
+    expect(
+      ENTRANCE_KEYFRAMES.length,
+      "no mp-reveal* keyframes were found, so every entrance rule below is vacuous",
+    ).toBeGreaterThanOrEqual(2);
   });
 
   it("declares the animation only inside the support query", () => {
@@ -153,11 +159,23 @@ describe("the scroll reveal", () => {
   });
 });
 
-describe("the reveal keyframe", () => {
-  const body = keyframes(TOKENS, "mp-reveal");
+/**
+ * EVERY ENTRANCE KEYFRAME, NOT JUST THE FIRST ONE SOMEBODY WROTE.
+ *
+ * `mp-reveal-side` was added after this file was, and the rules below were written against
+ * `mp-reveal` alone -- so the new keyframe arrived with no guard at all and the suite stayed green.
+ * The list is derived from the stylesheet instead: anything named `mp-reveal*` is an entrance and
+ * is held to the same rules, so the next one cannot slip in ungoverned either.
+ */
+const ENTRANCE_KEYFRAMES: string[] = [...TOKENS.matchAll(/@keyframes\s+(mp-reveal[a-z-]*)/g)]
+  .map((m) => m[1])
+  .filter((name): name is string => name !== undefined);
+
+describe.each(ENTRANCE_KEYFRAMES)("the %s keyframe", (name) => {
+  const body = keyframes(TOKENS, name);
 
   it("exists and was parsed", () => {
-    expect(body, "no @keyframes mp-reveal in tokens.css").toBeTypeOf("string");
+    expect(body, `no @keyframes ${name} in tokens.css`).toBeTypeOf("string");
     expect((body ?? "").length).toBeGreaterThan(20);
   });
 
@@ -191,7 +209,7 @@ describe("the reveal keyframe", () => {
       "zoom",
     ];
     for (const stem of LAYOUT_STEMS) {
-      expect(body, `mp-reveal animates ${stem}, which shifts the page as it scrolls`).not.toMatch(
+      expect(body, `${name} animates ${stem}, which shifts the page as it scrolls`).not.toMatch(
         new RegExp(`(^|[;{\\s])${stem}(-[a-z-]+)?\\s*:`),
       );
     }
@@ -206,7 +224,7 @@ describe("the reveal keyframe", () => {
     for (const property of new Set(declared)) {
       expect(
         ["opacity", "transform"],
-        `mp-reveal declares ${property}; only opacity and transform are composited`,
+        `${name} declares ${property}; only opacity and transform are composited`,
       ).toContain(property);
     }
   });

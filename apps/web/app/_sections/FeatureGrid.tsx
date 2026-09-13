@@ -146,7 +146,7 @@ export function FeatureGrid() {
       aria-labelledby="feature-grid-heading"
       className="mx-auto grid max-w-[1200px] items-center gap-8 px-8 py-12 md:grid-cols-2 md:gap-16 md:py-20"
     >
-      <div className="reveal md:order-2">
+      <div className="reveal-side md:order-2">
         <span className="text-ink-faint block text-[11px] font-bold tracking-[0.14em] uppercase md:text-xs">
           {EYEBROW}
         </span>

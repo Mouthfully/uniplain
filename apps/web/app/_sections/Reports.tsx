@@ -157,7 +157,7 @@ export function Reports() {
       aria-labelledby="reports-heading"
       className="mx-auto grid max-w-[1200px] items-center gap-8 px-8 py-12 md:grid-cols-2 md:gap-10 md:py-20 lg:gap-20"
     >
-      <div className="reveal min-w-0">
+      <div className="reveal-side min-w-0">
         <span className="text-ink-faint block text-xs font-bold tracking-[0.14em] uppercase">
           {EYEBROW}
         </span>

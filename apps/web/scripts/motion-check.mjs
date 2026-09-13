@@ -11,6 +11,11 @@
  * asked for, nothing may ever be part-way anywhere. The two together distinguish "working" from
  * "inert" and from "broken", which no single measurement does.
  *
+ * THE SELECTOR IS THE THING TO KEEP IN STEP. Adding `.reveal-side` to the stylesheet without
+ * adding it here dropped the tracked count from 27 to 24 and the harness still reported OK -- it
+ * was simply not looking at the three elements that had just changed. A count is printed on every
+ * run for that reason: a number that falls after a change is the tell.
+ *
  * Usage: node scripts/motion-check.mjs   (with a production server already running)
  *        BASE=http://127.0.0.1:3001 node scripts/motion-check.mjs
  */
@@ -29,7 +34,7 @@ async function probe(label, reduced) {
 
   // Every element the motion system touches, and whether a reader can actually see it.
   const read = async () =>
-    page.$$eval(".reveal, .reveal-group > *, .draw-trend", (els) =>
+    page.$$eval(".reveal, .reveal-side, .reveal-group > *, .draw-trend", (els) =>
       els.map((el) => {
         const cs = getComputedStyle(el);
         const r = el.getBoundingClientRect();

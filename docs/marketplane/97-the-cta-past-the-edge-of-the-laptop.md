@@ -79,6 +79,57 @@ Three further rules, each held by a test rather than by intention:
 a declared length of one whole path, so redrawing the trend or changing the viewBox cannot leave it
 animating the wrong distance.
 
+## 3b. The benchmark, measured rather than recalled
+
+The founder named **supermetrics.com** and **windsor.ai** as the bar. The first version of this work
+was built on judgement and never compared to either, which is the same defect as a figure nobody
+produced. Both were fetched and their shipped stylesheets read.
+
+| | supermetrics.com | windsor.ai | here |
+|---|---|---|---|
+| stylesheet | `_astro/index.HV-U3gWy.css`, 158 KB | `new_design.css`, 33 KB | `globals.css` + tokens |
+| transition durations | **.2s ×30**, .3s ×27, .15s ×5 | .2s / .3s | **200ms** base, 160ms fast |
+| easing | **ease-out ×89**, linear ×9, ease-in-out ×8 | linear ×15 | two named curves |
+| entrance keyframes | fadeIn, fadeInUp, fadeInDown, slideInLeft | target-fade | mp-reveal, mp-reveal-side |
+| `fadeInUp` travel | `translate3d(0,30px,0)` | — | **24px**, and see below |
+| entrance trigger | class-applied; no scroll timeline | — | **`animation-timeline: view()`, no JS** |
+| stagger | not in the stylesheet | — | 4-step range offset |
+| continuous decoration | `carousel` | `circle-rotate`, `img-rotate`, reverse + delayed variants | `mp-drift` |
+| SVG draw-on | none | none | `mp-draw` |
+| **`prefers-reduced-motion`** | **0 blocks** | **0 blocks** | every animation gated |
+| imagery | 91 `<picture>`, 112 `<img>`, 2 `<video>` | 179 `<img>`, 24 `<svg>` | 1 screenshot, 1 logo strip |
+
+**Two values moved because of this, and one deliberately did not.**
+
+`--mp-motion-base` was **320ms and is now 200ms**. A control answering a pointer at 320ms is slower
+than the bar, and the bar agrees with itself: `.2s` is the single most common duration on the
+reference, thirty occurrences.
+
+`--mp-motion-rise-distance` was **18px and is now 24px**, still short of their 30px. Their entrance
+is time-driven — the element travels 30px while the reader holds still. Ours is driven by scroll
+position, so the reader is *also* moving and the perceived travel is the sum. The number moved
+because it was measured against something; it did not move all the way because the two mechanisms
+are not the same mechanism.
+
+A fourth keyframe was added, `mp-reveal-side`, because the reference ships direction variety
+(`fadeInUp` *and* `slideInLeft`) and this did not. A two-column section whose halves both rise reads
+as one block twitching; the copy arriving from the side while the visual rises reads as two things
+assembling. It is used on exactly the three split sections that have that shape.
+
+**Where the bar is not matched, and will not be.** Neither reference contains a single
+`prefers-reduced-motion` block — zero in both stylesheets and zero in both HTML documents. Matching
+them there would mean deleting the gates.
+
+**Where the bar is genuinely ahead, and it is not animation.** Supermetrics ships 91 `<picture>`
+elements and two videos; Windsor ships 179 images. This page has one screenshot and a logo strip.
+That gap is photography, illustration and product footage — assets, not CSS — and no amount of
+motion work closes it. It is named here rather than quietly left out of the comparison.
+
+*(A methodology note, because it nearly produced a false finding: an early pass grep'd both
+documents for motion runtimes and reported three "rive" hits on one and five on the other. Both were
+substring matches — "d**rive**s" in a headline, "**Rive**ry" in a competitor logo. Neither site
+loads Rive. The finding was checked before it was written down.)*
+
 ## 4. Cost estimate
 
 **Per connected account per month:** `฿0 / $0 — no data-plane work.` No platform read, no envelope

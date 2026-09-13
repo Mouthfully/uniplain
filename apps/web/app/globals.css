@@ -215,6 +215,15 @@
       animation-range: entry 4% cover 24%;
     }
 
+    /* The sideways entrance, for a split section's copy column. See `mp-reveal-side`. It takes
+       the same range as `.reveal` so the two halves of a split arrive together rather than in
+       sequence -- the variety is in the DIRECTION, not in the timing. */
+    .reveal-side {
+      animation: mp-reveal-side linear both;
+      animation-timeline: view();
+      animation-range: entry 4% cover 24%;
+    }
+
     /* THE STAGGER IS A RANGE OFFSET, NOT A DELAY. `animation-delay` on a scroll timeline is
        measured in the timeline's own units, so a delay in milliseconds means nothing here. Moving
        each child's range a few percent later is the same idea expressed in the units the timeline
