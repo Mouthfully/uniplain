@@ -266,6 +266,24 @@ begin
     coalesce((select app.data_request_deadline())::text, 'null'));
 end $$;
 
+-- ---------------------------------------------------------------------------------------------
+-- 7. FILING A REQUEST LEAVES A TRAIL, AND THE TRAIL DOES NOT REPEAT THE PERSON'S WORDS.
+--
+-- `record_security_event` had no caller when it shipped, which is the failure this repository has
+-- now made twice with other modules. This asserts the wire exists, in the same transaction, and
+-- that `detail` carries the KIND rather than the subject's free text -- the trail is readable by
+-- every member of the organisation, and copying a subject's note into it would publish to their
+-- colleagues the very thing they asked to be private about.
+-- ---------------------------------------------------------------------------------------------
+select app_test.check('filing a request records a security event',
+  (select count(*) from public.security_events
+    where event = 'data_request_filed'
+      and organisation_id = '19100000-0000-4000-8000-00000000000a') >= 1);
+
+select app_test.check('the trail records the kind, not the subject''s words',
+  not exists (select 1 from public.security_events
+               where event = 'data_request_filed' and detail ilike '%delete my account%'));
+
 \o
 
 select name, 'FAIL' as result, detail from app_test.results where not passed order by id;
@@ -282,7 +300,7 @@ declare v_failed integer; v_total integer;
 begin
   select count(*) filter (where not passed), count(*) into v_failed, v_total from app_test.results;
   if v_failed > 0 then raise exception 'data requests: % assertion(s) failed', v_failed; end if;
-  if v_total < 24 then
-    raise exception 'data requests: only % assertion(s) ran; expected at least 24', v_total;
+  if v_total < 26 then
+    raise exception 'data requests: only % assertion(s) ran; expected at least 26', v_total;
   end if;
 end $$;
