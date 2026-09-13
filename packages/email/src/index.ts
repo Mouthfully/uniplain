@@ -9,3 +9,14 @@ export {
   type SendOptions,
   type SendResult,
 } from "./send.ts";
+export {
+  BRIEF_SPANS,
+  EMAIL_COPY,
+  briefEmail,
+  howToUseEmail,
+  refusalEmail,
+  welcomeEmail,
+  type BriefContent,
+  type BriefFigure,
+  type BriefSpan,
+} from "./templates.ts";
