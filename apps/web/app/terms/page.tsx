@@ -338,7 +338,13 @@ const OPEN_TERMS_LEAD =
 const OPEN_TERMS = [
   { term: "Refund policy", note: "No window, no eligibility rule, no procedure." },
   { term: "Notice before suspension", note: "No period set for a non-urgent suspension." },
-  { term: "Data retention after termination", note: "No retention period and no deletion window." },
+  {
+    term: "Data retention after termination",
+    // STILL NO PERIOD, AND THAT HALF IS UNCHANGED: nothing deletes on a timer, and the period is a
+    // decision the founder has not taken. What HAS changed is that a customer no longer depends on
+    // us taking it -- they can close the account themselves, at once.
+    note: "No retention period and no deletion window. An owner can close the account at any time, which removes it immediately.",
+  },
   { term: "Notice of changes", note: "No period, and no rule on what counts as acceptance." },
   { term: "Liability cap", note: "No figure, no formula, no excluded categories." },
   { term: "Governing law and forum", note: "No jurisdiction chosen and no venue agreed." },

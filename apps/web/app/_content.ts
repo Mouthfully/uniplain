@@ -253,6 +253,10 @@ export const NAV = [
   // page cannot remove a colleague who left, which is not a missing feature -- it is a former
   // employee still reading the takings.
   { href: "/members", label: "People" },
+  // TAKING YOUR DATA OUT AND CLOSING THE ACCOUNT ARE RIGHTS, NOT SETTINGS. A right nobody can find
+  // is a right nobody has, and "write to us and we will do it by hand" is the answer a page like
+  // this exists to stop being necessary.
+  { href: "/account", label: "Account" },
   { href: "/signin", label: "Sign in" },
 ] as const;
 
