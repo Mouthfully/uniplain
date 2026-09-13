@@ -231,19 +231,6 @@ export const SITE = {
 } as const;
 
 /**
- * THE LEGAL AND TRANSPARENCY PAGES, LINKED FROM EVERY PAGE.
- *
- * The footer's own comment has said since it was written that "a policy reachable only by typing
- * its URL is not published in any sense a regulator or a customer would accept" -- and then linked
- * two pages while three more shipped beside them unlinked. `/processing` is the PDPA s.39 record,
- * `/sub-processors` is half of what a controller's own diligence requires, and `/dpa` is the
- * document that decides whether a reviewer can clear the purchase at all. A customer's reviewer
- * does not guess URLs; they look in the footer and conclude from what is not there.
- *
- * Labels are structural rather than sentences, which is why they are short and why `check-copy`
- * does not reach them.
- */
-/**
  * THE IN-PRODUCT HALF OF AN ART. 28(2) NOTICE.
  *
  * Publishing a change to a page is informing somebody only if they look at the page. This is the
@@ -255,14 +242,6 @@ export const SUB_PROCESSOR_NOTICE = {
   body: "A provider that handles data on your behalf has been added, replaced or removed. The change is published with the date it takes effect, and it does not take effect for thirty days. If you object to it you may end the agreement within that window instead of accepting it.",
   link: "Read what changed",
 } as const;
-
-export const FOOTER_LEGAL_LINKS: readonly { readonly href: string; readonly label: string }[] = [
-  { href: "/terms", label: "Terms" },
-  { href: "/privacy", label: "Privacy" },
-  { href: "/dpa", label: "Data processing" },
-  { href: "/sub-processors", label: "Sub-processors" },
-  { href: "/processing", label: "Processing record" },
-];
 
 /**
  * The primary navigation. Labels are structural, so they are not sentences.

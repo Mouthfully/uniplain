@@ -1,9 +1,10 @@
-import { existsSync, readFileSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
 import { Footer, SiteHeader } from "./_chrome";
-import { FOOTER_LEGAL_LINKS, NAV, NAV_MENU } from "./_content";
+import { NAV, NAV_MENU } from "./_content";
+import { FOOTER_GROUPS, footerHrefs, footerLinks } from "./_footer-links";
 
 /**
  * THE NAVIGATION A PHONE CAN ACTUALLY REACH.
@@ -157,14 +158,13 @@ describe("nothing in the header is under the tap floor", () => {
  * They open the footer, see two documents, and conclude the other three do not exist -- which is
  * the same wrong answer a stale denial gives, arrived at through absence instead of prose.
  *
- * Both directions are asserted. Every registered link must render, and every href must be a route
- * that exists on disk, because a footer link to a 404 is worse than no link: it reads as a document
- * that was withdrawn.
+ * What is asserted here is that the footer RENDERS what `_footer-links.ts` registers. Whether the
+ * register itself covers the site is `footer-links.test.tsx`, which is the half that can drift.
  */
 describe("the footer publishes the legal surface", () => {
   const footer = renderToStaticMarkup(<Footer />);
 
-  it.each(FOOTER_LEGAL_LINKS.map((link) => [link.href, link.label] as const))(
+  it.each(FOOTER_GROUPS.flatMap((g) => footerLinks(g).map((l) => [l.href, l.label] as const)))(
     "links %s",
     (href, label) => {
       expect(footer).toContain(`href="${href}"`);
@@ -172,10 +172,9 @@ describe("the footer publishes the legal surface", () => {
     },
   );
 
-  it("links a route that exists for every href", () => {
-    for (const link of FOOTER_LEGAL_LINKS) {
-      const page = new URL(`.${link.href}/page.tsx`, import.meta.url).pathname;
-      expect(existsSync(page), `the footer links ${link.href}, which has no page.tsx`).toBe(true);
+  it("renders every column heading", () => {
+    for (const group of FOOTER_GROUPS) {
+      expect(footer, `the ${group.id} column is not rendered`).toContain(group.heading);
     }
   });
 
@@ -183,6 +182,20 @@ describe("the footer publishes the legal surface", () => {
     // Named rather than left to the loop above. `/dpa` is the one whose absence from the footer
     // costs a sale outright: a reviewer who cannot find an agreement concludes the vendor cannot be
     // appointed as a processor, and PDPA s.40 puts the duty to hold one on THEM, not on us.
-    expect(FOOTER_LEGAL_LINKS.map((l) => l.href)).toContain("/dpa");
+    expect(footerHrefs()).toContain("/dpa");
+  });
+
+  it("keeps every footer link at the WCAG 2.5.8 tap floor", () => {
+    // 24px, not the header's 44. The reason is in `_chrome.tsx` beside the class; what matters here
+    // is that the floor is stated somewhere a change has to walk past, rather than being whatever
+    // the line height happens to produce.
+    const links = footer.slice(footer.indexOf("<nav"), footer.lastIndexOf("</nav>"));
+    const sizes = links.match(/min-h-\[(\d+)px\]/g) ?? [];
+    expect(sizes.length, "no footer link states a tap height").toBeGreaterThanOrEqual(
+      footerHrefs().length,
+    );
+    for (const size of sizes) {
+      expect(Number(size.replace(/\D/g, ""))).toBeGreaterThanOrEqual(24);
+    }
   });
 });

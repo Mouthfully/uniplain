@@ -1,6 +1,7 @@
 import { brand, formatAddress } from "@repo/brand";
 
-import { FOOTER_LEGAL_LINKS, NAV, NAV_MENU, SITE } from "./_content";
+import { NAV, NAV_MENU, SITE } from "./_content";
+import { FOOTER_GROUPS, footerLinks } from "./_footer-links";
 
 /**
  * The header and footer, shared by the marketing page and the dashboard.
@@ -210,47 +211,81 @@ export function SiteHeader() {
 }
 
 /**
- * The footer carries the imprint, which is a legal requirement rather than a design choice: the
- * entity, its registered address, its registration number and a contact address. Every one of them
+ * THE FOOTER, WHICH IS THE ONLY NAVIGATION SOME READERS EVER USE.
+ *
+ * Two jobs, and they are not the same job.
+ *
+ * The first is the imprint -- the entity, its registered address, its registration number and a
+ * contact address. That is a legal requirement rather than a design choice, and every one of them
  * comes from `@repo/brand` and none is restated here.
+ *
+ * The second is the site's index. This footer used to carry two links, then five, all of them
+ * policies, while twenty-one public pages shipped and the only route to most of them was the
+ * six-item header or a search engine. A reviewer looking for the connector page for their till, a
+ * buyer looking for the security page, an agent looking for `llms.txt` -- none of them had a way in
+ * from the page they were standing on. The columns below are built from `AGENT_PAGES`, the registry
+ * `registry.test.ts` holds against the filesystem, so the index cannot fall behind the site the way
+ * the five-link version and the sitemap before it both did. See `_footer-links.ts`.
  */
 export function Footer() {
   return (
     <footer className="border-line bg-surface border-t">
-      <div className="mx-auto grid max-w-[1200px] gap-8 px-8 py-12 md:grid-cols-[2fr_1fr_1fr]">
-        <div>
-          <img src={brand.logoPath} alt={brand.productName} width={136} height={39} />
-          <p className="text-ink-muted mt-3 text-xs">{SITE.footerTagline}</p>
+      <div className="mx-auto max-w-[1200px] px-8 py-12">
+        {/* TWO COLUMNS FROM THE NARROWEST WIDTH, not one. Stacked single-file on a 390px screen
+              these five columns ran past a thousand pixels, which turns an index into a scroll --
+              and the phone is where the header's six links already leave the most unreachable. */}
+        <div className="grid grid-cols-2 gap-8 md:grid-cols-3 lg:grid-cols-5">
+          {FOOTER_GROUPS.map((group) => (
+            // Each column is its own <nav> with the heading as its accessible name, so a screen
+            // reader lands on "Connectors" rather than a fifth unlabelled list of links.
+            <nav key={group.id} aria-label={group.heading}>
+              <strong className="text-ink mb-3 block text-xs">{group.heading}</strong>
+              <ul>
+                {footerLinks(group).map((link) => (
+                  <li key={link.href}>
+                    {/* 24px, not the 44px floor the header's controls hold to. WCAG 2.5.5 is AAA
+                        and would make a twenty-four-link index taller than a phone's viewport,
+                        which costs more reachability than it buys; 2.5.8 is the AA floor and it is
+                        24. Written as a class rather than left to the line height so it is a
+                        decision a test can read. */}
+                    <a
+                      className="text-ink-muted hover:text-accent inline-flex min-h-[24px] items-center text-xs transition-colors"
+                      href={link.href}
+                    >
+                      {link.label}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </nav>
+          ))}
         </div>
 
-        <div className="text-xs">
-          <strong className="text-ink mb-2 block">{brand.legalEntity}</strong>
-          <p className="text-ink-muted">{formatAddress()}</p>
-          <p className="text-ink-muted mt-2">
-            <a
-              className="text-accent underline-offset-4 hover:underline"
-              href={`mailto:${brand.supportEmail}`}
-            >
-              {brand.supportEmail}
-            </a>
-          </p>
-        </div>
+        <div className="border-line mt-10 grid gap-8 border-t pt-8 md:grid-cols-[2fr_1fr_1fr]">
+          <div>
+            <img src={brand.logoPath} alt={brand.productName} width={136} height={39} />
+            <p className="text-ink-muted mt-3 text-xs">{SITE.footerTagline}</p>
+          </div>
 
-        <div className="text-ink-muted text-xs">
-          <p>{SITE.footerNote}</p>
-          <p className="mt-1">{SITE.footerNote2}</p>
-          {/* A registration number is an identifier, not a sentence, so it is written inline. */}
-          <p className="mt-4">Company registration {brand.companyRegistration}</p>
-
-          {/* Linked from every page, because a policy reachable only by typing its URL is not
-              published in any sense a regulator or a customer would accept. */}
-          <p className="mt-3 flex flex-wrap gap-x-4 gap-y-2">
-            {FOOTER_LEGAL_LINKS.map((link) => (
-              <a key={link.href} className="text-accent hover:underline" href={link.href}>
-                {link.label}
+          <div className="text-xs">
+            <strong className="text-ink mb-2 block">{brand.legalEntity}</strong>
+            <p className="text-ink-muted">{formatAddress()}</p>
+            <p className="text-ink-muted mt-2">
+              <a
+                className="text-accent underline-offset-4 hover:underline"
+                href={`mailto:${brand.supportEmail}`}
+              >
+                {brand.supportEmail}
               </a>
-            ))}
-          </p>
+            </p>
+          </div>
+
+          <div className="text-ink-muted text-xs">
+            <p>{SITE.footerNote}</p>
+            <p className="mt-1">{SITE.footerNote2}</p>
+            {/* A registration number is an identifier, not a sentence, so it is written inline. */}
+            <p className="mt-4">Company registration {brand.companyRegistration}</p>
+          </div>
         </div>
       </div>
     </footer>
