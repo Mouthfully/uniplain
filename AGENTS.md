@@ -86,8 +86,18 @@ becomes available.
 7. **s.19 / s.23 at the waiting list.** *Partly fixed:* the form now carries a purpose, a retention
    statement and a link to the notice. Still absent: a consent artefact recording what was agreed
    and when.
-8. **s.37(1) — no personal-data audit trail**, which also disables the s.37(4) breach assessment.
-   No access-log table exists in any migration; `claims.ts` correctly withholds `audit-log`.
+8. **s.37(1) — a security event trail now exists; a complete access log still does not.**
+   `public.security_events` records security-relevant ACTS — a credential sealed, a connection
+   attached or revoked, a role changed, a key minted — append-only and enforced as such: no role
+   holds UPDATE, DELETE or INSERT on it, the only writer is a `SECURITY DEFINER` function, and
+   `20_security_events.sql` proves all three from a hostile `authenticated` session. That makes an
+   s.37(4) breach assessment possible where it previously was not.
+
+   **Reads are still not captured**, and cannot be by anything in this schema: a tenant's reads go
+   through PostgREST as `authenticated` and would need database-level statement logging. So
+   `claims.ts` still correctly withholds `audit-log` — its text is "Every query, export and API key
+   is logged" — and `surface:audit-log` stays out of `AVAILABLE_CAPABILITIES`. A test in the SQL
+   suite carries the reasoning for whoever sees the new table and concludes the capability shipped.
 
 **VERIFIED, AND IT IS WORSE THAN "NO MX".** This entry previously read *"one agent reported no MX
 record; I could not verify that from this environment (no `dig`/`host`)"*. It is now verified, over

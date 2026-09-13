@@ -151,6 +151,21 @@ export const PROCESSING_ACTIVITIES: readonly ProcessingActivity[] = [
     evidence: "supabase/migrations/20260913000700_data_requests.sql",
   },
   {
+    id: "security-trail",
+    purpose:
+      "Recording security-relevant acts -- a credential sealed, a connection attached or revoked, a role changed, a key minted -- so that an incident can be assessed and a customer can review their own account.",
+    role: "controller",
+    tables: ["security_events"],
+    subjects: "People who administer an account.",
+    categories:
+      "What was done, a link to the person who did it, an opaque identifier for the thing it was done to, and a short non-secret note. No credential and no platform data reaches this table; the note column is bounded at 200 characters for that reason.",
+    basis:
+      "Necessary for the security of the service, and to make a breach assessment possible at all. The trail is append-only: no role holds UPDATE or DELETE on it, so it cannot be edited by the party it is evidence about.",
+    recipients: ["Supabase"],
+    retention: null,
+    evidence: "supabase/migrations/20260913000800_security_events.sql",
+  },
+  {
     id: "ambient",
     purpose:
       "Knowing which workspaces asked to see public environmental readings alongside their own figures.",
