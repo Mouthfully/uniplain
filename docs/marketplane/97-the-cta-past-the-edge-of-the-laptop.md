@@ -130,6 +130,56 @@ documents for motion runtimes and reported three "rive" hits on one and five on 
 substring matches — "d**rive**s" in a headline, "**Rive**ry" in a competitor logo. Neither site
 loads Rive. The finding was checked before it was written down.)*
 
+## 3c. The home page was one flat ribbon, and that was measurable
+
+The brief singled out the home page. Measured before anything was changed: **thirteen sections,
+roughly nine thousand pixels, and every one of them reported a fully transparent computed
+background.** The whole page sat on a single ground, so nothing marked where one argument stopped
+and the next began. Both references band their sections; this one did not band at all.
+
+It now carries four bands, grouped **by argument rather than by alternation**. Strict
+light-dark-light over thirteen sections is its own monotony — it manufactures a rhythm out of
+nothing and puts a seam through the middle of ideas that belong together. So:
+
+| Band | Sections | Why together |
+|---|---|---|
+| ground | hero, integrations strip | the opening |
+| `surface-subtle` | SimplerWay, ActionSheet | one argument: told what to do, and every insight ends in a to-do |
+| ground | FeatureGrid, AssistantPanel | the capabilities |
+| **`surface-inset`** | IntegrationsMap, DashboardFeature | **the product moment** — your tools, then the page you open instead of the others |
+| ground | Reports | |
+| `surface-subtle` | Pricing | |
+| ground | UseCases | |
+| `surface-subtle` | Faq, FinalCta | the close |
+
+`surface-inset` is spent **once**. The token file records it as *"BRAND.md Pale blue — soft feature
+backgrounds"*, which is this exact job; used everywhere it stops being an emphasis, used nowhere the
+product moment reads like every other section. **No new value is introduced** — three existing
+tokens, no literal.
+
+Measured after, in a real browser, both schemes:
+
+| | distinct grounds | ink contrast |
+|---|---|---|
+| light | **3** | 15.44 – 17.32 : 1 |
+| dark | **2** | 14.63 – 17.85 : 1 |
+
+**Dark mode loses the third tone, and that is the token file's decision rather than an oversight.**
+Its dark block resolves both `surface-subtle` and `surface-inset` to the ground, with the reason
+written beside it: *"an inset rail recedes on dark, so it takes the ground."* The rhythm survives —
+two grounds still band the page — but the product moment is not distinguished there. Inventing a
+third dark value to fix it would be a colour nobody chose, and the token file marks the two values
+it had to invent as `INVENTED` precisely because that is a cost.
+
+**The bands live in `page.tsx`, not on the sections.** Every section sets its own
+`mx-auto max-w-[1200px]`, so a background on the section itself paints a 1200px stripe with bare
+ground either side. The band has to be an outer element — and keeping all four in one file makes the
+rhythm readable *as* a rhythm instead of as eleven independent decisions.
+
+**No band wrapper may set `overflow`.** `animation-timeline: view()` resolves against the nearest
+scrollport, so an `overflow-hidden` on a wrapper would silently retime every reveal below it against
+the wrong box — and nothing would look broken enough to investigate. A test refuses it.
+
 ## 4. Cost estimate
 
 **Per connected account per month:** `฿0 / $0 — no data-plane work.` No platform read, no envelope

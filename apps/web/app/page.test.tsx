@@ -144,6 +144,60 @@ describe("the page renders every section of the supplied design", () => {
   });
 });
 
+describe("the page is banded, so the eye can find where an idea starts", () => {
+  /**
+   * MEASURED BEFORE IT WAS FIXED: thirteen sections, roughly nine thousand pixels, and every one
+   * of them sat on a fully transparent computed background. The whole home page was one flat
+   * ribbon, and nothing marked the boundary between one argument and the next. Both references the
+   * founder named band their sections.
+   *
+   * These assertions are on the BANDS, not on which section is in which -- the grouping is an
+   * editorial decision and should be free to change. What must not silently come back is the flat
+   * ribbon, which is exactly what a refactor that unwraps these divs would produce, with every
+   * test still green and the page looking subtly cheaper for reasons nobody could name.
+   */
+  const bands = [...html.matchAll(/class="bg-(surface-subtle|surface-inset)"/g)].map((m) => m[1]);
+
+  it("wraps sections in more than one ground", () => {
+    // PINNED, NOT FLOORED, and the difference is a mutation that walked through. A
+    // `toBeGreaterThanOrEqual(3)` floor passed happily when a band was unwrapped, because four
+    // minus one is still three -- so the page could lose its rhythm one wrapper at a time with
+    // every test green. Pinning turns that into a deliberate edit, the same way `NAV.length` is
+    // pinned in `_chrome.test.tsx` after the header drifted two links past the width of the bar.
+    //
+    // Regrouping the sections is meant to be free; changing this number while you do it is the
+    // price, and it costs one line.
+    expect(
+      bands.length,
+      "the number of bands changed. That is fine -- update this number, and check the page still " +
+        "reads as grouped rather than striped",
+    ).toBe(4);
+    expect(
+      new Set(bands).size,
+      "every band uses the same tone, which is a flat page with extra markup",
+    ).toBeGreaterThanOrEqual(2);
+  });
+
+  it("spends the stronger tone once, on one band", () => {
+    // `surface-inset` is the brand guide's "soft feature background". Used everywhere it stops
+    // being an emphasis; used nowhere the product moment reads like every other section.
+    expect(bands.filter((b) => b === "surface-inset")).toHaveLength(1);
+  });
+
+  it("puts no scrollport between the reveals and the viewport", () => {
+    // `animation-timeline: view()` resolves against the nearest scrollport. An `overflow` utility
+    // on a band wrapper would silently retime every reveal below it against the wrong box -- and
+    // nothing would look broken enough to investigate.
+    const wrappers = [
+      ...html.matchAll(/<div class="([^"]*bg-surface-(?:subtle|inset)[^"]*)"/g),
+    ].map((m) => m[1]);
+    expect(wrappers.length).toBeGreaterThanOrEqual(3);
+    for (const cls of wrappers) {
+      expect(cls, `a band wrapper sets overflow: ${cls}`).not.toMatch(/\boverflow[-\w]*\b/);
+    }
+  });
+});
+
 describe("the legal identity is the brand file's, not a copy", () => {
   it("renders the entity, address and registration from @repo/brand", () => {
     expect(text).toContain(brand.legalEntity);

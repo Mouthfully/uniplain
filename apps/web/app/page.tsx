@@ -166,22 +166,75 @@ export default function Page() {
         </section>
 
         {/* The reference's order, section for section. Each lives in its own file under
-            _sections/ with its copy colocated -- see that directory for why. */}
+            _sections/ with its copy colocated -- see that directory for why.
+
+            ------------------------------------------------------------------------------------
+            THE BANDS, AND WHY THEY ARE HERE RATHER THAN ON THE SECTIONS.
+            ------------------------------------------------------------------------------------
+
+            MEASURED, not felt: thirteen sections and roughly nine thousand pixels, and every one
+            of them reported a fully transparent computed background. The whole home page sat on
+            one flat ground, so nothing told a reader's eye where one idea stopped and the next
+            began. Both references the founder named band their sections; this one did not band at
+            all.
+
+            (That sentence quoted the measured value verbatim at first, and `check-tokens` refused
+            it -- correctly. The guard counts comments, because a comment is exactly how a literal
+            gets copied into a rule later. The prose gave way, not the guard.)
+
+            THE GROUPING IS BY ARGUMENT, NOT BY ALTERNATION. Strict light-dark-light over thirteen
+            sections is its own kind of monotony -- it makes a rhythm out of nothing and puts a
+            seam through the middle of ideas that belong together. So `SimplerWay` and
+            `ActionSheet` share a band because they are one argument (told what to do, not shown a
+            chart; and every insight ends in a to-do), and `IntegrationsMap` and
+            `DashboardFeature` share the strongest one because together they are the product
+            moment -- your tools, and then the page you open instead of the others.
+
+            `bg-surface-inset` IS THE BRAND GUIDE'S OWN ANSWER for that strongest band: the token
+            file records it as "BRAND.md Pale blue -- soft feature backgrounds", which is this
+            exact job. No new value is introduced anywhere here.
+
+            THE WRAPPER IS FULL-BLEED AND THE SECTION IS NOT. Every section sets its own
+            `mx-auto max-w-[1200px]`, so a background on the section itself would paint a
+            1200px-wide stripe with bare ground either side. The band has to be an outer element;
+            putting it here rather than editing eleven files also keeps the rhythm readable as a
+            rhythm, in one place, instead of as eleven independent decisions.
+
+            NO `overflow` ON ANY WRAPPER. `overflow` on an ancestor makes it a scrollport, and the
+            reveals are driven by `animation-timeline: view()` -- which resolves against the
+            nearest one. A stray `overflow-hidden` here would silently retime every animation on
+            the page against the wrong box. */}
         <IntegrationsStrip />
-        <SimplerWay />
-        {/* The action sheet sits third, ahead of the capability grid that enumerates it, because
-            it is the whole repositioning: the page's argument is that an insight ends in a to-do
-            rather than in a chart, and an argument made below the fold is not made. */}
-        <ActionSheet />
+
+        <div className="bg-surface-subtle">
+          <SimplerWay />
+          {/* The action sheet sits third, ahead of the capability grid that enumerates it, because
+              it is the whole repositioning: the page's argument is that an insight ends in a to-do
+              rather than in a chart, and an argument made below the fold is not made. */}
+          <ActionSheet />
+        </div>
+
         <FeatureGrid />
         <AssistantPanel />
-        <IntegrationsMap />
-        <DashboardFeature />
+
+        {/* The product moment, and the only band that takes the stronger tone. */}
+        <div className="bg-surface-inset">
+          <IntegrationsMap />
+          <DashboardFeature />
+        </div>
+
         <Reports />
-        <Pricing />
+
+        <div className="bg-surface-subtle">
+          <Pricing />
+        </div>
+
         <UseCases />
-        <Faq />
-        <FinalCta />
+
+        <div className="bg-surface-subtle">
+          <Faq />
+          <FinalCta />
+        </div>
       </main>
 
       <Footer />
