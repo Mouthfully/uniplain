@@ -182,6 +182,28 @@ export const PROCESSING_ACTIVITIES: readonly ProcessingActivity[] = [
     evidence: "supabase/migrations/20260912000900_ambient_readings.sql",
   },
   {
+    id: "serving-the-site",
+    purpose:
+      "Serving this website and the screens an account signs in to, which is processing even though it stores nothing here.",
+    role: "controller",
+    // NO TABLE, AND THAT IS THE POINT. This entry was missing until the sub-processor guard asked
+    // why Vercel was disclosed as a sub-processor while no activity named it. The record had been
+    // built table-first, so processing that holds no row was invisible to it -- and serving a
+    // signed-in page is processing: a request carries an address, a session and a path, and it
+    // passes through a provider. A record of processing that can only see storage is a record of
+    // storage.
+    tables: [],
+    subjects: "Anyone who visits the site, and anyone signed in to an account.",
+    categories:
+      "Request metadata handled in transit by the host -- an address, a session cookie, a path and a timestamp. Nothing is written to this company's own database by the act of serving a page.",
+    basis:
+      "Necessary to deliver the service at all. No analytics or advertising identifier is set by this site, so nothing here is processed for a purpose beyond serving the request.",
+    recipients: ["Vercel"],
+    retention:
+      "Not set by this company. What the host keeps in its own request logs is the host's retention and is not stated here, because it was not established and a number written from memory would be a fact a customer's counsel relied on.",
+    evidence: "apps/web/app/layout.tsx, apps/web/next.config.ts",
+  },
+  {
     id: "waiting-list",
     purpose:
       "A list of addresses collected before launch, to tell people when access opened. COLLECTION HAS ENDED.",
@@ -190,10 +212,11 @@ export const PROCESSING_ACTIVITIES: readonly ProcessingActivity[] = [
     subjects: "People who asked to be told about the product before it launched.",
     categories: "An email address and the page it was submitted from.",
     basis:
-      "Consent at the time of collection. The purpose it was collected for no longer exists as a feature, which is the condition that ends a retention basis -- so these rows are held with no current purpose and that is recorded here rather than glossed.",
+      "Consent at the time of collection. The purpose it was collected for no longer exists as a feature, which is the condition that ends a retention basis -- so these rows are held with no current purpose and that is recorded here rather than glossed. Collection is closed in the schema and not merely in the interface: the write path was revoked from every role the internet can reach, so this entry's claim is enforced rather than asserted.",
     recipients: ["Supabase"],
     retention: null,
-    evidence: "supabase/migrations/20260912000700_waitlist.sql, apps/web/app/access/page.tsx",
+    evidence:
+      "supabase/migrations/20260912000700_waitlist.sql, supabase/migrations/20260913001500_close_waitlist_collection.sql, supabase/tests/23_waitlist_closed.sql, apps/web/app/access/page.tsx",
   },
 ];
 

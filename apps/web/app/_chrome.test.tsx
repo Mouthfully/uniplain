@@ -1,9 +1,9 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
-import { SiteHeader } from "./_chrome";
-import { NAV, NAV_MENU } from "./_content";
+import { Footer, SiteHeader } from "./_chrome";
+import { FOOTER_LEGAL_LINKS, NAV, NAV_MENU } from "./_content";
 
 /**
  * THE NAVIGATION A PHONE CAN ACTUALLY REACH.
@@ -137,5 +137,48 @@ describe("nothing in the header is under the tap floor", () => {
     for (const row of rows) {
       expect(Number(row.replace(/\D/g, ""))).toBeGreaterThanOrEqual(44);
     }
+  });
+});
+
+/**
+ * THE FOOTER, WHICH IS WHERE A REVIEWER LOOKS FOR THE DOCUMENTS THAT DECIDE A PURCHASE.
+ *
+ * The header tests above exist because six links were in the markup and reachable by nobody. The
+ * footer had the opposite defect and the same cause: it linked `/terms` and `/privacy` under a
+ * comment saying "a policy reachable only by typing its URL is not published in any sense a
+ * regulator or a customer would accept", while `/processing`, `/sub-processors` and `/dpa` shipped
+ * beside them and were linked from nothing.
+ *
+ * THAT IS NOT A NAVIGATION BUG, IT IS A DILIGENCE ONE. A customer's reviewer does not guess URLs.
+ * They open the footer, see two documents, and conclude the other three do not exist -- which is
+ * the same wrong answer a stale denial gives, arrived at through absence instead of prose.
+ *
+ * Both directions are asserted. Every registered link must render, and every href must be a route
+ * that exists on disk, because a footer link to a 404 is worse than no link: it reads as a document
+ * that was withdrawn.
+ */
+describe("the footer publishes the legal surface", () => {
+  const footer = renderToStaticMarkup(<Footer />);
+
+  it.each(FOOTER_LEGAL_LINKS.map((link) => [link.href, link.label] as const))(
+    "links %s",
+    (href, label) => {
+      expect(footer).toContain(`href="${href}"`);
+      expect(footer).toContain(label);
+    },
+  );
+
+  it("links a route that exists for every href", () => {
+    for (const link of FOOTER_LEGAL_LINKS) {
+      const page = new URL(`.${link.href}/page.tsx`, import.meta.url).pathname;
+      expect(existsSync(page), `the footer links ${link.href}, which has no page.tsx`).toBe(true);
+    }
+  });
+
+  it("publishes the agreement a controller's own obligations require", () => {
+    // Named rather than left to the loop above. `/dpa` is the one whose absence from the footer
+    // costs a sale outright: a reviewer who cannot find an agreement concludes the vendor cannot be
+    // appointed as a processor, and PDPA s.40 puts the duty to hold one on THEM, not on us.
+    expect(FOOTER_LEGAL_LINKS.map((l) => l.href)).toContain("/dpa");
   });
 });

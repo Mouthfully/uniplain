@@ -134,6 +134,15 @@ jobs:
         if: ${{ !cancelled() }}
         run: node scripts/check-registry.mjs
 
+      # `deleteWorkspacePayloads` is written, tested and called by nothing -- which is correct only
+      # because `putPayload` is called by nothing either. The day the archive is wired into ingest,
+      # closing an account would delete thirteen tables by cascade, report success, and leave the
+      # customer's platform data in R2. Nothing else in the build would notice: 19_erasure.sql reads
+      # pg_class, and a bucket is not in the catalogue.
+      - name: Erasure guard
+        if: ${{ !cancelled() }}
+        run: node scripts/check-erasure.mjs
+
   # Row-level security is the whole tenant-isolation guarantee, so it is a regression gate rather
   # than a one-off check someone once ran. `supabase start` needs Docker-in-Docker and a full
   # Supabase stack; this needs a database, so it runs the real migrations against a plain
