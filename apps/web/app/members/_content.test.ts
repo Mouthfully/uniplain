@@ -95,3 +95,45 @@ describe("the notice an invited person is owed", () => {
     expect(MEMBERS_COPY.noMail).toMatch(/nothing was emailed/i);
   });
 });
+
+/**
+ * THE TRAIL'S THREE STATES, AND THE ONE THAT MATTERS.
+ *
+ * A page that answers "what happened to this account" must not answer "nothing" when it means "I
+ * could not tell". `_figures.ts`'s three-branch rule, applied to a history: null is unreadable, an
+ * empty array is a young account, and neither may render as the other.
+ */
+describe("what the membership trail may and may not say", () => {
+  it("has a different sentence for an unreadable history and an empty one", () => {
+    expect(MEMBERS_COPY.trailUnavailable).not.toBe(MEMBERS_COPY.trailEmpty);
+    // And the unreadable one says which it is, rather than being a generic apology.
+    expect(MEMBERS_COPY.trailUnavailable.toLowerCase()).toContain("could not be read");
+    expect(MEMBERS_COPY.trailEmpty.toLowerCase()).toContain("nothing has changed");
+  });
+
+  /**
+   * THE LIMIT IS PRINTED, NOT HIDDEN. `security_events.subject_id` holds a member id and not an
+   * address, because the table has no retention period and an address in it would be a store of
+   * identifiers nothing expires. So somebody who has left cannot be named -- and a page that showed
+   * a blank where a name belongs would read as a bug rather than as a decision.
+   */
+  it("says why somebody who has left is not named", () => {
+    expect(MEMBERS_COPY.trailAnonymousNote.split(/\s+/).length).toBeGreaterThan(15);
+    expect(MEMBERS_COPY.trailAnonymousNote.toLowerCase()).toContain("address");
+    expect(MEMBERS_COPY.trailRemovedSubject).not.toBe("");
+  });
+
+  /**
+   * AND IT DOES NOT CLAIM TO BE THE AUDIT LOG. `CLAIMS`' `audit-log` entry promises "every query,
+   * export and API key is logged" and stays withheld; `surface:audit-log` is deliberately absent
+   * from `AVAILABLE_CAPABILITIES`. This section shows two event types out of eight, and saying so
+   * is what keeps the two apart.
+   */
+  it("scopes itself to membership rather than implying a complete log", () => {
+    expect(MEMBERS_COPY.trailNote.toLowerCase()).toContain("not shown here");
+    for (const sentence of Object.values(MEMBERS_COPY)) {
+      expect(sentence).not.toMatch(/\bevery (?:query|action|access)\b/i);
+      expect(sentence).not.toMatch(/\bfull audit\b|\baudit log\b/i);
+    }
+  });
+});
