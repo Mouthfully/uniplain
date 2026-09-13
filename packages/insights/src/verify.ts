@@ -44,6 +44,7 @@ export type RefusalCode =
   | "empty_output"
   | "unverifiable_number"
   | "spelled_quantity"
+  | "magnitude_word"
   | "forbidden_claim";
 
 export type Verdict =
@@ -119,6 +120,52 @@ export const SPELLED_QUANTITIES = [
 const SPELLED_RE = new RegExp(`\\b(${SPELLED_QUANTITIES.join("|")})\\b`, "i");
 
 /**
+ * WORDS THAT STATE A SIZE THE ARITHMETIC DID NOT.
+ *
+ * `salience.ts` bands every change from the computed percentage and the prompt tells the model that
+ * the band IS the size. These words assert a size on top of it, and a size asserted in prose is a
+ * quantity the gate cannot check -- the same defect as a spelled-out number, wearing an adverb.
+ * "Takings fell sharply" over a 2.1% move is a false statement about the data that contains no
+ * false number, so every other check here waves it through.
+ *
+ * THE LIST IS DELIBERATELY SHORT, AND ONLY HOLDS WORDS THAT ARE WRONG AT EVERY BAND. It does not
+ * ban "rose", "fell" or "up": those are directions, the delta figure states the direction, and a
+ * guard that fired on them would fire on correct briefs several times a morning. A guard with false
+ * positives gets switched off, which is worse than not having one -- `brand.test.ts` keeps eight
+ * must-stay-legal sentences for exactly this reason, and `verify.test.ts` now keeps its own.
+ *
+ * What this does NOT do, stated because the boundary is easy to misread: it cannot tell that a
+ * `negligible` change was called "a fall". That needs attributing a clause to a figure, which is
+ * language work, and language work is what this module exists to not depend on. The prompt asks
+ * for it; this catches only the unambiguous half. Reducing a failure is not preventing it, and
+ * `brief.ts` already says the same about telling the model the gate exists.
+ */
+export const MAGNITUDE_WORDS = [
+  "sharply",
+  "dramatically",
+  "drastically",
+  "hugely",
+  "massively",
+  "steeply",
+  "plummet",
+  "plummeted",
+  "plunge",
+  "plunged",
+  "soar",
+  "soared",
+  "surge",
+  "surged",
+  "collapse",
+  "collapsed",
+  "skyrocket",
+  "skyrocketed",
+  "nosedive",
+  "nosedived",
+] as const;
+
+const MAGNITUDE_RE = new RegExp(`\\b(${MAGNITUDE_WORDS.join("|")})\\b`, "i");
+
+/**
  * Every numeric token in a string.
  *
  * A digit run, with grouping separators and an optional decimal part. Deliberately sign-blind: the
@@ -187,6 +234,19 @@ export function verifyInsight(raw: string, set: FigureSet): Verdict {
         detail:
           `"${spelled[0]}" is a quantity written as a word, so it cannot be checked against the ` +
           "figures. The prompt requires digits.",
+        offending: text,
+      };
+    }
+
+    const magnitude = MAGNITUDE_RE.exec(text);
+    if (magnitude !== null) {
+      return {
+        ok: false,
+        code: "magnitude_word",
+        detail:
+          `"${magnitude[0]}" states a size that no figure states. How big a change is comes from ` +
+          "the band the arithmetic computed, not from the wording, so this is a quantity the gate " +
+          "cannot check -- refused for the same reason a spelled-out number is.",
         offending: text,
       };
     }
