@@ -150,6 +150,9 @@ importers:
       '@repo/insights':
         specifier: workspace:*
         version: link:../../packages/insights
+      '@repo/store':
+        specifier: workspace:*
+        version: link:../../packages/store
       '@repo/tokens':
         specifier: workspace:*
         version: link:../../packages/tokens

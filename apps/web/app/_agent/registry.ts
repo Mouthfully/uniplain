@@ -270,6 +270,10 @@ export const PRIVATE_PATHS: readonly string[] = [
   // refused to a crawler, which mattered more than usual because the commit before this one
   // invited every AI crawler in by name.
   "/join",
+  // Added with the key screen itself: `/keys` lists a workspace's credentials by name and mints
+  // new ones. The fourth route this guard has caught on arrival, and the one where a crawler
+  // following a link would be reading a list of live credentials.
+  "/keys",
   "/members",
   "/signin",
   "/welcome",
