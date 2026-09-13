@@ -67,6 +67,23 @@ export const MEMBERS_COPY = {
   roleViewer: "Viewer",
   roleViewerWhat: "Read the figures in the workspaces they are given.",
 
+  // --- The trail. -------------------------------------------------------------------------------
+  trailHeading: "What has changed",
+  trailEmpty: "Nothing has changed since this account was created.",
+  trailUnavailable:
+    "The history could not be read, so none is shown rather than an empty list that would look like nothing having happened.",
+  trailRemovedSubject: "a person who is no longer in this account",
+  trailRoleChanged: "Role changed",
+  trailMemberRemoved: "Removed from the account",
+  trailNote:
+    "Only changes to who is in the account and what they may do. Connecting a source or creating an API key is recorded too, and is not shown here.",
+  // THE LIMIT, SAID ON THE PAGE. The trail stores a member id rather than an address, because the
+  // table has no retention period and an address in it would be a store of identifiers nothing
+  // expires. So somebody who has left cannot be named, and the page says so rather than printing a
+  // blank where a name would be.
+  trailAnonymousNote:
+    "Somebody who has left the account is not named here. We keep the record of what happened and not a copy of their address, so there is nothing left to show once they are gone.",
+
   // --- The states where nothing is produced. ----------------------------------------------------
   signedOut: "You are not signed in, so there is no account to show.",
   noOrganisation:

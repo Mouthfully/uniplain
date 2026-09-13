@@ -26,6 +26,24 @@ export interface MemberRow {
   readonly createdAt: string;
 }
 
+/**
+ * One entry in the membership trail.
+ *
+ * `subjectLabel` IS RESOLVED HERE AND CAN BE NULL, which is the honest shape rather than a
+ * convenience. `security_events.subject_id` is an opaque member id and not an address -- deliberately,
+ * because the trail has no retention period and an address here would be a store of identifiers
+ * nothing expires. So a member still in the account resolves to their address, and one who has been
+ * removed does not resolve at all. The screen says which; it does not invent a name.
+ */
+export interface TrailRow {
+  readonly id: number;
+  readonly event: string;
+  readonly detail: string | null;
+  readonly occurredAt: string;
+  readonly subjectLabel: string | null;
+  readonly actorLabel: string | null;
+}
+
 export interface InvitationRow {
   readonly id: string;
   readonly email: string;
@@ -45,6 +63,12 @@ export interface Membership {
    * and an empty array would tell them there is nothing waiting -- a claim this code cannot make.
    */
   readonly invitations: readonly InvitationRow[] | null;
+  /**
+   * NULL MEANS THE TRAIL COULD NOT BE READ, not that nothing has happened. An empty array is a real
+   * answer -- a young account where nobody has changed anything -- and the two must not render the
+   * same way on a page whose whole purpose is answering "what happened here".
+   */
+  readonly trail: readonly TrailRow[] | null;
 }
 
 export type MembershipState =
@@ -118,6 +142,35 @@ export async function readMembership(userId: string): Promise<MembershipState> {
     }));
   }
 
+  // THE MEMBERSHIP TRAIL. Readable by any member -- `security_events_select` is gated on
+  // `app.is_org_member`, not on admin -- so it is not behind the role check the invitations are.
+  // Bounded at fifty: this is the recent history a person checks after something changed, not an
+  // export, and an unbounded read on a table that only grows is a page that gets slower for ever.
+  let trail: TrailRow[] | null = null;
+  const { data: events, error: trailError } = await supabase
+    .from("security_events")
+    .select("id, event, detail, occurred_at, subject_id, actor")
+    .eq("organisation_id", organisation.id)
+    .in("event", MEMBERSHIP_EVENTS)
+    .order("id", { ascending: false })
+    .limit(50);
+
+  if (trailError === null) {
+    const byMemberId = new Map(members.map((member) => [member.memberId, member.email]));
+    trail = (events ?? []).map((row) => ({
+      id: row.id as number,
+      event: row.event as string,
+      detail: (row.detail as string | null) ?? null,
+      occurredAt: row.occurred_at as string,
+      // Resolves while the person is still here, and null once they are not. See `TrailRow`.
+      subjectLabel: byMemberId.get(row.subject_id as string) ?? null,
+      // The actor is an auth user id, which this app has no read path for at all -- the whole point
+      // of `organisation_members`. It resolves only when the actor is themselves a current member,
+      // which is the common case and the only one that can be answered honestly here.
+      actorLabel: null,
+    }));
+  }
+
   return {
     kind: "ready",
     membership: {
@@ -126,9 +179,19 @@ export async function readMembership(userId: string): Promise<MembershipState> {
       ownRole: own.role as MemberRole,
       members,
       invitations,
+      trail,
     },
   };
 }
+
+/**
+ * The events this screen shows.
+ *
+ * NAMED RATHER THAN "everything for this organisation". `security_events` carries connection,
+ * credential and API-key events too, and a members page listing a credential being sealed would be
+ * a different page wearing this one's title.
+ */
+const MEMBERSHIP_EVENTS = ["member_role_changed", "member_removed"] as const;
 
 /** The row shape `public.organisation_members` returns. Named so the mapping above stays readable. */
 interface RawMember {

@@ -59,6 +59,7 @@ export default async function MembersPage() {
                   members={state.membership.members}
                   invitations={state.membership.invitations}
                   ownRole={state.membership.ownRole}
+                  trail={state.membership.trail}
                 />
               </div>
 
