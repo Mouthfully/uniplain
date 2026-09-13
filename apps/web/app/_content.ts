@@ -234,6 +234,10 @@ export const NAV = [
   { href: "/pricing", label: "Pricing" },
   { href: "/docs", label: "Documentation" },
   { href: "/connections", label: "Connections" },
+  // THE BRIEF IS THE PRODUCT, so it sits beside the dashboard rather than under it. A page nothing
+  // links to is a page nobody uses: `/brief` shipped reachable only by typing the address, which
+  // is the same defect as a test nothing runs.
+  { href: "/brief", label: "Brief" },
   { href: "/dashboard", label: "Dashboard" },
   { href: "/signin", label: "Sign in" },
 ] as const;
