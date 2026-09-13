@@ -144,6 +144,45 @@ export const AGENT_PAGES: readonly AgentPage[] = [
     changeFrequency: "monthly",
     priority: 0.7,
   },
+  // THE SEGMENT PAGES, LISTED ONE BY ONE RATHER THAN GENERATED FROM `SEGMENTS`.
+  //
+  // This registry drives the sitemap, so an entry here is an assertion that a URL is canonical and
+  // worth indexing. Generating them from the segment data structure would mean a draft segment
+  // advertises itself the moment somebody adds it to that structure. Three lines is the cost of
+  // each one being a decision.
+  {
+    path: "/for/cafe",
+    title: "For cafés and coffee bars",
+    summary: "What this product reads for a café, and the brief it writes from it.",
+    claims: ["byoc"],
+    changeFrequency: "monthly",
+    priority: 0.8,
+  },
+  {
+    path: "/for/online-shop",
+    title: "For online shops",
+    summary: "What this product reads for an online shop, and the brief it writes from it.",
+    claims: ["byoc"],
+    changeFrequency: "monthly",
+    priority: 0.8,
+  },
+  {
+    path: "/for/salon",
+    title: "For salons and clinics",
+    summary: "What this product reads for a salon, and the brief it writes from it.",
+    claims: ["byoc"],
+    changeFrequency: "monthly",
+    priority: 0.8,
+  },
+  // A buyer looks for this one before they sign up, which is the whole argument for indexing it.
+  {
+    path: "/security",
+    title: "Security",
+    summary: "What this service enforces in code, and which assurance documents are not held.",
+    claims: [],
+    changeFrequency: "monthly",
+    priority: 0.7,
+  },
   {
     path: "/processing",
     title: "Record of processing",

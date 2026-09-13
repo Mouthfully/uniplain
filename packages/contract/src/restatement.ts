@@ -106,6 +106,26 @@ export const RESTATEMENT_CLOCKS: Record<Source, RestatementClock> = {
   // window that does not exist. The incremental pull filters on `modified_after` instead, which is
   // load-bearing and verified in WooCommerce core -- `wc_create_refund` bumps the parent order's
   // `date_modified` unconditionally, so a refund resurfaces the order it belongs to.
+  // THE SAME NULL AS WOOCOMMERCE, AND FOR THE SAME REASON RATHER THAN BY ANALOGY.
+  //
+  // A Shopify order is the merchant's own record, not a platform's reporting pipeline, and Shopify
+  // documents the `current*` money fields as reflecting "returns, refunds, order edits, and
+  // cancellations" -- all four of which can happen at any remove from the sale. There is no point
+  // at which an order stops being able to move, so no window closes and no row is ever final.
+  //
+  // The consequence is the same and is accepted the same way: `restatesUntil` returns null, so
+  // `isProvisional` is always true, and the backfill planner sees no ladder to climb. The
+  // incremental pull filters on `updated_at` instead -- which is load-bearing here, and is a
+  // documented filter on the `orders` query rather than a hopeful guess.
+  shopify: {
+    windowDays: null,
+    perAccount: false,
+    note:
+      "No window closes. An order can be refunded, edited or cancelled at any remove, and Shopify's " +
+      "own currentTotalPriceSet reflects all three -- so every row stays provisional and " +
+      "restatements are caught by an updated_at pull rather than by a ladder.",
+  },
+
   woocommerce: {
     windowDays: null,
     perAccount: false,

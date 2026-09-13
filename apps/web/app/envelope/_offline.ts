@@ -41,6 +41,7 @@ import {
   normalizeGoogleAdsSearch,
   normalizeMetaInsights,
   normalizeSearchAnalytics,
+  normalizeShopifyOrders,
   normalizeWooOrders,
 } from "@repo/connectors";
 import { CONVERSION_METRICS, type EnvelopeRow, envelopeRowSchema } from "@repo/contract";
@@ -48,6 +49,7 @@ import { CONVERSION_METRICS, type EnvelopeRow, envelopeRowSchema } from "@repo/c
 import * as ga4Fixtures from "../../../../packages/connectors/src/sources/ga4/fixtures.ts";
 import * as googleAdsFixtures from "../../../../packages/connectors/src/sources/google_ads/fixtures.ts";
 import * as loyverseFixtures from "../../../../packages/connectors/src/sources/loyverse/fixtures.ts";
+import * as shopifyFixtures from "../../../../packages/connectors/src/sources/shopify/fixtures.ts";
 import * as metaFixtures from "../../../../packages/connectors/src/sources/meta_ads/fixtures.ts";
 import * as searchConsoleFixtures from "../../../../packages/connectors/src/sources/search_console/fixtures.ts";
 import * as wooFixtures from "../../../../packages/connectors/src/sources/woocommerce/fixtures.ts";
@@ -179,6 +181,13 @@ const LOYVERSE_INPUT = {
   firstSeenAt: "2026-09-10T02:00:00.000Z",
 };
 
+const SHOPIFY_INPUT = {
+  shopDomain: "example.myshopify.com",
+  timezone: "Asia/Bangkok",
+  fetchedAt: "2026-09-13T02:00:00.000Z",
+  firstSeenAt: "2026-09-13T02:00:00.000Z",
+};
+
 const WOO_INPUT = {
   storeUrl: "https://shop.example.com",
   timezone: "Asia/Bangkok",
@@ -232,6 +241,17 @@ const LOYVERSE = source(
   normalizeLoyverseReceipts({ receipts: loyverseFixtures.PAGE, ...LOYVERSE_INPUT }),
 );
 
+// FIVE FIXTURES IN, FOUR ROWS OUT. The fifth is a test order, which this normaliser drops -- the
+// one order it is ever safe to drop, because it never existed commercially. Every other refusal in
+// that connector throws instead, and this panel is where a reader can see the difference.
+const SHOPIFY = source(
+  normalizeShopifyOrders,
+  shopifyFixtures,
+  shopifyFixtures.SHOPIFY_ORDERS,
+  SHOPIFY_INPUT,
+  normalizeShopifyOrders({ orders: shopifyFixtures.SHOPIFY_ORDERS, ...SHOPIFY_INPUT }),
+);
+
 const WOOCOMMERCE = source(
   normalizeWooOrders,
   wooFixtures,
@@ -246,6 +266,7 @@ export const SOURCES: readonly OfflineSource[] = [
   LOYVERSE,
   META_ADS,
   SEARCH_CONSOLE,
+  SHOPIFY,
   WOOCOMMERCE,
 ];
 

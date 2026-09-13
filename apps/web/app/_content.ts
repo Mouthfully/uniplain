@@ -277,6 +277,10 @@ export const NAV = [
   // TAKING YOUR DATA OUT AND CLOSING THE ACCOUNT ARE RIGHTS, NOT SETTINGS. A right nobody can find
   // is a right nobody has, and "write to us and we will do it by hand" is the answer a page like
   // this exists to stop being necessary.
+  // SECURITY IS A SALES PAGE, not a settings one, and it sits with the other things a buyer reads
+  // before they sign up. It is the page that answers "are you safe to give my takings to" without
+  // asserting a certificate this company does not hold.
+  { href: "/security", label: "Security" },
   { href: "/account", label: "Account" },
   { href: "/signin", label: "Sign in" },
 ] as const;
@@ -601,6 +605,15 @@ export const CONNECTIONS = {
       accountHint:
         "The merchant id of the account, which is what every receipt is filed under. It identifies the account rather than one shop, so a two-shop owner names it once.",
     },
+    shopify: {
+      accountLabel: "Store address",
+      // THE myshopify ADDRESS AND NOT THE CUSTOMER-FACING DOMAIN, and the hint says so because
+      // most merchants think of the second one as their address. `shopifyEndpoint` is built from
+      // this value and refuses anything that is not a myshopify domain, so a shop that pastes its
+      // own domain is refused at the form rather than reaching a host nobody authorised.
+      accountHint:
+        "The myshopify address of the store, the one ending in myshopify.com. It is in your browser's address bar when you are in the Shopify admin, and it is not the domain your customers visit.",
+    },
   } as Record<string, { readonly accountLabel: string; readonly accountHint: string }>,
 
   expiryLegend: "Does this token expire?",
@@ -641,6 +654,7 @@ export const CONNECTIONS = {
     google_ads: "Google Ads",
     search_console: "Search Console",
     loyverse: "Loyverse",
+    shopify: "Shopify",
   } as Record<string, string>,
 
   statusNames: {

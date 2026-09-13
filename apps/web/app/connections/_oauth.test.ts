@@ -69,6 +69,10 @@ describe("the cookie that crosses the detour", () => {
    */
   it("refuses a provider this screen does not offer on this door", () => {
     expect(decodeContext(JSON.stringify({ ...context, provider: "woocommerce" }))).toBeNull();
+    // `shopify` STAYS ON THIS SIDE, and now for a sharper reason than before. It used to be here
+    // because nothing in the repository could read Shopify at all. It is here now because its
+    // connector is real and its OAUTH DOOR IS NOT: `@repo/oauth` holds endpoints as constants and
+    // Shopify's are per-shop. A screen that accepted it would start a flow that cannot finish.
     expect(decodeContext(JSON.stringify({ ...context, provider: "shopify" }))).toBeNull();
   });
 

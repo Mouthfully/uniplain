@@ -126,15 +126,20 @@ describe("the page runs the connectors offline", () => {
   it("counts the rows it rendered rather than announcing a number", () => {
     // ROW_COUNT IS DEFINED AS THIS SUM, so re-deriving it here and asserting equality restated the
     // definition and could not fail. The number that can be wrong is the one the page PRINTS, and
-    // the count the fixtures actually yield -- so both are pinned to a literal. 20 is what the
-    // six normalisers produce today (2 ga4 + 2 google_ads + 4 loyverse + 7 meta_ads +
-    // 2 search_console + 3 woocommerce); a normaliser that changes its fan-out fails here and
-    // should. Loyverse contributes ONE ROW PER RECEIPT -- a sale, a refund, a cancellation and a
-    // late-night sale -- because a receipt is the `order` grain and a refund is a second receipt
-    // rather than a mutation of the first.
-    expect(ROW_COUNT).toBe(20);
-    expect(SOURCES.reduce((total, s) => total + s.rows.length, 0)).toBe(20);
-    expect(text).toContain("20");
+    // the count the fixtures actually yield -- so both are pinned to a literal. 24 is what the
+    // seven normalisers produce today (2 ga4 + 2 google_ads + 4 loyverse + 7 meta_ads +
+    // 2 search_console + 4 shopify + 3 woocommerce); a normaliser that changes its fan-out fails
+    // here and should. Loyverse contributes ONE ROW PER RECEIPT -- a sale, a refund, a cancellation
+    // and a late-night sale -- because a receipt is the `order` grain and a refund is a second
+    // receipt rather than a mutation of the first.
+    //
+    // SHOPIFY IS FIVE FIXTURES AND FOUR ROWS, and the missing one is the point: a `test: true`
+    // order is a developer pressing buttons with the gateway in test mode, it never existed
+    // commercially, and it is the ONLY order this connector drops rather than throwing on. That
+    // fixture carries 999,999 so the consequence of counting it would be unmissable.
+    expect(ROW_COUNT).toBe(24);
+    expect(SOURCES.reduce((total, s) => total + s.rows.length, 0)).toBe(24);
+    expect(text).toContain("24");
   });
 
   it("carries a Meta row per attribution window plus one unattributed delivery row", () => {
