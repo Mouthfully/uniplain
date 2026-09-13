@@ -157,7 +157,7 @@ export function Reports() {
       aria-labelledby="reports-heading"
       className="mx-auto grid max-w-[1200px] items-center gap-8 px-8 py-12 md:grid-cols-2 md:gap-10 md:py-20 lg:gap-20"
     >
-      <div className="min-w-0">
+      <div className="reveal min-w-0">
         <span className="text-ink-faint block text-xs font-bold tracking-[0.14em] uppercase">
           {EYEBROW}
         </span>
@@ -174,22 +174,24 @@ export function Reports() {
 
         <a
           href="/dashboard"
-          className="bg-surface text-accent border-line hover:bg-surface-subtle mt-6 inline-flex min-h-[46px] items-center gap-3 rounded-md border px-[22px] text-sm font-bold transition-colors"
+          className="nudge-host bg-surface text-accent border-line hover:bg-surface-subtle mt-6 inline-flex min-h-[46px] items-center gap-3 rounded-md border px-[22px] text-sm font-bold transition-colors"
         >
           {CTA_LABEL}
-          <span aria-hidden="true">&#9655;</span>
+          <span aria-hidden="true" className="nudge inline-block">
+            &#9655;
+          </span>
         </a>
       </div>
 
       {/* The panel is the design's: the four cards sit on a tinted ground with a 2px-larger radius,
           which is what reads as a set rather than four loose cards. It stays two-up at every width
           -- these cards carry two short lines and a chart, so they survive a phone in pairs. */}
-      <ul className="bg-surface-subtle grid min-w-0 grid-cols-2 gap-2.5 rounded-xl p-2.5 md:gap-4 md:p-[18px]">
+      <ul className="reveal-group bg-surface-subtle grid min-w-0 grid-cols-2 gap-2.5 rounded-xl p-2.5 md:gap-4 md:p-[18px]">
         {REPORTS.map((report) => (
           <li key={report.name} className="flex">
             <a
               href="/dashboard"
-              className="border-line bg-surface hover:border-accent flex flex-1 flex-col rounded-lg border p-3 text-left transition-colors md:p-[18px]"
+              className="lift border-line bg-surface hover:border-accent flex flex-1 flex-col rounded-lg border p-3 text-left transition-colors md:p-[18px]"
             >
               <strong className="text-ink text-xs leading-[1.3] font-bold">{report.name}</strong>
 

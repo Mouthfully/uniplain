@@ -436,6 +436,37 @@
    * --------------------------------------------------------------------------------- */
   --mp-motion-blink: mp-blink 1s steps(1) infinite; /* the 2x16px caret */
   --mp-motion-rise: mp-rise 0.4s ease-out; /* the answer bubble */
+
+  /* ---------------------------------------------------------------------------------
+   * THE MARKETING PAGE'S MOTION, AS VALUES RATHER THAN AS NUMBERS TYPED INTO A CLASS.
+   *
+   * Everything above this line is the artboard's motion, reproduced verbatim. Everything below
+   * is new, and it is here rather than in globals.css for the same reason every colour is here:
+   * a duration typed into one section and a different duration typed into the next is how a page
+   * stops reading as one thing. There are three durations and two curves in the whole system.
+   *
+   * THE CURVES ARE NOT `ease-out`. CSS's own `ease-out` decelerates gently the whole way, which
+   * reads as slow rather than as settled. Both curves below leave fast and arrive slowly, which
+   * is what makes a 620ms reveal feel like it took 300: `--settle` is the expo-out curve used for
+   * anything entering the page, `--standard` the shorter one for a control responding to a
+   * pointer. A control that used the settle curve would feel laggy under the cursor; an entrance
+   * that used the standard curve would arrive with a bump.
+   *
+   * THE RISE DISTANCE IS 18px AND NOT MORE. An entrance that travels far enough to notice is an
+   * entrance the reader waits out. This is roughly one line of body text -- perceptible as
+   * movement, never as a journey.
+   *
+   * --mp-motion-lift IS NEGATIVE because it is a translateY: a card rising under the cursor moves
+   * up the screen. Writing `3px` here and negating it at each call site would put a minus sign in
+   * eleven files and a bug in the twelfth.
+   * --------------------------------------------------------------------------------- */
+  --mp-motion-fast: 160ms; /* a control answering a pointer */
+  --mp-motion-base: 320ms; /* a card lifting, a colour crossing */
+  --mp-motion-slow: 620ms; /* an element entering the page */
+  --mp-motion-settle: cubic-bezier(0.16, 1, 0.3, 1); /* entrances: leave fast, arrive slowly */
+  --mp-motion-standard: cubic-bezier(0.2, 0, 0, 1); /* controls under a pointer */
+  --mp-motion-rise-distance: 18px; /* about one line of body text */
+  --mp-motion-lift: -3px; /* negative: a card rises toward the reader */
 }
 
 /*
@@ -543,6 +574,74 @@
   from {
     opacity: 0;
     transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/*
+ * THE TREND LINE DRAWING ITSELF, ONCE, ON LOAD.
+ *
+ * `pathLength="1"` ON THE PATH IS WHAT MAKES THIS SAFE TO KEEP. SVG lets an author declare the
+ * length the browser should PRETEND a path has, and every dash value is then measured against that
+ * instead of against the real geometry. So the keyframe below says "one whole path" rather than
+ * guessing at a number of user units -- and the day somebody redraws the trend, adds an hour to
+ * the axis or changes the viewBox, the animation still starts exactly at the beginning and ends
+ * exactly at the end. A hard-coded `stroke-dasharray: 1000` would keep working and stop being
+ * right: too small and the line draws in segments, too large and it appears part-drawn.
+ *
+ * NO `fill-mode`, DELIBERATELY. Before the animation starts and after it finishes, the element
+ * uses its ordinary style -- no dash at all, the line simply drawn. The only state in which this
+ * line is incomplete is the 620ms it is being drawn. There is no failure mode where a reader is
+ * left looking at half a chart, which `both` or `backwards` would introduce.
+ */
+@keyframes mp-draw {
+  from {
+    stroke-dasharray: 1;
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dasharray: 1;
+    stroke-dashoffset: 0;
+  }
+}
+
+/*
+ * THE HERO WASH, BREATHING.
+ *
+ * Applied to a decorative pseudo-element that paints a gradient behind the hero and contains no
+ * content, so this animation cannot hide, move or reflow anything a reader came for. It is slow
+ * enough -- see globals.css -- that it reads as depth rather than as movement; anything faster
+ * competes with the headline it sits behind.
+ */
+@keyframes mp-drift {
+  from {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  to {
+    transform: translate3d(0, -1.5%, 0) scale(1.06);
+  }
+}
+
+/*
+ * THE SCROLL REVEAL, AND THE TWO PROPERTIES IT IS ALLOWED TO TOUCH.
+ *
+ * `opacity` and `transform`, and nothing else, ever. Both are composited off the main thread and
+ * neither participates in layout, so a page full of these reveals cannot shift a single line of
+ * text while it runs. The moment a height, a margin or a `top` appears in here, the reveal starts
+ * moving the page under a reader's finger -- which is the one thing a marketing page must not do
+ * on a phone. `motion.test.ts` refuses a layout property in this keyframe rather than trusting
+ * the next person to remember.
+ *
+ * IT IS DRIVEN BY SCROLL POSITION, not by a timer -- see globals.css. That is why the keyframe
+ * carries no duration of its own.
+ */
+@keyframes mp-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(var(--mp-motion-rise-distance));
   }
   to {
     opacity: 1;

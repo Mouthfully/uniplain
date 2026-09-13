@@ -132,17 +132,21 @@ export default function Page() {
                   the magic link creates the account on first use, so "start free" IS sign in. */}
               <a
                 href="/signin"
-                className="bg-accent text-ink-on-accent hover:bg-accent-hover inline-flex min-h-[46px] items-center gap-3 rounded-[10px] px-[22px] text-sm font-bold transition-colors"
+                className="nudge-host bg-accent text-ink-on-accent hover:bg-accent-hover inline-flex min-h-[46px] items-center gap-3 rounded-[10px] px-[22px] text-sm font-bold transition-colors"
               >
                 {SITE.ctaPrimary}
-                <span aria-hidden="true">&rarr;</span>
+                <span aria-hidden="true" className="nudge inline-block">
+                  &rarr;
+                </span>
               </a>
               <a
                 href="/dashboard"
-                className="bg-surface text-accent border-line inline-flex min-h-[46px] items-center gap-3 rounded-[10px] border px-[22px] text-sm font-bold"
+                className="nudge-host bg-surface text-accent border-line inline-flex min-h-[46px] items-center gap-3 rounded-[10px] border px-[22px] text-sm font-bold"
               >
                 {SITE.ctaSecondary}
-                <span aria-hidden="true">&#9655;</span>
+                <span aria-hidden="true" className="nudge inline-block">
+                  &#9655;
+                </span>
               </a>
             </div>
 
@@ -291,7 +295,17 @@ function HeroDashboard() {
               <path d="M0 35H440M0 80H440M0 125H440" stroke="currentColor" />
             </g>
             <path d={`${HERO_TREND}V155H0Z`} fill="url(#hero-area)" />
-            <path d={HERO_TREND} stroke="currentColor" strokeWidth="3" fill="none" />
+            {/* `pathLength="1"` lets the draw-on animation measure in whole paths rather than
+                in user units, so redrawing the trend or changing the viewBox cannot leave it
+                animating the wrong length. See `mp-draw` in tokens.css. */}
+            <path
+              d={HERO_TREND}
+              stroke="currentColor"
+              strokeWidth="3"
+              fill="none"
+              pathLength="1"
+              className="draw-trend"
+            />
           </svg>
 
           <div className="text-ink-faint mt-1 flex justify-between text-[9px]">
