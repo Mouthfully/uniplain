@@ -1,6 +1,6 @@
 # 90. The second factor nobody can unlock
 
-**PR:** #TBD &nbsp;·&nbsp; **Date:** 2026-09-13 &nbsp;·&nbsp; **Status:** proposed &nbsp;·&nbsp; **Ships no feature**
+**PR:** [#78](https://github.com/Mouthfully/uniplain/pull/78) &nbsp;·&nbsp; **Issue:** [#79](https://github.com/Mouthfully/uniplain/issues/79) &nbsp;·&nbsp; **Date:** 2026-09-13 &nbsp;·&nbsp; **Status:** proposed &nbsp;·&nbsp; **Ships no feature**
 
 ---
 
@@ -97,7 +97,9 @@ One question, and the honest options:
   is not yet asked for at sign-in. That is a section whose whole content is a disclaimer, and it is
   hard to see who it helps.
 
-The work is scoped and small once the answer exists. What is missing is the answer.
+The work is scoped and small once the answer exists. What is missing is the answer, and it is
+asked as issue [#79](https://github.com/Mouthfully/uniplain/issues/79) so it sits somewhere a person
+will meet it rather than only in a directory of notes.
 
 ## 5. What could not be verified from here
 
