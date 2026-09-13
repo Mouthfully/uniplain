@@ -57,6 +57,15 @@ export interface Membership {
   readonly organisationName: string;
   /** The signed-in person's own role, which decides what the page offers rather than what it shows. */
   readonly ownRole: MemberRole;
+  /**
+   * The signed-in person's own `members.id`.
+   *
+   * Exposed because `api_keys.created_by` references it, and resolving it again on the key screen
+   * would be a SECOND place this session's membership is worked out -- the one that eventually
+   * disagrees with this one. It is already in hand here; handing it over costs a column on a
+   * query that runs anyway.
+   */
+  readonly ownMemberId: string;
   readonly members: readonly MemberRow[];
   /**
    * NULL MEANS "NOT SHOWN TO YOU", NOT "THERE ARE NONE". A viewer cannot read `invitations` at all,
@@ -96,7 +105,7 @@ export async function readMembership(userId: string): Promise<MembershipState> {
   // RLS has already decided which rows are visible, and this picks the reader's own out of them.
   const { data: own, error: ownError } = await supabase
     .from("members")
-    .select("role")
+    .select("id, role")
     .eq("organisation_id", organisation.id)
     .eq("user_id", userId)
     .maybeSingle();
@@ -177,6 +186,7 @@ export async function readMembership(userId: string): Promise<MembershipState> {
       organisationId: organisation.id as string,
       organisationName: organisation.name as string,
       ownRole: own.role as MemberRole,
+      ownMemberId: own.id as string,
       members,
       invitations,
       trail,

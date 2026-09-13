@@ -15,6 +15,7 @@
     "@repo/connectors": "workspace:*",
     "@repo/contract": "workspace:*",
     "@repo/insights": "workspace:*",
+    "@repo/store": "workspace:*",
     "@repo/tokens": "workspace:*",
     "@supabase/ssr": "^0.12.7",
     "@supabase/supabase-js": "^2.116.0",

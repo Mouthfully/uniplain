@@ -33,6 +33,13 @@ const nextConfig: NextConfig = {
     "@repo/connectors",
     "@repo/extract",
     "@repo/payloads",
+    // Added with `/keys`, which mints an API key and must hash it with the SAME function the Worker
+    // feeds `verify_api_key`. It imports `@repo/store/jwt` -- the leaf module -- and NOT the
+    // package's barrel, for the reason the paragraph above predicts: `src/index.ts` re-exports its
+    // siblings as `./thing.js`, Turbopack will not map that onto the `.ts` beside it, and pulling
+    // the barrel in fails the build with eight `Module not found`s. It did, on the first attempt.
+    // `src/jwt.ts` imports nothing at all, so it has no specifiers to get wrong.
+    "@repo/store",
   ],
   typedRoutes: true,
 
