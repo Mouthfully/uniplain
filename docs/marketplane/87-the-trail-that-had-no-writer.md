@@ -1,6 +1,6 @@
-# 77. The trail that had no writer
+# 87. The trail that had no writer
 
-**PR:** TBD &nbsp;·&nbsp; **Date:** 2026-09-13 &nbsp;·&nbsp; **Status:** proposed
+**PR:** [#73](https://github.com/Mouthfully/uniplain/pull/73) &nbsp;·&nbsp; **Date:** 2026-09-13 &nbsp;·&nbsp; **Status:** proposed
 
 ---
 
@@ -99,7 +99,7 @@ an account's life — on Supabase disk at $0.125/GB. The read is bounded at fift
 
 Gates 1–4, 9–17: `N/A` or `PASS` — no credential, no platform call, no quota, no dependency.
 **5. RLS.** `PASS` — no new table; `security_events` already carries `organisation_id` under FORCE
-RLS with a member-gated select policy, and `23_membership_trail.sql` proves an admin can neither
+RLS with a member-gated select policy, and `24_membership_trail.sql` proves an admin can neither
 rewrite nor delete it.
 **6. No service-role bypass.** `PASS` — the writer is a definer trigger reaching a FORCED table
 through **no** insert policy, on the owner's `BYPASSRLS`. A permissive insert policy would be one
