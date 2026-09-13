@@ -71,7 +71,27 @@ becomes available.
    one-hour TTL and a single-use `delete … returning`, both in `20260913000400_oauth_pending.sql`.
    Across all migrations there are exactly three `delete from` statements, and none names a
    tenancy table.
-2. **s.28 — every byte crosses a border with no mechanism.** Five transfers, each needing a s.28 or
+2. **s.28 — every byte still crosses a border with no mechanism, and the position is now assessed
+   and published rather than noted here.** `apps/web/app/_processing/transfer-basis.ts` scores all
+   six s.28 exceptions and both s.29 routes against the record, generated from `SUB_PROCESSORS` so
+   it cannot fall behind the disclosure, and `/processing` publishes it. **No basis is claimed.**
+   Two limbs — the contractual ones — are recorded as *open, needing counsel* rather than as "no",
+   because they are the ones that plausibly carry and a source file does not get to decide them;
+   the consent limb is **deliberately not claimed**, since nothing in this system asks anyone to
+   consent to an inadequate destination.
+
+   Three findings came out of generating it rather than writing it. **Four of the five recipients
+   carry `location: null`, so s.28's question cannot be reached for them at all** — adequacy is a
+   property of a named country and the country is not named. **Whether the Committee has published
+   an adequacy list could not be established** from any source checked, and is recorded as unknown
+   rather than assumed either way, because "no list exists" closes a route and "we did not find
+   one" does not. And `/privacy` opened its transfers clause "Those transfers are **necessary** to
+   provide the service a customer has asked for", which reads as the contractual-necessity limb
+   being asserted in a published notice; the word is gone and the clause now names the PDPA
+   position instead of only the GDPR one. The two PDPC notifications took effect **2024-03-24**,
+   checked against published commentary rather than recalled.
+
+   *Original entry, still true of the instruments themselves:* Five transfers, each needing a s.28 or
    s.29 basis: Supabase (Singapore), Cloudflare R2, Vercel, Stripe, **and OpenRouter**, which
    receives prompts built from a tenant's figures.
 3. **s.40 — the company calls itself a processor and has no instrument.** `/privacy` declares

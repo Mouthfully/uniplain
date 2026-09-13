@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 
 import { Footer, SiteHeader } from "../_chrome";
 import { CONTACT_DELIVERY_LINE, RIGHTS_CHANNEL_LINE } from "../_content";
+import { transferPosition } from "../_processing/transfer-basis";
 import { SUB_PROCESSORS } from "../_processing/sub-processors";
 
 /**
@@ -13,6 +14,21 @@ import { SUB_PROCESSORS } from "../_processing/sub-processors";
  * that has to be kept in step with the list beneath it by hand, and it is the half a reader
  * believes without checking. The list is the count.
  */
+/**
+ * THE TRANSFER POSITION UNDER THE LAW THAT BINDS, NAMED ON THE PAGE.
+ *
+ * The clause it joins was written GDPR-first: it named standard contractual clauses and said none
+ * was in place. True, and about the law whose application to this entity is still undecided. **PDPA
+ * s.28 binds today**, and the clause said nothing about it.
+ *
+ * It is also here to correct a sentence that was drifting toward a claim. The clause used to open
+ * "Those transfers are NECESSARY to provide the service a customer has asked for" -- which reads,
+ * to a lawyer, like the contractual-necessity limb of s.28 being asserted. `transfer-basis.ts`
+ * records that limb as **open, needing counsel**, so a notice cannot lean on it. The factual half
+ * of the sentence survives; the word that carried the claim does not.
+ */
+const PDPA_TRANSFER_LINE = `Thai law governs this: the company is registered in Thailand, so sections 28 and 29 of the Personal Data Protection Act decide what may carry a transfer out of the Kingdom. ${transferPosition()} The full assessment, route by route and provider by provider, is published in the record of processing.`;
+
 const SUB_PROCESSOR_LEAD =
   "The providers below process data on our behalf in order to run this service.";
 
@@ -402,7 +418,8 @@ const CLAUSES: readonly Clause[] = [
     open: true,
     body: [
       "The company is registered in Thailand and the data is held in Singapore, so data crosses a border to reach this service and crosses another to reach the payment processor and the web host. The providers are named in the sub-processors clause above.",
-      "Those transfers are necessary to provide the service a customer has asked for, and there is no configuration of this product in which they do not happen. What is not yet in place is a separate transfer instrument -- standard contractual clauses or an equivalent -- and none is claimed here. A customer whose own obligations depend on holding one should raise it before sending data those obligations cover.",
+      "Those transfers happen in every configuration of this product; there is none in which they do not. What is not in place is a transfer instrument -- standard contractual clauses or an equivalent -- and none is claimed here. A customer whose own obligations depend on holding one should raise it before sending data those obligations cover.",
+      PDPA_TRANSFER_LINE,
       EU_REPRESENTATIVE_LINE,
     ],
   },

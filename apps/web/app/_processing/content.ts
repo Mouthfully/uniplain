@@ -39,6 +39,17 @@ export const PROCESSING_COPY = {
   cleanNote:
     "Listed with the reason, because a judgement nobody wrote down is one that stops being true without anyone noticing.",
 
+  transferHeading: "Sending data out of Thailand",
+  transferNote:
+    "The controller is registered in Thailand, so every provider that receives personal data receives it across a border. Sections 28 and 29 of the PDPA say what may carry such a transfer. This is what each route says and what this service holds against it, generated from the provider list rather than written alongside it.",
+  transferAdequacyUnverified:
+    'Whether the Committee has published a list of destinations it treats as adequate could not be established from any source checked. That is recorded as unknown rather than assumed either way, because "no list exists" and "we did not find one" are different findings and only one of them closes a route.',
+  transferLimbHeading: "The routes, and what is held against each",
+  transferStateLabels: {
+    "not-engaged": "Not engaged",
+    engaged: "Engaged",
+    undetermined: "Open — needs counsel",
+  },
   openHeading: "What is not in place",
   openNote:
     "Named here rather than left for a reviewer to discover. No transfer instrument such as standard contractual clauses is in place; no data processing agreement is offered yet; no retention schedule has been set; and no data protection officer has been appointed. Each of those is a decision that needs a person, and none of them is claimed on this page or anywhere else on this site.",
