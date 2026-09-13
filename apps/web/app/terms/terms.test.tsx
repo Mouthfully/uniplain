@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { brand } from "@repo/brand";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
@@ -105,6 +106,62 @@ describe("what the terms say is arranged", () => {
     // The clause's own intro sentence is a summary of the four below it, and a summary is the part
     // that goes stale first. "None of them exists today" was true and is not.
     expect(text.toLowerCase()).not.toContain("none of them exists today");
+  });
+});
+
+describe("the termination clause describes the deletion the code performs", () => {
+  it("promises no grace period, because there is none", () => {
+    // THE DEFECT THIS REPLACED. The clause read "For thirty days after an account closes, its data
+    // remains available so that the customer can export it" -- and `public.delete_organisation` is
+    // ONE STATEMENT that cascades through thirteen tables the moment an owner confirms. `/account`
+    // had always said "It happens at once and there is no undo"; the screen was right and the
+    // contract was wrong, which is the worse way round. A customer who read the terms and planned
+    // to export next week would have lost everything, having been told they had a month.
+    expect(text).toContain("Closing an account deletes it at once and there is no undo");
+    for (const window of [
+      "For thirty days after an account closes",
+      "remains available so that the customer can export it",
+      "grace period of",
+    ]) {
+      expect(text, `the terms promise a window after closure: "${window}"`).not.toContain(window);
+    }
+  });
+
+  it("agrees with the screen that performs it", () => {
+    // Two documents, one act. The account page's own copy is read here rather than restated, so
+    // the two cannot drift the way they had.
+    const account = readFileSync(
+      new URL("../account/_content.ts", import.meta.url).pathname,
+      "utf8",
+    );
+    expect(account).toContain("It happens at once and there is no undo");
+    expect(text.toLowerCase()).toContain("at once and there is no undo");
+  });
+
+  it("still refuses to promise automatic deletion for an account that stays open", () => {
+    // The half of the old clause that was TRUE and stays: nothing deletes on a timer, and no
+    // retention schedule is set. Fixing the false half must not quietly settle this one.
+    expect(text).toContain("no automatic deletion is promised here");
+  });
+});
+
+describe("the under-review marker counts the clauses rather than describing them", () => {
+  it("marks no clause under review, and says so in the standing note", () => {
+    // The note read "A small number of clauses are marked as under review" and the last open
+    // clause closed when termination stopped describing a window this system never had. A standing
+    // note announcing markers a reader cannot find is the stale-denial defect again, in prose
+    // about the document itself.
+    expect(text, "the note still announces markers that are not there").not.toContain(
+      "A small number of clauses are marked as under review",
+    );
+    expect(text).toContain("none is marked as under review");
+  });
+
+  it("renders no badge on any clause", () => {
+    const source = readFileSync(new URL("./page.tsx", import.meta.url).pathname, "utf8");
+    expect(source, "a clause is flagged open again without the note following").not.toMatch(
+      /^\s*open: true,/m,
+    );
   });
 });
 

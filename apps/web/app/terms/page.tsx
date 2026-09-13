@@ -108,9 +108,6 @@ const OPEN_BADGE = "Under review";
  * deletion window written here would be a description of software that does not exist, which is a
  * different kind of wrong from a term nobody has negotiated yet.
  */
-const HEADLINE_NOTE =
-  "This page is the agreement covering use of the service. A small number of clauses are marked as under review: those say what the position is today rather than carrying a placeholder that would read like a settled term.";
-
 /* The parties panel. Every value is read from the brand package; none is typed here. */
 const PARTIES_LABEL = "The agreement is with";
 
@@ -316,17 +313,23 @@ const CLAUSES: readonly Clause[] = [
   },
   {
     id: "termination",
-    // STILL OPEN, AND ONLY THE SECOND PARAGRAPH IS WHY. The termination right itself is settled
-    // below. What is not settled is what happens to the data afterwards, and that is not a term
-    // waiting on a negotiation -- it is waiting on code. Nothing in this system deletes on a timer,
-    // so a deletion window written here would describe software that does not exist. See the
-    // retention clause on the privacy notice, which is open for the same reason and must move in
-    // the same change.
+    // THE SECOND PARAGRAPH DESCRIBED SOFTWARE THAT DOES NOT EXIST, in the direction that costs a
+    // customer their data. It read "For thirty days after an account closes, its data remains
+    // available so that the customer can export it" -- and `public.delete_organisation` is ONE
+    // STATEMENT that cascades through thirteen tables the moment an owner confirms. There is no
+    // window. `/account` has always said so in its own words: "It happens at once and there is no
+    // undo." The screen was right and the contract was wrong, which is the worse way round: a
+    // customer who read the terms and planned to export next week would have lost everything.
+    //
+    // THE CLAUSE IS NO LONGER OPEN, and that is why the badge is gone rather than hidden. It was
+    // marked under review because what happened to the data was waiting on code. It is not: the
+    // code is decided and immediate, and the clause now describes it. Retention for data nobody
+    // has asked about is a different question, still unset, and still open on `/privacy`.
     title: "Termination",
-    open: true,
     body: [
       "The customer may stop using the service and close its account at any time; the paid period runs out as described above. We may terminate this agreement for a serious or repeated breach of the acceptable-use clause, on thirty days' notice, or immediately where the breach cannot be put right.",
-      "For thirty days after an account closes, its data remains available so that the customer can export it. What happens to it after that is not fixed by this agreement: no automatic deletion is promised here, because none happens automatically. A customer who wants its data deleted should ask at the contact address, and it is dealt with individually.",
+      "Closing an account deletes it at once and there is no undo: the organisation and everything belonging to it goes in one step, and no copy is kept for a grace period. Anything the customer wants to keep must be exported before closing, which the account page does in one file. Two things outlive the closure and neither is in this service's own tables: the sign-in record held by the service that signs you in, and whatever the payment provider holds.",
+      "For an account that stays open, no automatic deletion is promised here, because none happens automatically. A customer who wants data deleted without closing the account should ask at the contact address, and it is dealt with individually.",
     ],
   },
   {
@@ -401,9 +404,39 @@ const OPEN_TERMS = [
   { term: "Governing law and forum", note: "No jurisdiction chosen and no venue agreed." },
 ] as const;
 
-export default function TermsPage() {
-  const openCount = CLAUSES.filter((clause) => clause.open === true).length;
+/**
+ * DERIVED FROM THE CLAUSES, because the sentence it replaced went stale the moment one closed.
+ *
+ * It read "A small number of clauses are marked as under review", and the last open clause on this
+ * page -- termination's data paragraph -- closed when that paragraph stopped describing a thirty-day
+ * window this system has never had. A standing note announcing markers a reader then cannot find is
+ * the same defect as the stale denial this page carried before: prose about the document, kept by
+ * hand, compared to nothing.
+ *
+ * So it counts. `openCount` already drives the figure in the header panel; the sentence now comes
+ * from the same number.
+ */
+const OPEN_CLAUSES = CLAUSES.filter((clause) => clause.open === true).length;
 
+/*
+ * WRITTEN `=== 0` RATHER THAN `> 0`, AND NOT FOR TASTE. `scripts/check-copy.mjs` decides whether a
+ * string is JSX text by walking back to the nearest unmatched delimiter, and `isTagClose` treats a
+ * `>` as a tag close unless it is part of `=>`, `->`, `>>` or `>=`. A SPACED COMPARISON IS NONE OF
+ * THOSE, so `OPEN_CLAUSES > 0` reads to the scanner as the end of a tag and every string after it
+ * on the line becomes a text node -- which is how a module constant came to be reported as "a
+ * sentence of 92 words written into the page".
+ *
+ * The guard's own note says its model of JSX "is enough", and everywhere else in `app/` it is: a
+ * bare greater-than at module scope in a rendered file is the one shape it misreads. Avoiding the
+ * operator is the small fix; loosening `isTagClose` is the risky one, because a real tag close can
+ * carry a space too and this guard is load-bearing. Recorded rather than worked around silently.
+ */
+const HEADLINE_NOTE =
+  OPEN_CLAUSES === 0
+    ? "This page is the agreement covering use of the service. Every clause states a settled position; none is marked as under review. Where a term rests on something this company has not yet decided, the clause says so in its own words rather than leaving it to be inferred."
+    : "This page is the agreement covering use of the service. A small number of clauses are marked as under review: those say what the position is today rather than carrying a placeholder that would read like a settled term.";
+
+export default function TermsPage() {
   return (
     <>
       <SiteHeader />
@@ -455,7 +488,7 @@ export default function TermsPage() {
                   {OPEN_BADGE}
                 </dt>
                 {/* A count, not a sentence: how many clauses below carry the open marker. */}
-                <dd className="text-ink mt-1 font-bold">{openCount}</dd>
+                <dd className="text-ink mt-1 font-bold">{OPEN_CLAUSES}</dd>
               </div>
             </dl>
           </div>
