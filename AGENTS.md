@@ -207,7 +207,7 @@ rather than deferred. Progress against the articles this section previously list
 | Art. 27 representative | **Absent** — the open decision, issue #74 | `brand.euRepresentative` is `null` |
 | Art. 44–49 transfers | **Absent, and the largest remaining gap** | Every recipient is in a third country from the Union's standpoint and so is the controller. No SCCs, no BCRs, no derogation. Stated in Art. 30(1)(e), in `/dpa` and in `/privacy` |
 | Art. 33–34 breach notification | **Partial** — the trail an assessment needs exists, the notification path does not | `20260913001200_security_events.sql` |
-| Art. 28 processor terms | **A PDPA s.40 instrument exists; its Art. 28(3) clause-by-clause coverage is unassessed** | `/dpa` |
+| Art. 28(3) processor terms | **Seven of eight sub-paragraphs met; (d) absent and stated as such** | `apps/web/app/_processing/article-28.ts` maps each sub-paragraph to the clause answering it, and `article-28.test.tsx` requires the quoted commitment to appear in the RENDERED page. The assessment found (b) confidentiality absent entirely, and (a), (f), (g), (h) partial; all five are now in the agreement. **(d) cannot be met**: Art. 28(2) makes a right to object depend on a notice, and the domain answers NODATA for MX |
 | Art. 37 DPO | **Undecided**, like PDPA s.41 | `brand.dataProtectionOfficer` is `null` |
 
 ---
